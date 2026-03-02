@@ -292,14 +292,14 @@ export default class extends Controller {
       // Notify the user
       this.#showOfflineConfirmation()
     } catch (error) {
-      console.error("[ScoutRail] Failed to save offline entry:", error)
+      console.error("[Lighthouse] Failed to save offline entry:", error)
       alert("Failed to save entry offline. Please try again.")
     }
   }
 
   #openDB() {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open("scoutrail", 1)
+      const request = indexedDB.open("lighthouse", 1)
       request.onupgradeneeded = (event) => {
         const db = event.target.result
         if (!db.objectStoreNames.contains("offline_entries")) {

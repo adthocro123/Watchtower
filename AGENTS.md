@@ -1,4 +1,4 @@
-# AGENTS.md — ScoutRail (frc-scout)
+# AGENTS.md — Lighthouse
 
 FRC scouting app built with Ruby on Rails 8.1, PostgreSQL, Hotwire (Turbo + Stimulus), and Tailwind CSS.
 

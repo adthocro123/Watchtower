@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-const DB_NAME = "scoutrail"
+const DB_NAME = "lighthouse"
 const DB_VERSION = 2
 const SCOUTING_STORE = "offline_entries"
 const PIT_STORE = "offline_pit_entries"

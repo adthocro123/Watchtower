@@ -56,7 +56,7 @@ end
 puts "  Game config: #{game_config.game_name} (#{game_config.year})"
 
 # --- Admin User ---
-admin = User.find_or_create_by!(email: "admin@scoutrail.com") do |u|
+admin = User.find_or_create_by!(email: "admin@lighthouse.com") do |u|
   u.password = "password123"
   u.password_confirmation = "password123"
   u.first_name = "Admin"
@@ -72,7 +72,7 @@ end
 puts "  Admin user: #{admin.email} (role: admin, org membership: owner)"
 
 # --- Scout User ---
-scout = User.find_or_create_by!(email: "scout@scoutrail.com") do |u|
+scout = User.find_or_create_by!(email: "scout@lighthouse.com") do |u|
   u.password = "password123"
   u.password_confirmation = "password123"
   u.first_name = "Scout"
@@ -94,7 +94,7 @@ puts ""
 puts "--- Populating test event with full data ---"
 
 # --- Additional scout users for varied scouting data ---
-scout2 = User.find_or_create_by!(email: "scout2@scoutrail.com") do |u|
+scout2 = User.find_or_create_by!(email: "scout2@lighthouse.com") do |u|
   u.password = "password123"
   u.password_confirmation = "password123"
   u.first_name = "Maya"
@@ -104,7 +104,7 @@ end
 scout2.add_role(:scout) unless scout2.has_role?(:scout)
 Membership.find_or_create_by!(user: scout2, organization: org) { |m| m.role = :scout }
 
-scout3 = User.find_or_create_by!(email: "scout3@scoutrail.com") do |u|
+scout3 = User.find_or_create_by!(email: "scout3@lighthouse.com") do |u|
   u.password = "password123"
   u.password_confirmation = "password123"
   u.first_name = "Jake"

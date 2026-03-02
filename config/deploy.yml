@@ -1,8 +1,8 @@
 # Name of your application. Used to uniquely configure containers.
-service: scoutrail
+service: lighthouse
 
 # Name of the container image.
-image: your-dockerhub-user/scoutrail
+image: your-dockerhub-user/lighthouse
 
 # Deploy to these servers (replace with your actual server IPs).
 servers:
@@ -16,7 +16,7 @@ servers:
 # Enable SSL auto certification via Let's Encrypt.
 proxy:
   ssl: true
-  host: scoutrail.example.com
+  host: lighthouse.example.com
 
 # Container registry (replace with your registry).
 registry:
@@ -30,11 +30,11 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
-    - SCOUT_RAIL_DATABASE_PASSWORD
+    - LIGHTHOUSE_DATABASE_PASSWORD
     - TBA_API_KEY
   clear:
     SOLID_QUEUE_IN_PUMA: true
-    DB_HOST: scoutrail-db
+    DB_HOST: lighthouse-db
     RAILS_LOG_LEVEL: info
     RAILS_SERVE_STATIC_FILES: true
     WEB_CONCURRENCY: 2
@@ -49,7 +49,7 @@ aliases:
 
 # Persistent storage for Active Storage and SQLite-backed Solid services.
 volumes:
-  - "scoutrail_storage:/rails/storage"
+  - "lighthouse_storage:/rails/storage"
 
 # Bridge assets between deployments.
 asset_path: /rails/public/assets
@@ -66,9 +66,9 @@ accessories:
     port: "127.0.0.1:5432:5432"
     env:
       clear:
-        POSTGRES_DB: scout_rail_production
-        POSTGRES_USER: scout_rail
+        POSTGRES_DB: lighthouse_production
+        POSTGRES_USER: lighthouse
       secret:
-        - SCOUT_RAIL_DATABASE_PASSWORD
+        - LIGHTHOUSE_DATABASE_PASSWORD
     directories:
       - data:/var/lib/postgresql/data

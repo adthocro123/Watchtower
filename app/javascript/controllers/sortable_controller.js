@@ -178,7 +178,7 @@ export default class extends Controller {
         this.#showToast("Failed to save order", "error")
       }
     } catch (error) {
-      console.error("[ScoutRail] Failed to save sort order:", error)
+      console.error("[Lighthouse] Failed to save sort order:", error)
       this.#showToast("Failed to save order", "error")
     }
   }

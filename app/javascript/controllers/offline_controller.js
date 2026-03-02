@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-const DB_NAME = "scoutrail"
+const DB_NAME = "lighthouse"
 const DB_VERSION = 1
 const STORE_NAME = "offline_entries"
 const SYNC_URL = "/api/v1/scouting_entries/bulk_sync"
@@ -76,7 +76,7 @@ export default class extends Controller {
 
       this.#showSyncBanner(syncedUuids.length)
     } catch (error) {
-      console.error("[ScoutRail] Sync failed:", error)
+      console.error("[Lighthouse] Sync failed:", error)
     }
   }
 

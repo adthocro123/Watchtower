@@ -52,7 +52,7 @@ class ExportService
   private
 
   def render_header(pdf)
-    pdf.text "ScoutRail - Team Rankings", size: 20, style: :bold
+    pdf.text "Lighthouse - Team Rankings", size: 20, style: :bold
     pdf.text "#{@event.name} (#{@event.tba_key})", size: 14
     pdf.text "Generated: #{Time.current.strftime('%B %d, %Y at %I:%M %p')}", size: 10
     pdf.move_down 15

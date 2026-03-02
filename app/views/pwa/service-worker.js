@@ -1,11 +1,11 @@
-const CACHE_VERSION = "scoutrail-v2"
+const CACHE_VERSION = "lighthouse-v2"
 
 const PRECACHE_URLS = [
   "/",
   "/manifest.json"
 ]
 
-const DB_NAME = "scoutrail"
+const DB_NAME = "lighthouse"
 const DB_VERSION = 2
 const SCOUTING_STORE = "offline_entries"
 const PIT_STORE = "offline_pit_entries"
@@ -111,7 +111,7 @@ function offlineFallback() {
   return new Response(
     `<!DOCTYPE html>
     <html>
-      <head><title>ScoutRail - Offline</title>
+      <head><title>Lighthouse - Offline</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <style>
         body { font-family: system-ui; background: #111827; color: #f3f4f6; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
@@ -121,7 +121,7 @@ function offlineFallback() {
       </style></head>
       <body>
         <div class="container">
-          <h1>ScoutRail</h1>
+          <h1>Lighthouse</h1>
           <p>You are currently offline.</p>
           <p>Any scouting entries you submitted are saved and will sync automatically when you reconnect.</p>
         </div>
@@ -203,7 +203,7 @@ async function syncOfflineEntries(storeName, syncUrl) {
       client.postMessage({ type: "sync-complete", store: storeName, count: syncedUuids.length })
     }
   } catch (error) {
-    console.error("[ScoutRail SW] Background sync failed:", error)
+    console.error("[Lighthouse SW] Background sync failed:", error)
   }
 }
 

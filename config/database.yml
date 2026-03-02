@@ -22,11 +22,11 @@ default: &default
 
 development:
   <<: *default
-  database: scout_rail_development
+  database: lighthouse_development
 
 test:
   <<: *default
-  database: scout_rail_test
+  database: lighthouse_test
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
@@ -57,18 +57,18 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    database: scout_rail_production
-    username: scout_rail
-    password: <%= ENV["SCOUT_RAIL_DATABASE_PASSWORD"] %>
+    database: lighthouse_production
+    username: lighthouse
+    password: <%= ENV["LIGHTHOUSE_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production
-    database: scout_rail_production_cache
+    database: lighthouse_production_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
-    database: scout_rail_production_queue
+    database: lighthouse_production_queue
     migrations_paths: db/queue_migrate
   cable:
     <<: *primary_production
-    database: scout_rail_production_cable
+    database: lighthouse_production_cable
     migrations_paths: db/cable_migrate
