@@ -15,8 +15,8 @@ class StatboticsClientTest < ActiveSupport::TestCase
     assert_equal "https://api.statbotics.io/v3", StatboticsClient::BASE_URL
   end
 
-  test "CACHE_TTL is 10 minutes" do
-    assert_equal 10.minutes, StatboticsClient::CACHE_TTL
+  test "CACHE_TTL is 1 hour" do
+    assert_equal 1.hour, StatboticsClient::CACHE_TTL
   end
 
   test "team_year returns nil on network failure" do
