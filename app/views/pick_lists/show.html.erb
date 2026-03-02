@@ -1,0 +1,66 @@
+<% content_for(:title) { "#{@pick_list.name} - ScoutRail" } %>
+
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center gap-2 mb-6">
+    <%= link_to pick_lists_path, class: "text-gray-500 hover:text-gray-300 transition" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    <% end %>
+    <h1 class="text-2xl font-bold text-white flex-1"><%= @pick_list.name %></h1>
+    <div class="flex items-center gap-2">
+      <%= link_to "Edit", edit_pick_list_path(@pick_list), class: "px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition" %>
+      <%= button_to "Delete", pick_list_path(@pick_list), method: :delete, data: { turbo_confirm: "Delete this pick list?" }, class: "px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm rounded-lg border border-red-500/30 transition" %>
+    </div>
+  </div>
+
+  <p class="text-sm text-gray-500 mb-4">By <%= @pick_list.user.full_name %> &middot; Updated <%= time_ago_in_words(@pick_list.updated_at) %> ago</p>
+
+  <%# Drag-and-drop sortable list %>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+       data-controller="sortable"
+       data-sortable-save-url="<%= pick_list_path(@pick_list) %>">
+    <div data-sortable-target="list" class="divide-y divide-gray-800/50"
+         data-action="dragover->sortable#dragover drop->sortable#drop">
+      <% entries = @pick_list.entries || [] %>
+      <% if entries.any? %>
+        <% teams = FrcTeam.where(id: entries).index_by(&:id) %>
+        <% entries.each_with_index do |team_id, idx| %>
+          <% team = teams[team_id.to_i] %>
+          <% next unless team %>
+          <div class="flex items-center gap-3 px-4 py-3 hover:bg-gray-800/50 transition cursor-grab active:cursor-grabbing"
+               data-sortable-target="item"
+               data-sortable-id="<%= team.id %>"
+               data-action="dragstart->sortable#dragstart dragend->sortable#dragend">
+            <%# Drag handle %>
+            <div class="text-gray-600 shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+              </svg>
+            </div>
+            <%# Rank number %>
+            <span class="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center text-sm font-bold text-gray-400 shrink-0">
+              <%= idx + 1 %>
+            </span>
+            <%# Team info %>
+            <div class="flex-1 min-w-0">
+              <span class="font-bold text-emerald-400"><%= team.team_number %></span>
+              <span class="text-gray-400 text-sm ml-1"><%= team.nickname %></span>
+            </div>
+            <%# View link %>
+            <%= link_to team_path(team), class: "text-gray-600 hover:text-gray-400 transition shrink-0" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="text-center py-12">
+          <p class="text-gray-500 text-sm">No teams in this pick list yet.</p>
+          <p class="text-gray-600 text-xs mt-1">Edit the pick list to add teams.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

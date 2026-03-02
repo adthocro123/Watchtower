@@ -1,0 +1,168 @@
+<% content_for(:title) { "Team #{@team.team_number} - ScoutRail" } %>
+
+<div class="max-w-4xl mx-auto">
+  <%# Header %>
+  <div class="flex items-center gap-2 mb-6">
+    <%= link_to teams_path, class: "text-gray-500 hover:text-gray-300 transition" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    <% end %>
+    <div>
+      <h1 class="text-2xl font-bold text-white">
+        <span class="text-emerald-400"><%= @team.team_number %></span>
+        <% if @team.nickname.present? %>
+          <span class="text-gray-400 font-normal text-lg ml-1"><%= @team.nickname %></span>
+        <% end %>
+      </h1>
+      <p class="text-sm text-gray-500">
+        <%= [@team.city, @team.state_prov, @team.country].compact.join(", ") %>
+        <% if @team.rookie_year.present? %>
+          &middot; Rookie Year: <%= @team.rookie_year %>
+        <% end %>
+      </p>
+    </div>
+  </div>
+
+  <%# Summary Stats %>
+  <% if @summary %>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-emerald-400"><%= @summary.avg_total_points.to_f.round(1) %></p>
+        <p class="text-xs text-gray-500 mt-1">Avg Points</p>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-amber-400"><%= @summary.fuel_accuracy_pct.to_f.round(1) %>%</p>
+        <p class="text-xs text-gray-500 mt-1">Accuracy</p>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-blue-400"><%= @summary.avg_climb_points.to_f.round(1) %></p>
+        <p class="text-xs text-gray-500 mt-1">Avg Climb Pts</p>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-white"><%= @summary.matches_scouted %></p>
+        <p class="text-xs text-gray-500 mt-1">Matches Scouted</p>
+      </div>
+    </div>
+
+    <%# Accuracy Donut + Breakdown %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+        <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Fuel Accuracy</h3>
+        <% accuracy = @summary.fuel_accuracy_pct.to_f.round(1)
+           made = @summary.avg_fuel_made.to_f.round(1)
+           missed = @summary.avg_fuel_missed.to_f.round(1) %>
+        <%= pie_chart({ "Made" => made, "Missed" => missed },
+                       donut: true,
+                       colors: ["#10b981", "#ef4444"],
+                       library: {
+                         plugins: {
+                           legend: { labels: { color: "#9ca3af" } }
+                         }
+                       }) %>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+        <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Performance Breakdown</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="text-gray-400">Avg Fuel Made</span>
+              <span class="font-mono text-emerald-400"><%= made %></span>
+            </div>
+            <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500 rounded-full" style="width: <%= [made.to_f * 3, 100].min %>%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="text-gray-400">Avg Fuel Missed</span>
+              <span class="font-mono text-red-400"><%= missed %></span>
+            </div>
+            <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-red-500 rounded-full" style="width: <%= [missed.to_f * 3, 100].min %>%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="text-gray-400">Avg Climb</span>
+              <span class="font-mono text-blue-400"><%= @summary.avg_climb_points.to_f.round(1) %> pts</span>
+            </div>
+            <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-blue-500 rounded-full" style="width: <%= (@summary.avg_climb_points.to_f / 30 * 100).round(0) %>%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="text-gray-400">Consistency (Std Dev)</span>
+              <span class="font-mono text-gray-400"><%= @summary.stddev_total_points.to_f.round(1) %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Points Over Matches Chart %>
+  <% if @entries.any? %>
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6 mb-6">
+      <h3 class="text-lg font-semibold text-white mb-4">Points Over Matches</h3>
+      <% chart_data = @entries.reverse.each_with_object({}) do |entry, hash|
+        label = entry.match&.display_name || "Entry #{entry.id}"
+        hash[label] = entry.total_points
+      end %>
+      <%= line_chart chart_data,
+                     colors: ["#10b981"],
+                     library: {
+                       scales: {
+                         x: { ticks: { color: "#9ca3af" }, grid: { color: "#1f2937" } },
+                         y: { ticks: { color: "#9ca3af" }, grid: { color: "#1f2937" }, beginAtZero: true }
+                       },
+                       plugins: { legend: { display: false } },
+                       elements: { point: { radius: 5, backgroundColor: "#10b981" } }
+                     } %>
+    </div>
+  <% end %>
+
+  <%# Scouting Entries Table %>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+    <div class="px-4 sm:px-6 py-4 border-b border-gray-800">
+      <h3 class="text-lg font-semibold text-white">Scouting Entries (<%= @entries.count %>)</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-gray-500 text-xs uppercase tracking-wider border-b border-gray-800">
+            <th class="px-4 py-3 text-left">Match</th>
+            <th class="px-4 py-3 text-left">Scout</th>
+            <th class="px-4 py-3 text-right">Made</th>
+            <th class="px-4 py-3 text-right">Missed</th>
+            <th class="px-4 py-3 text-right hidden sm:table-cell">Climb</th>
+            <th class="px-4 py-3 text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800/50">
+          <% @entries.each do |entry| %>
+            <tr class="hover:bg-gray-800/50 transition">
+              <td class="px-4 py-3">
+                <%= link_to scouting_entry_path(entry), class: "text-white hover:text-emerald-400 transition font-medium" do %>
+                  <%= entry.match&.display_name || "—" %>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-gray-400"><%= entry.user.full_name %></td>
+              <td class="px-4 py-3 text-right font-mono text-emerald-400"><%= entry.total_fuel_made %></td>
+              <td class="px-4 py-3 text-right font-mono text-red-400"><%= entry.total_fuel_missed %></td>
+              <td class="px-4 py-3 text-right font-mono text-gray-300 hidden sm:table-cell"><%= entry.data&.dig("endgame_climb") || "None" %></td>
+              <td class="px-4 py-3 text-right font-mono font-bold text-white"><%= entry.total_points %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if @entries.empty? %>
+      <div class="text-center py-8">
+        <p class="text-gray-500 text-sm">No scouting entries for this team yet.</p>
+        <%= link_to "Scout This Team", new_scouting_entry_path, class: "inline-block mt-2 text-sm text-emerald-400 hover:text-emerald-300 transition" %>
+      </div>
+    <% end %>
+  </div>
+</div>

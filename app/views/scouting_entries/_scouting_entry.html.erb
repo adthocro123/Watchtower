@@ -1,0 +1,38 @@
+<%# Turbo Stream / broadcast partial for a single scouting entry %>
+<div id="<%= dom_id(scouting_entry) %>" class="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-gray-800/50 transition border-b border-gray-800/50 last:border-b-0">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center shrink-0">
+      <span class="text-sm font-bold text-emerald-400"><%= scouting_entry.frc_team.team_number %></span>
+    </div>
+    <div class="min-w-0">
+      <p class="text-sm font-medium text-white">
+        Team <%= scouting_entry.frc_team.team_number %>
+        <% if scouting_entry.match %>
+          <span class="text-gray-500">&middot;</span>
+          <span class="text-gray-400"><%= scouting_entry.match.display_name %></span>
+        <% end %>
+      </p>
+      <p class="text-xs text-gray-500 truncate">
+        <%= scouting_entry.user.full_name %> &middot; <%= time_ago_in_words(scouting_entry.created_at) %> ago
+      </p>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 shrink-0">
+    <div class="text-right">
+      <p class="text-sm font-bold text-white"><%= scouting_entry.total_points %> pts</p>
+      <span class="text-xs px-1.5 py-0.5 rounded-full
+        <%= case scouting_entry.status
+            when 'submitted' then 'bg-emerald-500/20 text-emerald-400'
+            when 'flagged' then 'bg-amber-500/20 text-amber-400'
+            when 'rejected' then 'bg-red-500/20 text-red-400'
+            end %>">
+        <%= scouting_entry.status.capitalize %>
+      </span>
+    </div>
+    <%= link_to scouting_entry_path(scouting_entry), class: "text-gray-600 hover:text-gray-400 transition" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    <% end %>
+  </div>
+</div>

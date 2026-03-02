@@ -1,0 +1,44 @@
+<% content_for(:title) { "Pick Lists - ScoutRail" } %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Pick Lists</h1>
+    <p class="text-sm text-gray-400 mt-1"><%= current_event.name %></p>
+  </div>
+  <%= link_to new_pick_list_path, class: "flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition" do %>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>
+    <span class="hidden sm:inline">New Pick List</span>
+  <% end %>
+</div>
+
+<div class="space-y-3">
+  <% @pick_lists.each do |pick_list| %>
+    <%= link_to pick_list_path(pick_list), class: "block bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition group" do %>
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-semibold text-white group-hover:text-emerald-400 transition"><%= pick_list.name %></h3>
+          <p class="text-sm text-gray-500 mt-1">
+            By <%= pick_list.user.full_name %>
+            &middot; <%= pick_list.entries&.length || 0 %> teams
+            &middot; Updated <%= time_ago_in_words(pick_list.updated_at) %> ago
+          </p>
+        </div>
+        <svg class="w-5 h-5 text-gray-600 group-hover:text-gray-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<% if @pick_lists.empty? %>
+  <div class="text-center py-16 bg-gray-900 border border-gray-800 rounded-xl">
+    <svg class="w-12 h-12 text-gray-700 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    </svg>
+    <p class="text-gray-500 mb-4">No pick lists yet.</p>
+    <%= link_to "Create Pick List", new_pick_list_path, class: "inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition" %>
+  </div>
+<% end %>

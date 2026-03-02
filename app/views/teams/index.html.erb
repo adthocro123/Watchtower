@@ -1,0 +1,94 @@
+<% content_for(:title) { "Teams - ScoutRail" } %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Team Rankings</h1>
+    <p class="text-sm text-gray-400 mt-1"><%= @teams.count %> teams at <%= current_event.name %></p>
+  </div>
+  <div class="flex items-center gap-2">
+    <%= link_to new_match_simulator_path, class: "flex items-center gap-1 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      <span class="hidden sm:inline">Simulate</span>
+    <% end %>
+  </div>
+</div>
+
+<%# Search with Stimulus search controller %>
+<div class="mb-4" data-controller="search">
+  <div class="relative">
+    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+    <input type="text"
+           placeholder="Search teams..."
+           class="w-full bg-gray-900 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+           data-action="input->search#filter"
+           data-search-target="input">
+  </div>
+
+  <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mt-4">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-gray-500 text-xs uppercase tracking-wider border-b border-gray-800">
+            <th class="px-3 sm:px-4 py-3 text-left">#</th>
+            <th class="px-3 sm:px-4 py-3 text-left">Team</th>
+            <th class="px-3 sm:px-4 py-3 text-right">Avg Pts</th>
+            <th class="px-3 sm:px-4 py-3 text-right hidden sm:table-cell">Accuracy</th>
+            <th class="px-3 sm:px-4 py-3 text-right hidden md:table-cell">Avg Climb</th>
+            <th class="px-3 sm:px-4 py-3 text-right hidden lg:table-cell">Std Dev</th>
+            <th class="px-3 sm:px-4 py-3 text-right">Scouted</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800/50">
+          <% sorted_teams = @teams.sort_by { |t| -(@summaries[t.id]&.avg_total_points.to_f || 0) } %>
+          <% sorted_teams.each_with_index do |team, idx| %>
+            <% summary = @summaries[team.id] %>
+            <tr class="hover:bg-gray-800/50 transition"
+                data-search-target="item"
+                data-search="<%= team.team_number %> <%= team.nickname&.downcase %>">
+              <td class="px-3 sm:px-4 py-3 text-gray-400 font-mono text-xs"><%= idx + 1 %></td>
+              <td class="px-3 sm:px-4 py-3">
+                <%= link_to team_path(team), class: "hover:text-emerald-400 transition group" do %>
+                  <span class="font-bold text-white group-hover:text-emerald-400"><%= team.team_number %></span>
+                  <span class="text-gray-500 text-xs ml-1 hidden sm:inline"><%= team.nickname %></span>
+                <% end %>
+              </td>
+              <td class="px-3 sm:px-4 py-3 text-right">
+                <span class="font-mono font-bold text-emerald-400"><%= summary&.avg_total_points.to_f.round(1) || "---" %></span>
+              </td>
+              <td class="px-3 sm:px-4 py-3 text-right hidden sm:table-cell">
+                <% acc = summary&.fuel_accuracy_pct.to_f.round(0) || 0 %>
+                <div class="flex items-center justify-end gap-2">
+                  <div class="w-16 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all
+                      <%= if acc >= 70
+                            'bg-emerald-500'
+                          elsif acc >= 40
+                            'bg-amber-500'
+                          else
+                            'bg-red-500'
+                          end %>"
+                      style="width: <%= acc %>%"></div>
+                  </div>
+                  <span class="text-xs font-mono text-gray-400 w-8 text-right"><%= acc %>%</span>
+                </div>
+              </td>
+              <td class="px-3 sm:px-4 py-3 text-right font-mono text-gray-300 hidden md:table-cell"><%= summary&.avg_climb_points.to_f.round(1) || "---" %></td>
+              <td class="px-3 sm:px-4 py-3 text-right font-mono text-gray-500 hidden lg:table-cell"><%= summary&.stddev_total_points.to_f.round(1) || "---" %></td>
+              <td class="px-3 sm:px-4 py-3 text-right font-mono text-gray-400"><%= summary&.matches_scouted || 0 %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if @teams.empty? %>
+      <div class="text-center py-16">
+        <p class="text-gray-500">No teams found for this event. Sync from TBA to import teams.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

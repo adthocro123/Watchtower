@@ -1,0 +1,72 @@
+<% content_for(:title) { "Data Conflicts - ScoutRail" } %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Data Conflicts</h1>
+    <p class="text-sm text-gray-400 mt-1"><%= @data_conflicts.count %> unresolved conflicts at <%= current_event.name %></p>
+  </div>
+</div>
+
+<% if @data_conflicts.any? %>
+  <div class="space-y-4">
+    <% @data_conflicts.each do |conflict| %>
+      <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h3 class="font-semibold text-white">
+              Team
+              <span class="text-emerald-400"><%= conflict.frc_team.team_number %></span>
+              &middot;
+              <span class="text-gray-400"><%= conflict.match.display_name %></span>
+            </h3>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Field: <span class="text-amber-400 font-mono"><%= conflict.field_name %></span>
+              &middot; Detected <%= time_ago_in_words(conflict.created_at) %> ago
+            </p>
+          </div>
+          <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.27 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            Unresolved
+          </span>
+        </div>
+
+        <%# Conflicting Values %>
+        <div class="px-4 sm:px-6 py-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wider mb-3">Conflicting Values from Scouts</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+            <% (conflict.values || {}).each do |scout_id, value| %>
+              <% scout = User.find_by(id: scout_id) %>
+              <div class="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                <p class="text-xs text-gray-500 mb-1"><%= scout&.full_name || "Scout ##{scout_id}" %></p>
+                <p class="text-lg font-bold text-white font-mono"><%= value %></p>
+              </div>
+            <% end %>
+          </div>
+
+          <%# Resolve Form %>
+          <%= form_with url: resolve_data_conflict_path(conflict), method: :post, class: "flex flex-col sm:flex-row items-stretch sm:items-end gap-3" do |f| %>
+            <div class="flex-1">
+              <label class="block text-xs text-gray-500 mb-1">Resolved Value</label>
+              <input type="text" name="resolution" required
+                     class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition font-mono"
+                     placeholder="Enter the correct value...">
+            </div>
+            <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition whitespace-nowrap">
+              Resolve Conflict
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="text-center py-16 bg-gray-900 border border-gray-800 rounded-xl">
+    <svg class="w-12 h-12 text-emerald-500/50 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p class="text-gray-400 font-medium">No Data Conflicts</p>
+    <p class="text-gray-600 text-sm mt-1">All scouting data is consistent.</p>
+  </div>
+<% end %>

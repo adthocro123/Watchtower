@@ -1,0 +1,19 @@
+<% if resource.errors.any? %>
+  <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4" data-turbo-temporary>
+    <div class="flex items-center gap-2 mb-2">
+      <svg class="w-5 h-5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.27 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+      <h3 class="text-sm font-semibold text-red-400">
+        <%= I18n.t("errors.messages.not_saved",
+                   count: resource.errors.count,
+                   resource: resource.class.model_name.human.downcase) %>
+      </h3>
+    </div>
+    <ul class="text-sm text-red-400/80 list-disc list-inside space-y-1 ml-7">
+      <% resource.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
