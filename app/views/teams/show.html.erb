@@ -28,24 +28,24 @@
   <% if @epa %>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
       <div class="stat-card group text-center border-emerald-500/20">
-        <p class="text-3xl font-bold text-emerald-400 font-mono"><%= @epa[:epa_mean] %></p>
+        <p class="text-3xl font-bold text-emerald-400 font-mono"><%= @epa.epa_mean.round(1) %></p>
         <p class="text-xs text-gray-400 mt-1 font-medium">EPA (Statbotics)</p>
       </div>
       <div class="stat-card group text-center border-emerald-500/20">
-        <p class="text-3xl font-bold text-emerald-400 font-mono"><%= @epa[:epa_sd] %></p>
+        <p class="text-3xl font-bold text-emerald-400 font-mono"><%= @epa.epa_sd.round(1) %></p>
         <p class="text-xs text-gray-400 mt-1 font-medium">EPA Std Dev</p>
       </div>
       <div class="stat-card group text-center">
-        <p class="text-3xl font-bold text-white font-mono"><%= @epa[:record] || "---" %></p>
+        <p class="text-3xl font-bold text-white font-mono"><%= @epa.record %></p>
         <p class="text-xs text-gray-400 mt-1 font-medium">Record (W-L-T)</p>
       </div>
       <div class="stat-card group text-center">
-        <% if @epa[:epa_rank] %>
-          <p class="text-3xl font-bold text-amber-400 font-mono">#<%= @epa[:epa_rank] %></p>
-          <p class="text-xs text-gray-400 mt-1 font-medium">Global Rank (<%= (@epa[:epa_percentile].to_f * 100).round(1) %>%)</p>
+        <% if @epa.qual_rank %>
+          <p class="text-3xl font-bold text-amber-400 font-mono">#<%= @epa.qual_rank %></p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Qual Rank<%= " / #{@epa.qual_num_teams}" if @epa.qual_num_teams %></p>
         <% else %>
           <p class="text-3xl font-bold text-gray-500 font-mono">---</p>
-          <p class="text-xs text-gray-400 mt-1 font-medium">Global Rank</p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Qual Rank</p>
         <% end %>
       </div>
     </div>

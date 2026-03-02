@@ -85,9 +85,17 @@ class MatchSimulatorService
     end
   end
 
-  # Fetches Statbotics EPA for a team in the event year.
+  # Reads Statbotics EPA from the local DB cache (instant).
+  # Falls back to the API only if no cached data exists.
   # Returns { mean:, sd: } or nil.
   def fetch_statbotics_epa(frc_team)
+    # Fast path: read from local DB
+    cache = StatboticsCache.find_by(event: @event, frc_team: frc_team)
+    if cache&.epa_mean&.positive?
+      return { mean: cache.epa_mean, sd: cache.epa_sd.to_f }
+    end
+
+    # Slow fallback: hit the API (only if a client was provided)
     return nil unless @statbotics && @event.year.present?
 
     data = @statbotics.team_year(frc_team.team_number, @event.year)

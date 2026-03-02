@@ -11,7 +11,7 @@ class Event < ApplicationRecord
   has_many :simulation_results, dependent: :destroy
   has_many :data_conflicts, dependent: :destroy
   has_many :pick_lists, dependent: :destroy
-  has_many :statbotics_caches, dependent: :destroy
+  has_many :statbotics_caches, class_name: "StatboticsCache", dependent: :destroy
 
   # Validations
   validates :tba_key, uniqueness: true

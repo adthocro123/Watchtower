@@ -7,7 +7,7 @@ class FrcTeam < ApplicationRecord
   has_many :scouting_entries, dependent: :destroy
   has_many :pit_scouting_entries, dependent: :destroy
   has_many :predictions, through: :matches
-  has_many :statbotics_caches, dependent: :destroy
+  has_many :statbotics_caches, class_name: "StatboticsCache", dependent: :destroy
 
   # Validations
   validates :team_number, presence: true, uniqueness: true

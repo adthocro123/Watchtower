@@ -66,7 +66,7 @@
                 <span class="font-mono font-bold text-orange-400"><%= summary&.avg_total_points.to_f.round(1) || "---" %></span>
               </td>
               <td class="text-right hidden sm:table-cell">
-                <span class="font-mono font-semibold text-emerald-400"><%= epa_data ? epa_data[:epa_mean] : "---" %></span>
+                <span class="font-mono font-semibold text-emerald-400"><%= epa_data ? epa_data.epa_mean.round(1) : "---" %></span>
               </td>
               <td class="text-right hidden sm:table-cell">
                 <% acc = summary&.fuel_accuracy_pct.to_f.round(0) || 0 %>
@@ -83,9 +83,9 @@
                 </div>
               </td>
               <td class="text-right hidden md:table-cell">
-                <% if epa_data&.dig(:record) %>
-                  <span class="font-mono text-gray-300"><%= epa_data[:record] %></span>
-                  <span class="text-xs text-gray-500 ml-1">(<%= epa_data[:winrate] %>%)</span>
+                <% if epa_data %>
+                  <span class="font-mono text-gray-300"><%= epa_data.record %></span>
+                  <span class="text-xs text-gray-500 ml-1">(<%= (epa_data.winrate * 100).round(0) %>%)</span>
                 <% else %>
                   <span class="font-mono text-gray-500">---</span>
                 <% end %>
