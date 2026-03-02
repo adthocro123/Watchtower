@@ -22,9 +22,19 @@ export default class extends Controller {
     this.tabTargets.forEach(tab => this.#deactivate(tab))
     this.#activate(selectedTab)
 
-    // Show/hide panels
+    // Show/hide panels with animation
     this.panelTargets.forEach(panel => {
-      panel.classList.toggle("hidden", panel.id !== panelId)
+      const isTarget = panel.id === panelId
+      if (isTarget) {
+        panel.classList.remove("hidden")
+        panel.classList.add("tab-panel-enter")
+        panel.addEventListener("animationend", () => {
+          panel.classList.remove("tab-panel-enter")
+        }, { once: true })
+      } else {
+        panel.classList.add("hidden")
+        panel.classList.remove("tab-panel-enter")
+      }
     })
   }
 

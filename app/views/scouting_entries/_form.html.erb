@@ -12,7 +12,7 @@
                action: "submit->scouting#submitForm"
              }) do |f| %>
   <% if scouting_entry.errors.any? %>
-    <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
+    <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4 animate-slide-down" role="alert">
       <h3 class="text-sm font-semibold text-red-400 mb-2"><%= pluralize(scouting_entry.errors.count, "error") %> prevented this entry from being saved:</h3>
       <ul class="text-sm text-red-400/80 list-disc list-inside space-y-1">
         <% scouting_entry.errors.full_messages.each do |message| %>
@@ -35,98 +35,111 @@
       <%= f.select :frc_team_id,
             options_from_collection_for_select(@teams, :id, ->(t) { "#{t.team_number} - #{t.nickname}" }, scouting_entry.frc_team_id),
             { prompt: "Select team..." },
-            class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" %>
+            class: "input-field text-sm" %>
     </div>
     <div>
       <%= f.label :match_id, "Match", class: "block text-sm font-medium text-gray-300 mb-1" %>
       <%= f.select :match_id,
             options_from_collection_for_select(@matches, :id, :display_name, scouting_entry.match_id),
             { prompt: "Select match..." },
-            class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" %>
+            class: "input-field text-sm" %>
     </div>
   </div>
 
   <%# ===== OVERALL SUMMARY BAR ===== %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 mb-4">
+  <div class="scout-card p-3 mb-4" aria-live="polite" aria-atomic="true">
     <div class="grid grid-cols-4 gap-2 text-center">
       <div>
-        <p class="text-xl font-bold text-emerald-400" data-scouting-target="totalMade">0</p>
-        <p class="text-[10px] text-gray-500">Total Made</p>
+        <p class="text-xl font-bold text-emerald-400 font-mono" data-scouting-target="totalMade">0</p>
+        <p class="text-[11px] text-gray-400 font-medium">Total Made</p>
       </div>
       <div>
-        <p class="text-xl font-bold text-red-400" data-scouting-target="totalMissed">0</p>
-        <p class="text-[10px] text-gray-500">Total Missed</p>
+        <p class="text-xl font-bold text-red-400 font-mono" data-scouting-target="totalMissed">0</p>
+        <p class="text-[11px] text-gray-400 font-medium">Total Missed</p>
       </div>
       <div>
-        <p class="text-xl font-bold text-amber-400" data-scouting-target="accuracy">0.0%</p>
-        <p class="text-[10px] text-gray-500">Accuracy</p>
+        <p class="text-xl font-bold text-amber-400 font-mono" data-scouting-target="summaryAccuracy">0.0%</p>
+        <p class="text-[11px] text-gray-400 font-medium">Accuracy</p>
       </div>
       <div>
-        <p class="text-xl font-bold text-white" data-scouting-target="totalPoints">0</p>
-        <p class="text-[10px] text-gray-500">Points</p>
+        <p class="text-xl font-bold text-white font-mono" data-scouting-target="totalPoints">0</p>
+        <p class="text-[11px] text-gray-400 font-medium">Points</p>
       </div>
     </div>
   </div>
 
   <%# ===== PHASE TABS ===== %>
   <div class="mb-4">
-    <div class="flex rounded-xl bg-gray-800 p-1 gap-1" role="tablist">
+    <div class="flex rounded-xl bg-gray-800/80 p-1 gap-1" role="tablist" aria-label="Match phases">
       <button type="button" role="tab"
-              class="flex-1 py-2.5 text-sm font-semibold rounded-lg transition border-b-2 border-emerald-400 text-emerald-400"
+              id="tab-auton"
+              class="flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 bg-emerald-500/15 text-emerald-400 shadow-sm"
               data-action="click->scouting#switchTab"
               data-tab-button
               data-tab="auton"
-              aria-selected="true">
+              aria-selected="true"
+              aria-controls="panel-auton">
         Auton
       </button>
       <button type="button" role="tab"
-              class="flex-1 py-2.5 text-sm font-semibold rounded-lg transition border-b-2 border-transparent text-gray-400"
+              id="tab-teleop"
+              class="flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 text-gray-400 hover:text-gray-300 hover:bg-gray-700/50"
               data-action="click->scouting#switchTab"
               data-tab-button
               data-tab="teleop"
-              aria-selected="false">
+              aria-selected="false"
+              aria-controls="panel-teleop">
         Teleop
       </button>
       <button type="button" role="tab"
-              class="flex-1 py-2.5 text-sm font-semibold rounded-lg transition border-b-2 border-transparent text-gray-400"
+              id="tab-endgame"
+              class="flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 text-gray-400 hover:text-gray-300 hover:bg-gray-700/50"
               data-action="click->scouting#switchTab"
               data-tab-button
               data-tab="endgame"
-              aria-selected="false">
+              aria-selected="false"
+              aria-controls="panel-endgame">
         Endgame
       </button>
     </div>
   </div>
 
   <%# ===== AUTON PANEL ===== %>
-  <div data-scouting-target="tabContent" data-tab-panel="auton">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 class="text-xs text-gray-500 uppercase tracking-wider text-center mb-4">Autonomous Period</h3>
+  <div data-scouting-target="tabContent" data-tab-panel="auton" id="panel-auton" role="tabpanel" aria-labelledby="tab-auton">
+    <div class="scout-card p-4 border-l-4 border-l-emerald-500/50">
+      <div class="flex items-center justify-center gap-2 mb-4">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider font-medium">Autonomous Period</h3>
+      </div>
 
       <%# Score display %>
       <div class="grid grid-cols-2 gap-3 mb-4 text-center">
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-emerald-400" data-scouting-target="autonMade">0</p>
-          <p class="text-xs text-gray-500">Made</p>
+          <p class="text-3xl font-bold text-emerald-400 font-mono" data-scouting-target="autonMade">0</p>
+          <p class="text-xs text-gray-400">Made</p>
         </div>
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-red-400" data-scouting-target="autonMissed">0</p>
-          <p class="text-xs text-gray-500">Missed</p>
+          <p class="text-3xl font-bold text-red-400 font-mono" data-scouting-target="autonMissed">0</p>
+          <p class="text-xs text-gray-400">Missed</p>
         </div>
       </div>
 
       <%# HUGE MAKE / MISS buttons %>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMade"
-                data-phase="auton">
+                data-phase="auton"
+                aria-label="Score made fuel in autonomous">
           +MAKE
         </button>
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white shadow-lg shadow-red-500/20 transition-all active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white shadow-lg shadow-red-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMissed"
-                data-phase="auton">
+                data-phase="auton"
+                aria-label="Score missed fuel in autonomous">
           +MISS
         </button>
       </div>
@@ -134,75 +147,92 @@
       <%# Undo buttons %>
       <div class="grid grid-cols-2 gap-3 mb-4">
         <button type="button"
-                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition active:scale-95 select-none"
+                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#undoMade"
                 data-phase="auton">
           Undo Make
         </button>
         <button type="button"
-                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition active:scale-95 select-none"
+                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#undoMissed"
                 data-phase="auton">
           Undo Miss
         </button>
       </div>
 
-      <%# Auton Actions - Pill Buttons %>
+      <%# Auton Actions - Pill Buttons with toggle state %>
       <div class="mb-4">
-        <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Auton Actions</p>
+        <p class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Auton Actions</p>
         <div class="flex flex-wrap gap-2">
           <% %w[Mobility Preload Intake].each do |action_name| %>
             <button type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-full border border-gray-700 bg-gray-800 text-gray-400 transition active:scale-95 select-none hover:border-gray-600"
+                    class="px-4 py-2 text-sm font-medium rounded-full border border-gray-700 bg-gray-800 text-gray-400 transition-all duration-150 active:scale-95 select-none hover:border-gray-600 hover:text-gray-300"
                     data-action="click->scouting#addAutonAction"
-                    data-action-name="<%= action_name %>">
-              <%= action_name %>
+                    data-action-name="<%= action_name %>"
+                    data-auton-pill>
+              <span class="inline-flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 hidden" data-check-icon fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                <%= action_name %>
+              </span>
             </button>
           <% end %>
         </div>
       </div>
 
       <%# Auton Climb Toggle %>
-      <div class="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-3 cursor-pointer transition"
+      <div class="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-3 cursor-pointer transition-all duration-150 hover:bg-gray-750"
            data-action="click->scouting#toggleAutonClimb"
-           data-scouting-target="autonClimb">
+           data-scouting-target="autonClimb"
+           role="switch"
+           aria-checked="<%= scouting_entry.data&.dig('auton_climb') == true ? 'true' : 'false' %>"
+           aria-label="Toggle autonomous climb"
+           tabindex="0">
         <span class="text-sm font-medium text-gray-300">Auton Climb (+10 pts)</span>
-        <div class="w-12 h-7 rounded-full transition-colors bg-gray-700 flex items-center">
-          <div class="w-5 h-5 bg-white rounded-full shadow-sm transition-transform translate-x-1"></div>
+        <div class="w-12 h-7 rounded-full transition-colors duration-200 bg-gray-700 flex items-center relative" data-toggle-track>
+          <div class="w-5 h-5 bg-white rounded-full shadow-md transition-all duration-200 absolute left-1" data-toggle-knob></div>
         </div>
       </div>
     </div>
   </div>
 
   <%# ===== TELEOP PANEL ===== %>
-  <div data-scouting-target="tabContent" data-tab-panel="teleop" class="hidden">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 class="text-xs text-gray-500 uppercase tracking-wider text-center mb-4">Teleop Period</h3>
+  <div data-scouting-target="tabContent" data-tab-panel="teleop" class="hidden" id="panel-teleop" role="tabpanel" aria-labelledby="tab-teleop">
+    <div class="scout-card p-4 border-l-4 border-l-blue-500/50">
+      <div class="flex items-center justify-center gap-2 mb-4">
+        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+        </svg>
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider font-medium">Teleop Period</h3>
+      </div>
 
       <%# Score display %>
       <div class="grid grid-cols-2 gap-3 mb-4 text-center">
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-emerald-400" data-scouting-target="teleopMade">0</p>
-          <p class="text-xs text-gray-500">Made</p>
+          <p class="text-3xl font-bold text-emerald-400 font-mono" data-scouting-target="teleopMade">0</p>
+          <p class="text-xs text-gray-400">Made</p>
         </div>
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-red-400" data-scouting-target="teleopMissed">0</p>
-          <p class="text-xs text-gray-500">Missed</p>
+          <p class="text-3xl font-bold text-red-400 font-mono" data-scouting-target="teleopMissed">0</p>
+          <p class="text-xs text-gray-400">Missed</p>
         </div>
       </div>
 
       <%# HUGE MAKE / MISS buttons %>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMade"
-                data-phase="teleop">
+                data-phase="teleop"
+                aria-label="Score made fuel in teleop">
           +MAKE
         </button>
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white shadow-lg shadow-red-500/20 transition-all active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white shadow-lg shadow-red-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMissed"
-                data-phase="teleop">
+                data-phase="teleop"
+                aria-label="Score missed fuel in teleop">
           +MISS
         </button>
       </div>
@@ -210,13 +240,13 @@
       <%# Undo buttons %>
       <div class="grid grid-cols-2 gap-3 mb-4">
         <button type="button"
-                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition active:scale-95 select-none"
+                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#undoMade"
                 data-phase="teleop">
           Undo Make
         </button>
         <button type="button"
-                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition active:scale-95 select-none"
+                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#undoMissed"
                 data-phase="teleop">
           Undo Miss
@@ -225,12 +255,13 @@
 
       <%# Live accuracy display %>
       <div class="bg-gray-800 rounded-lg p-3">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs text-gray-500">Live Accuracy</span>
-          <span class="text-xs font-mono text-amber-400" data-scouting-target="accuracy">0.0%</span>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs text-gray-400 font-medium">Live Accuracy</span>
+          <span class="text-xs font-mono text-amber-400 font-semibold" data-scouting-target="teleopAccuracy">0.0%</span>
         </div>
-        <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+        <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden" role="progressbar" aria-label="Teleop accuracy">
           <div class="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-300"
+               data-scouting-target="accuracyBar"
                style="width: 0%"></div>
         </div>
       </div>
@@ -238,34 +269,41 @@
   </div>
 
   <%# ===== ENDGAME PANEL ===== %>
-  <div data-scouting-target="tabContent" data-tab-panel="endgame" class="hidden">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 class="text-xs text-gray-500 uppercase tracking-wider text-center mb-4">Endgame</h3>
+  <div data-scouting-target="tabContent" data-tab-panel="endgame" class="hidden" id="panel-endgame" role="tabpanel" aria-labelledby="tab-endgame">
+    <div class="scout-card p-4 border-l-4 border-l-amber-500/50">
+      <div class="flex items-center justify-center gap-2 mb-4">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider font-medium">Endgame</h3>
+      </div>
 
       <%# Score display %>
       <div class="grid grid-cols-2 gap-3 mb-4 text-center">
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-emerald-400" data-scouting-target="endgameMade">0</p>
-          <p class="text-xs text-gray-500">Made</p>
+          <p class="text-3xl font-bold text-emerald-400 font-mono" data-scouting-target="endgameMade">0</p>
+          <p class="text-xs text-gray-400">Made</p>
         </div>
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-red-400" data-scouting-target="endgameMissed">0</p>
-          <p class="text-xs text-gray-500">Missed</p>
+          <p class="text-3xl font-bold text-red-400 font-mono" data-scouting-target="endgameMissed">0</p>
+          <p class="text-xs text-gray-400">Missed</p>
         </div>
       </div>
 
       <%# HUGE MAKE / MISS buttons %>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMade"
-                data-phase="endgame">
+                data-phase="endgame"
+                aria-label="Score made fuel in endgame">
           +MAKE
         </button>
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white shadow-lg shadow-red-500/20 transition-all active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white shadow-lg shadow-red-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMissed"
-                data-phase="endgame">
+                data-phase="endgame"
+                aria-label="Score missed fuel in endgame">
           +MISS
         </button>
       </div>
@@ -273,13 +311,13 @@
       <%# Undo buttons %>
       <div class="grid grid-cols-2 gap-3 mb-4">
         <button type="button"
-                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition active:scale-95 select-none"
+                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#undoMade"
                 data-phase="endgame">
           Undo Make
         </button>
         <button type="button"
-                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition active:scale-95 select-none"
+                class="py-2 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#undoMissed"
                 data-phase="endgame">
           Undo Miss
@@ -287,16 +325,20 @@
       </div>
 
       <%# Climb Level Selector - Large Tappable Cards %>
-      <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Climb Level</p>
-      <div class="grid grid-cols-4 gap-2 mb-4">
+      <p class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Climb Level</p>
+      <div class="grid grid-cols-4 gap-2 mb-4" role="radiogroup" aria-label="Select climb level">
         <% [["None", 0], ["L1", 10], ["L2", 20], ["L3", 30]].each do |level, points| %>
+          <% is_selected = level == (scouting_entry.data&.dig('endgame_climb') || 'None') %>
           <button type="button"
-                  class="py-4 rounded-xl border-2 text-center transition active:scale-95 select-none
-                         <%= level == (scouting_entry.data&.dig('endgame_climb') || 'None') ? 'ring-2 ring-emerald-400 bg-emerald-900/50 border-emerald-500' : 'bg-gray-800 border-gray-700' %>"
+                  class="py-4 rounded-xl border-2 text-center transition-all duration-200 active:scale-95 select-none
+                         <%= is_selected ? 'ring-2 ring-emerald-400 bg-emerald-500/15 border-emerald-500 shadow-lg shadow-emerald-500/10 scale-[1.02]' : 'bg-gray-800 border-gray-700 hover:border-gray-600 hover:bg-gray-750' %>"
                   data-action="click->scouting#selectClimb"
                   data-climb-card
-                  data-level="<%= level %>">
-            <p class="text-lg font-bold <%= level == (scouting_entry.data&.dig('endgame_climb') || 'None') ? 'text-emerald-400' : 'text-gray-300' %>"><%= level %></p>
+                  data-level="<%= level %>"
+                  role="radio"
+                  aria-checked="<%= is_selected %>"
+                  aria-label="<%= level %> climb - <%= points %> points">
+            <p class="text-lg font-bold <%= is_selected ? 'text-emerald-400' : 'text-gray-300' %>"><%= level %></p>
             <p class="text-xs text-gray-500"><%= points %> pts</p>
           </button>
         <% end %>
@@ -306,15 +348,15 @@
 
   <%# ===== NOTES ===== %>
   <div class="mt-4">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <%= f.label :notes, class: "block text-xs text-gray-500 uppercase tracking-wider mb-2" %>
-      <%= f.text_area :notes, rows: 3, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition resize-none", placeholder: "Defense quality, robot issues, strategy observations..." %>
+    <div class="scout-card p-4">
+      <%= f.label :notes, class: "block text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium" %>
+      <%= f.text_area :notes, rows: 3, class: "input-field text-sm resize-none", placeholder: "Defense quality, robot issues, strategy observations..." %>
     </div>
   </div>
 
   <%# ===== SUBMIT ===== %>
   <div class="mt-4 pb-4">
     <%= f.submit scouting_entry.persisted? ? "Update Entry" : "Submit Entry",
-                 class: "w-full py-4 text-lg font-bold bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl transition-all active:scale-[0.98] cursor-pointer shadow-lg shadow-emerald-500/20" %>
+                 class: "w-full py-4 text-lg font-bold bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl transition-all duration-150 active:scale-[0.98] cursor-pointer shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950" %>
   </div>
 <% end %>

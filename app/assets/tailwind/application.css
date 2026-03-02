@@ -1,1 +1,274 @@
 @import "tailwindcss";
+
+/* ============================================================
+   ScoutRail Design System
+   ============================================================ */
+
+/* --- Base Layer: Global defaults & resets --- */
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  /* Dark scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: theme(--color-gray-900);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: theme(--color-gray-700);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme(--color-gray-600);
+  }
+
+  /* Selection colors */
+  ::selection {
+    background: theme(--color-emerald-500 / 30%);
+    color: theme(--color-emerald-100);
+  }
+
+  /* Smooth focus transitions globally */
+  *:focus-visible {
+    outline: 2px solid theme(--color-emerald-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Dark-mode friendly native form elements */
+  select,
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    color-scheme: dark;
+  }
+}
+
+/* --- Component Layer: Reusable UI patterns --- */
+@layer components {
+  /* Cards */
+  .scout-card {
+    @apply bg-gray-900 border border-gray-800 rounded-xl;
+  }
+  .scout-card-hover {
+    @apply bg-gray-900 border border-gray-800 rounded-xl transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-emerald-500/5;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-all duration-150 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-gray-300 hover:text-white text-sm font-medium rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-red-600/20 hover:bg-red-600/30 active:bg-red-600/40 text-red-400 hover:text-red-300 text-sm font-medium rounded-lg border border-red-500/30 hover:border-red-500/50 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-3 py-1.5 text-gray-400 hover:text-white hover:bg-gray-800 text-sm font-medium rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950;
+  }
+
+  /* Form inputs */
+  .input-field {
+    @apply w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-150;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full;
+  }
+  .badge-emerald {
+    @apply badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/30;
+  }
+  .badge-amber {
+    @apply badge bg-amber-500/10 text-amber-400 border border-amber-500/30;
+  }
+  .badge-red {
+    @apply badge bg-red-500/10 text-red-400 border border-red-500/30;
+  }
+  .badge-blue {
+    @apply badge bg-blue-500/10 text-blue-400 border border-blue-500/30;
+  }
+  .badge-gray {
+    @apply badge bg-gray-500/10 text-gray-400 border border-gray-500/30;
+  }
+
+  /* Stat cards */
+  .stat-card {
+    @apply scout-card p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-emerald-500/5 group;
+  }
+  .stat-card-icon {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110;
+  }
+
+  /* Nav links */
+  .nav-link {
+    @apply px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950;
+  }
+  .nav-link-active {
+    @apply nav-link bg-emerald-500/20 text-emerald-400;
+  }
+  .nav-link-inactive {
+    @apply nav-link text-gray-400 hover:text-white hover:bg-gray-800;
+  }
+
+  /* Table improvements */
+  .data-table {
+    @apply w-full text-sm;
+  }
+  .data-table thead th {
+    @apply text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3;
+  }
+  .data-table tbody td {
+    @apply px-4 py-3;
+  }
+  .data-table tbody tr {
+    @apply border-t border-gray-800/50 transition-colors duration-150 hover:bg-gray-800/30;
+  }
+
+  /* Back link */
+  .back-link {
+    @apply inline-flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg;
+  }
+
+  /* Turbo progress bar */
+  .turbo-progress-bar {
+    background: linear-gradient(to right, theme(--color-emerald-400), theme(--color-emerald-500));
+    height: 3px;
+    box-shadow: 0 0 10px theme(--color-emerald-500 / 50%), 0 0 5px theme(--color-emerald-500 / 30%);
+  }
+
+  /* Safe area bottom for iPhone notch */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Screen reader only (utility) */
+  .sr-only-text {
+    @apply sr-only;
+  }
+}
+
+/* --- Utility Layer: Custom one-off utilities --- */
+@layer utilities {
+  /* Animation utilities */
+  .animate-slide-down {
+    animation: slide-down 0.3s ease-out;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+  }
+  .animate-bounce-number {
+    animation: bounce-number 0.3s ease-out;
+  }
+  .animate-pulse-ring {
+    animation: pulse-ring 0.4s ease-out;
+  }
+  .animate-slide-up-fade {
+    animation: slide-up-fade 0.3s ease-out forwards;
+  }
+  .animate-collapse {
+    animation: collapse 0.3s ease-out forwards;
+  }
+
+  /* Tab panel transition */
+  .tab-panel-enter {
+    animation: tab-enter 0.2s ease-out;
+  }
+}
+
+/* --- Keyframes --- */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce-number {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 theme(--color-emerald-500 / 40%);
+  }
+  100% {
+    box-shadow: 0 0 0 12px theme(--color-emerald-500 / 0%);
+  }
+}
+
+@keyframes slide-up-fade {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 100px;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-width: 0;
+  }
+}
+
+@keyframes collapse {
+  from {
+    max-height: 200px;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    margin: 0;
+    border-width: 0;
+    overflow: hidden;
+  }
+}
+
+@keyframes tab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

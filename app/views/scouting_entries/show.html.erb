@@ -2,7 +2,7 @@
 
 <div class="max-w-3xl mx-auto">
   <div class="flex items-center gap-2 mb-6">
-    <%= link_to scouting_entries_path, class: "text-gray-500 hover:text-gray-300 transition" do %>
+    <%= link_to scouting_entries_path, class: "back-link", "aria-label": "Back to entries" do %>
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
@@ -11,54 +11,59 @@
       Scouting Entry
       <span class="text-emerald-400">#<%= @scouting_entry.frc_team.team_number %></span>
     </h1>
-    <span class="text-xs font-medium px-2 py-0.5 rounded-full ml-auto
-      <%= case @scouting_entry.status
-          when 'submitted' then 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-          when 'flagged' then 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-          when 'rejected' then 'bg-red-500/20 text-red-400 border border-red-500/30'
-          end %>">
-      <%= @scouting_entry.status.capitalize %>
+    <span class="ml-auto <%= case @scouting_entry.status
+        when 'submitted' then 'badge-emerald'
+        when 'flagged' then 'badge-amber'
+        when 'rejected' then 'badge-red'
+        else 'badge-gray'
+        end %>">
+      <%= @scouting_entry.status&.capitalize || 'Draft' %>
     </span>
   </div>
 
   <%# Header Info %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-4">
+  <div class="scout-card p-5 mb-4">
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div>
-        <span class="text-xs text-gray-500 uppercase tracking-wider">Team</span>
+        <span class="text-xs text-gray-400 uppercase tracking-wider font-medium">Team</span>
         <p class="text-lg font-bold text-white mt-1">
-          <%= link_to @scouting_entry.frc_team.team_number, team_path(@scouting_entry.frc_team), class: "text-emerald-400 hover:text-emerald-300 transition" %>
+          <%= link_to @scouting_entry.frc_team.team_number, team_path(@scouting_entry.frc_team), class: "text-emerald-400 hover:text-emerald-300 transition-colors duration-150 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500" %>
         </p>
-        <p class="text-xs text-gray-400"><%= @scouting_entry.frc_team.nickname %></p>
+        <p class="text-xs text-gray-500"><%= @scouting_entry.frc_team.nickname %></p>
       </div>
       <div>
-        <span class="text-xs text-gray-500 uppercase tracking-wider">Match</span>
+        <span class="text-xs text-gray-400 uppercase tracking-wider font-medium">Match</span>
         <p class="text-lg font-bold text-white mt-1"><%= @scouting_entry.match&.display_name || "N/A" %></p>
       </div>
       <div>
-        <span class="text-xs text-gray-500 uppercase tracking-wider">Scout</span>
+        <span class="text-xs text-gray-400 uppercase tracking-wider font-medium">Scout</span>
         <p class="text-lg font-bold text-white mt-1"><%= @scouting_entry.user.full_name %></p>
       </div>
       <div>
-        <span class="text-xs text-gray-500 uppercase tracking-wider">Total Points</span>
-        <p class="text-lg font-bold text-emerald-400 mt-1"><%= @scouting_entry.total_points %></p>
+        <span class="text-xs text-gray-400 uppercase tracking-wider font-medium">Total Points</span>
+        <p class="text-lg font-bold text-emerald-400 mt-1 font-mono"><%= @scouting_entry.total_points %></p>
       </div>
     </div>
   </div>
 
-  <%# Scoring Summary %>
+  <%# Scoring Summary - Phase cards with color-coded borders %>
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
     <%# Auton %>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Autonomous</h3>
+    <div class="scout-card p-4 border-l-4 border-l-emerald-500/50">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider font-medium">Autonomous</h3>
+      </div>
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Fuel Made</span>
-          <span class="text-sm font-bold text-emerald-400"><%= @scouting_entry.data&.dig("auton_fuel_made") || 0 %></span>
+          <span class="text-sm font-bold text-emerald-400 font-mono"><%= @scouting_entry.data&.dig("auton_fuel_made") || 0 %></span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Fuel Missed</span>
-          <span class="text-sm font-bold text-red-400"><%= @scouting_entry.data&.dig("auton_fuel_missed") || 0 %></span>
+          <span class="text-sm font-bold text-red-400 font-mono"><%= @scouting_entry.data&.dig("auton_fuel_missed") || 0 %></span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Climb</span>
@@ -71,7 +76,7 @@
             <span class="text-xs text-gray-500">Actions:</span>
             <div class="flex flex-wrap gap-1 mt-1">
               <% @scouting_entry.auton_actions.each do |action| %>
-                <span class="text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400"><%= action %></span>
+                <span class="badge-gray text-[10px]"><%= action %></span>
               <% end %>
             </div>
           </div>
@@ -80,16 +85,21 @@
     </div>
 
     <%# Teleop %>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Teleop</h3>
+    <div class="scout-card p-4 border-l-4 border-l-blue-500/50">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+        </svg>
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider font-medium">Teleop</h3>
+      </div>
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Fuel Made</span>
-          <span class="text-sm font-bold text-emerald-400"><%= @scouting_entry.data&.dig("teleop_fuel_made") || 0 %></span>
+          <span class="text-sm font-bold text-emerald-400 font-mono"><%= @scouting_entry.data&.dig("teleop_fuel_made") || 0 %></span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Fuel Missed</span>
-          <span class="text-sm font-bold text-red-400"><%= @scouting_entry.data&.dig("teleop_fuel_missed") || 0 %></span>
+          <span class="text-sm font-bold text-red-400 font-mono"><%= @scouting_entry.data&.dig("teleop_fuel_missed") || 0 %></span>
         </div>
         <% teleop_made = (@scouting_entry.data&.dig("teleop_fuel_made") || 0).to_i
            teleop_missed = (@scouting_entry.data&.dig("teleop_fuel_missed") || 0).to_i
@@ -97,27 +107,32 @@
            teleop_acc = teleop_total > 0 ? (teleop_made.to_f / teleop_total * 100).round(1) : 0 %>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Accuracy</span>
-          <span class="text-sm font-bold text-amber-400"><%= teleop_acc %>%</span>
+          <span class="text-sm font-bold text-amber-400 font-mono"><%= teleop_acc %>%</span>
         </div>
       </div>
     </div>
 
     <%# Endgame %>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Endgame</h3>
+    <div class="scout-card p-4 border-l-4 border-l-amber-500/50">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider font-medium">Endgame</h3>
+      </div>
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Fuel Made</span>
-          <span class="text-sm font-bold text-emerald-400"><%= @scouting_entry.data&.dig("endgame_fuel_made") || 0 %></span>
+          <span class="text-sm font-bold text-emerald-400 font-mono"><%= @scouting_entry.data&.dig("endgame_fuel_made") || 0 %></span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Fuel Missed</span>
-          <span class="text-sm font-bold text-red-400"><%= @scouting_entry.data&.dig("endgame_fuel_missed") || 0 %></span>
+          <span class="text-sm font-bold text-red-400 font-mono"><%= @scouting_entry.data&.dig("endgame_fuel_missed") || 0 %></span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-400">Climb Level</span>
           <% climb = @scouting_entry.data&.dig("endgame_climb") || "None" %>
-          <span class="text-sm font-bold
+          <span class="text-sm font-bold font-mono
             <%= case climb
                 when 'L3' then 'text-emerald-400'
                 when 'L2' then 'text-blue-400'
@@ -132,40 +147,40 @@
   </div>
 
   <%# Overall Stats Bar %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
-    <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Overall</h3>
+  <div class="scout-card p-4 mb-4">
+    <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-medium">Overall</h3>
     <div class="grid grid-cols-3 gap-4 text-center">
       <div>
-        <p class="text-2xl font-bold text-emerald-400"><%= @scouting_entry.total_fuel_made %></p>
-        <p class="text-xs text-gray-500">Total Made</p>
+        <p class="text-2xl font-bold text-emerald-400 font-mono"><%= @scouting_entry.total_fuel_made %></p>
+        <p class="text-xs text-gray-400">Total Made</p>
       </div>
       <div>
-        <p class="text-2xl font-bold text-red-400"><%= @scouting_entry.total_fuel_missed %></p>
-        <p class="text-xs text-gray-500">Total Missed</p>
+        <p class="text-2xl font-bold text-red-400 font-mono"><%= @scouting_entry.total_fuel_missed %></p>
+        <p class="text-xs text-gray-400">Total Missed</p>
       </div>
       <div>
-        <p class="text-2xl font-bold text-amber-400"><%= @scouting_entry.fuel_accuracy %>%</p>
-        <p class="text-xs text-gray-500">Accuracy</p>
+        <p class="text-2xl font-bold text-amber-400 font-mono"><%= @scouting_entry.fuel_accuracy %>%</p>
+        <p class="text-xs text-gray-400">Accuracy</p>
       </div>
     </div>
     <%# Accuracy bar %>
-    <div class="mt-3 w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-      <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all" style="width: <%= @scouting_entry.fuel_accuracy %>%"></div>
+    <div class="mt-3 w-full h-2 bg-gray-800 rounded-full overflow-hidden" role="progressbar" aria-valuenow="<%= @scouting_entry.fuel_accuracy %>" aria-valuemin="0" aria-valuemax="100" aria-label="Overall accuracy: <%= @scouting_entry.fuel_accuracy %>%">
+      <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500" style="width: <%= @scouting_entry.fuel_accuracy %>%"></div>
     </div>
   </div>
 
   <%# Notes %>
   <% if @scouting_entry.notes.present? %>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
-      <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-2">Notes</h3>
-      <p class="text-sm text-gray-300 whitespace-pre-wrap"><%= @scouting_entry.notes %></p>
+    <div class="scout-card p-4 mb-4">
+      <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Notes</h3>
+      <p class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed"><%= @scouting_entry.notes %></p>
     </div>
   <% end %>
 
   <%# Actions %>
-  <div class="flex items-center gap-2 mt-4">
-    <%= link_to "Edit", edit_scouting_entry_path(@scouting_entry), class: "px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition" %>
-    <%= button_to "Delete", scouting_entry_path(@scouting_entry), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this entry?" }, class: "px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition border border-red-500/30" %>
+  <div class="flex items-center gap-3 mt-4">
+    <%= link_to "Edit", edit_scouting_entry_path(@scouting_entry), class: "btn-secondary" %>
+    <%= button_to "Delete", scouting_entry_path(@scouting_entry), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this entry?" }, class: "btn-danger" %>
     <span class="text-xs text-gray-600 ml-auto">Created <%= time_ago_in_words(@scouting_entry.created_at) %> ago</span>
   </div>
 </div>

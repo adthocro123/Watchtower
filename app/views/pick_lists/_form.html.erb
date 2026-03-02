@@ -1,6 +1,6 @@
 <%= form_with(model: pick_list, class: "space-y-6") do |f| %>
   <% if pick_list.errors.any? %>
-    <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+    <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 animate-slide-down" role="alert">
       <h3 class="text-sm font-semibold text-red-400 mb-2"><%= pluralize(pick_list.errors.count, "error") %> prevented this pick list from being saved:</h3>
       <ul class="text-sm text-red-400/80 list-disc list-inside space-y-1">
         <% pick_list.errors.full_messages.each do |message| %>
@@ -12,11 +12,11 @@
 
   <div>
     <%= f.label :name, class: "block text-sm font-medium text-gray-300 mb-1" %>
-    <%= f.text_field :name, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition", placeholder: "e.g., Alliance Selection Priority" %>
+    <%= f.text_field :name, class: "input-field", placeholder: "e.g., Alliance Selection Priority" %>
   </div>
 
   <div class="flex items-center gap-3 pt-2">
-    <%= f.submit pick_list.persisted? ? "Update Pick List" : "Create Pick List", class: "px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition cursor-pointer" %>
-    <%= link_to "Cancel", (pick_list.persisted? ? pick_list_path(pick_list) : pick_lists_path), class: "px-6 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium rounded-lg transition" %>
+    <%= f.submit pick_list.persisted? ? "Update Pick List" : "Create Pick List", class: "btn-primary px-6 py-2.5 cursor-pointer" %>
+    <%= link_to "Cancel", (pick_list.persisted? ? pick_list_path(pick_list) : pick_lists_path), class: "btn-secondary px-6 py-2.5" %>
   </div>
 <% end %>

@@ -1,5 +1,5 @@
 <div class="min-h-[80vh] flex items-center justify-center px-4">
-  <div class="w-full max-w-md">
+  <div class="w-full max-w-md animate-fade-in">
     <%# Branding %>
     <div class="text-center mb-8">
       <div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
@@ -12,21 +12,21 @@
     </div>
 
     <%# Login Card %>
-    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+    <div class="scout-card rounded-2xl p-6 sm:p-8 shadow-xl">
       <h2 class="text-xl font-bold text-white mb-6">Sign In</h2>
 
       <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-4" }) do |f| %>
         <div>
           <%= f.label :email, class: "block text-sm font-medium text-gray-300 mb-1" %>
-          <%= f.email_field :email, autofocus: true, autocomplete: "email",
-              class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition",
+          <%= f.email_field :email, autofocus: true, autocomplete: "email", required: true,
+              class: "input-field py-2.5",
               placeholder: "you@team254.com" %>
         </div>
 
         <div>
           <%= f.label :password, class: "block text-sm font-medium text-gray-300 mb-1" %>
-          <%= f.password_field :password, autocomplete: "current-password",
-              class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition",
+          <%= f.password_field :password, autocomplete: "current-password", required: true,
+              class: "input-field py-2.5",
               placeholder: "Your password" %>
         </div>
 
@@ -38,7 +38,7 @@
         <% end %>
 
         <div class="pt-2">
-          <%= f.submit "Sign In", class: "w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition cursor-pointer shadow-lg shadow-emerald-500/20" %>
+          <%= f.submit "Sign In", class: "w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 cursor-pointer shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950" %>
         </div>
       <% end %>
 
@@ -47,12 +47,12 @@
         <%- if devise_mapping.registerable? %>
           <p class="text-sm text-gray-400">
             Don't have an account?
-            <%= link_to "Sign up", new_registration_path(resource_name), class: "text-emerald-400 hover:text-emerald-300 font-medium transition" %>
+            <%= link_to "Sign up", new_registration_path(resource_name), class: "text-emerald-400 hover:text-emerald-300 font-medium transition-colors duration-150" %>
           </p>
         <% end %>
         <%- if devise_mapping.recoverable? %>
           <p>
-            <%= link_to "Forgot your password?", new_password_path(resource_name), class: "text-sm text-gray-500 hover:text-gray-400 transition" %>
+            <%= link_to "Forgot your password?", new_password_path(resource_name), class: "text-sm text-gray-400 hover:text-gray-300 transition-colors duration-150" %>
           </p>
         <% end %>
       </div>

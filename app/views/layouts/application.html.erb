@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html class="dark">
+<html lang="en" class="dark">
   <head>
     <title><%= content_for(:title) || "ScoutRail" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="application-name" content="ScoutRail">
@@ -24,13 +24,18 @@
   </head>
 
   <body class="bg-gray-950 text-gray-100 antialiased min-h-screen">
+    <%# Skip to main content for keyboard users %>
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:rounded-lg focus:text-sm focus:font-medium">
+      Skip to main content
+    </a>
+
     <%= turbo_stream_from "scouting_entries" if user_signed_in? %>
 
     <%# Top navigation %>
     <%= render "shared/nav" %>
 
-    <%# Flash messages %>
-    <main class="pt-16 pb-20 md:pb-6 min-h-screen">
+    <%# Main content area %>
+    <main id="main-content" class="pt-16 pb-20 md:pb-6 min-h-screen" role="main">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <%= render "shared/flash" %>
         <%= yield %>

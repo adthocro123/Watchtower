@@ -1,25 +1,32 @@
 <% content_for(:title) { "Match Simulator - ScoutRail" } %>
 
 <div class="max-w-4xl mx-auto">
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-white">Match Simulator</h1>
-    <p class="text-sm text-gray-400 mt-1">Predict match outcomes based on scouting data</p>
+  <div class="flex items-center gap-2 mb-6">
+    <%= link_to teams_path, class: "back-link", "aria-label": "Back to teams" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    <% end %>
+    <div>
+      <h1 class="text-2xl font-bold text-white">Match Simulator</h1>
+      <p class="text-sm text-gray-400 mt-1">Predict match outcomes based on scouting data</p>
+    </div>
   </div>
 
   <%= form_with url: match_simulator_path, method: :post, data: { turbo_frame: "simulator_results" } do |f| %>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <%# Red Alliance %>
-      <div class="bg-gray-900 border border-red-500/30 rounded-xl p-5">
+      <div class="scout-card border-red-500/30 p-5">
         <div class="flex items-center gap-2 mb-4">
-          <div class="w-4 h-4 rounded-full bg-red-500"></div>
+          <div class="w-4 h-4 rounded-full bg-red-500 shadow-sm shadow-red-500/30"></div>
           <h2 class="text-lg font-bold text-red-400">Red Alliance</h2>
         </div>
         <div class="space-y-3">
           <% 3.times do |i| %>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">Red <%= i + 1 %></label>
-              <select name="red_team_ids[]"
-                      class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition">
+              <label for="red_team_<%= i %>" class="block text-xs text-gray-400 mb-1 font-medium">Red <%= i + 1 %></label>
+              <select name="red_team_ids[]" id="red_team_<%= i %>"
+                      class="input-field text-sm focus:ring-red-500">
                 <option value="">Select team...</option>
                 <% @teams.each do |team| %>
                   <option value="<%= team.id %>"><%= team.team_number %> - <%= team.nickname %></option>
@@ -31,17 +38,17 @@
       </div>
 
       <%# Blue Alliance %>
-      <div class="bg-gray-900 border border-blue-500/30 rounded-xl p-5">
+      <div class="scout-card border-blue-500/30 p-5">
         <div class="flex items-center gap-2 mb-4">
-          <div class="w-4 h-4 rounded-full bg-blue-500"></div>
+          <div class="w-4 h-4 rounded-full bg-blue-500 shadow-sm shadow-blue-500/30"></div>
           <h2 class="text-lg font-bold text-blue-400">Blue Alliance</h2>
         </div>
         <div class="space-y-3">
           <% 3.times do |i| %>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">Blue <%= i + 1 %></label>
-              <select name="blue_team_ids[]"
-                      class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+              <label for="blue_team_<%= i %>" class="block text-xs text-gray-400 mb-1 font-medium">Blue <%= i + 1 %></label>
+              <select name="blue_team_ids[]" id="blue_team_<%= i %>"
+                      class="input-field text-sm focus:ring-blue-500">
                 <option value="">Select team...</option>
                 <% @teams.each do |team| %>
                   <option value="<%= team.id %>"><%= team.team_number %> - <%= team.nickname %></option>
@@ -53,7 +60,7 @@
       </div>
     </div>
 
-    <button type="submit" class="w-full py-3 text-lg font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition cursor-pointer shadow-lg shadow-emerald-500/20">
+    <button type="submit" class="w-full py-3 text-lg font-bold bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl transition-all duration-150 cursor-pointer shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950">
       Simulate Match
     </button>
   <% end %>
@@ -61,85 +68,87 @@
   <%# Results area %>
   <%= turbo_frame_tag "simulator_results" do %>
     <% if defined?(@red_score) && @red_score %>
-      <div class="mt-6">
+      <div class="mt-6 animate-fade-in" aria-live="polite">
         <h2 class="text-lg font-bold text-white mb-4">Simulation Results</h2>
 
         <%# Score Cards %>
         <div class="grid grid-cols-3 gap-4 mb-6">
           <%# Red Score %>
-          <div class="bg-gray-900 border border-red-500/30 rounded-xl p-4 text-center">
-            <p class="text-xs text-red-400 uppercase tracking-wider mb-1">Red Alliance</p>
-            <p class="text-4xl font-black text-red-400"><%= @red_score.round(1) %></p>
+          <div class="scout-card border-red-500/30 p-4 text-center">
+            <p class="text-xs text-red-400 uppercase tracking-wider mb-1 font-medium">Red Alliance</p>
+            <p class="text-4xl font-black text-red-400 font-mono"><%= @red_score.round(1) %></p>
             <p class="text-xs text-gray-500 mt-1">predicted pts</p>
           </div>
 
           <%# VS %>
           <div class="flex items-center justify-center">
-            <span class="text-2xl font-black text-gray-600">VS</span>
+            <div class="w-12 h-12 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center">
+              <span class="text-lg font-black text-gray-500">VS</span>
+            </div>
           </div>
 
           <%# Blue Score %>
-          <div class="bg-gray-900 border border-blue-500/30 rounded-xl p-4 text-center">
-            <p class="text-xs text-blue-400 uppercase tracking-wider mb-1">Blue Alliance</p>
-            <p class="text-4xl font-black text-blue-400"><%= @blue_score.round(1) %></p>
+          <div class="scout-card border-blue-500/30 p-4 text-center">
+            <p class="text-xs text-blue-400 uppercase tracking-wider mb-1 font-medium">Blue Alliance</p>
+            <p class="text-4xl font-black text-blue-400 font-mono"><%= @blue_score.round(1) %></p>
             <p class="text-xs text-gray-500 mt-1">predicted pts</p>
           </div>
         </div>
 
         <%# Win Probability Bars %>
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-4">
-          <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Win Probability</h3>
+        <div class="scout-card p-5 mb-4">
+          <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-medium">Win Probability</h3>
           <% total = @red_score + @blue_score
              red_pct = total > 0 ? (@red_score / total * 100).round(1) : 50
              blue_pct = total > 0 ? (@blue_score / total * 100).round(1) : 50 %>
           <div class="flex items-center gap-3 mb-2">
-            <span class="text-sm font-bold text-red-400 w-16 text-right"><%= red_pct %>%</span>
-            <div class="flex-1 h-6 bg-gray-800 rounded-full overflow-hidden flex">
+            <span class="text-sm font-bold text-red-400 w-16 text-right font-mono"><%= red_pct %>%</span>
+            <div class="flex-1 h-6 bg-gray-800 rounded-full overflow-hidden flex" role="progressbar" aria-label="Win probability: Red <%= red_pct %>%, Blue <%= blue_pct %>%">
               <div class="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-500 rounded-l-full" style="width: <%= red_pct %>%"></div>
               <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 rounded-r-full" style="width: <%= blue_pct %>%"></div>
             </div>
-            <span class="text-sm font-bold text-blue-400 w-16"><%= blue_pct %>%</span>
+            <span class="text-sm font-bold text-blue-400 w-16 font-mono"><%= blue_pct %>%</span>
           </div>
 
-          <%# Margin of Victory %>
+          <%# Margin of Victory - use static class names to avoid Tailwind purge issues %>
           <% margin = (@red_score - @blue_score).abs.round(1)
-             winner_color = @red_score >= @blue_score ? "red" : "blue" %>
+             red_wins = @red_score >= @blue_score %>
           <div class="text-center mt-4 pt-4 border-t border-gray-800">
             <p class="text-xs text-gray-500">Predicted Margin of Victory</p>
-            <p class="text-2xl font-bold text-<%= winner_color %>-400 mt-1"><%= margin %> pts</p>
-            <p class="text-sm text-<%= winner_color %>-400/70"><%= winner_color.capitalize %> Alliance favored</p>
+            <p class="text-2xl font-bold mt-1 font-mono <%= red_wins ? 'text-red-400' : 'text-blue-400' %>"><%= margin %> pts</p>
+            <p class="text-sm <%= red_wins ? 'text-red-400/70' : 'text-blue-400/70' %>"><%= red_wins ? 'Red' : 'Blue' %> Alliance favored</p>
           </div>
         </div>
 
         <%# Team Breakdown %>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <%# Red Teams %>
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <h3 class="text-xs text-red-400 uppercase tracking-wider mb-3">Red Alliance Teams</h3>
+          <div class="scout-card p-4">
+            <h3 class="text-xs text-red-400 uppercase tracking-wider mb-3 font-medium">Red Alliance Teams</h3>
             <div class="space-y-2">
               <% @red_summaries.includes(:frc_team).each do |summary| %>
                 <div class="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2">
                   <div>
-                    <span class="font-bold text-red-400"><%= summary.frc_team.team_number %></span>
+                    <span class="font-bold text-red-400 font-mono"><%= summary.frc_team.team_number %></span>
                     <span class="text-gray-500 text-xs ml-1"><%= summary.frc_team.nickname %></span>
                   </div>
-                  <span class="font-mono text-sm text-white"><%= summary.avg_total_points.to_f.round(1) %> pts</span>
+                  <span class="font-mono text-sm text-white font-semibold"><%= summary.avg_total_points.to_f.round(1) %> pts</span>
                 </div>
               <% end %>
             </div>
           </div>
 
           <%# Blue Teams %>
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <h3 class="text-xs text-blue-400 uppercase tracking-wider mb-3">Blue Alliance Teams</h3>
+          <div class="scout-card p-4">
+            <h3 class="text-xs text-blue-400 uppercase tracking-wider mb-3 font-medium">Blue Alliance Teams</h3>
             <div class="space-y-2">
               <% @blue_summaries.includes(:frc_team).each do |summary| %>
                 <div class="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2">
                   <div>
-                    <span class="font-bold text-blue-400"><%= summary.frc_team.team_number %></span>
+                    <span class="font-bold text-blue-400 font-mono"><%= summary.frc_team.team_number %></span>
                     <span class="text-gray-500 text-xs ml-1"><%= summary.frc_team.nickname %></span>
                   </div>
-                  <span class="font-mono text-sm text-white"><%= summary.avg_total_points.to_f.round(1) %> pts</span>
+                  <span class="font-mono text-sm text-white font-semibold"><%= summary.avg_total_points.to_f.round(1) %> pts</span>
                 </div>
               <% end %>
             </div>
