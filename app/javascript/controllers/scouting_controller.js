@@ -13,7 +13,8 @@ export default class extends Controller {
     "autonClimb", "endgameClimb",
     "summaryAccuracy", "teleopAccuracy", "accuracyBar",
     "totalPoints", "totalMade", "totalMissed",
-    "dataField", "tabContent"
+    "dataField", "tabContent",
+    "matchSelect", "teamSelect"
   ]
 
   static values = {
@@ -24,13 +25,15 @@ export default class extends Controller {
     endgameMade:  { type: Number, default: 0 },
     endgameMissed:{ type: Number, default: 0 },
     autonClimb:   { type: Boolean, default: false },
-    endgameClimb: { type: String, default: "None" }
+    endgameClimb: { type: String, default: "None" },
+    matchTeams:   { type: Object, default: {} }
   }
 
   connect() {
     this.autonActions = []
     this.updateDisplay()
     this.#initializeToggleState()
+    this.#initializeTeamFilter()
   }
 
   // --- Counter actions ---
@@ -189,6 +192,12 @@ export default class extends Controller {
         panel.classList.remove("tab-panel-enter")
       }
     })
+  }
+
+  // --- Match-team filtering ---
+
+  matchChanged() {
+    this.#filterTeams()
   }
 
   // --- Form submission ---
@@ -408,6 +417,87 @@ export default class extends Controller {
         knob.style.left = "4px"
         knob.style.right = "auto"
       }
+    }
+  }
+
+  #initializeTeamFilter() {
+    if (!this.hasMatchSelectTarget || !this.hasTeamSelectTarget) return
+
+    // Cache all original team options so we can restore them
+    this._allTeamOptions = Array.from(this.teamSelectTarget.options).map(opt => ({
+      value: opt.value,
+      text: opt.text
+    }))
+
+    // If a match is already selected (e.g. editing an entry), filter now
+    if (this.matchSelectTarget.value) {
+      this.#filterTeams()
+    }
+  }
+
+  #filterTeams() {
+    if (!this.hasMatchSelectTarget || !this.hasTeamSelectTarget) return
+
+    const select = this.teamSelectTarget
+    const matchId = this.matchSelectTarget.value
+    const currentTeamId = select.value
+
+    // Clear existing options
+    select.innerHTML = ""
+
+    // Always add the prompt option
+    const prompt = document.createElement("option")
+    prompt.value = ""
+    prompt.textContent = "Select team..."
+    select.appendChild(prompt)
+
+    if (!matchId) {
+      // No match selected: restore all teams
+      this._allTeamOptions.forEach(opt => {
+        if (opt.value === "") return // skip original prompt
+        const option = document.createElement("option")
+        option.value = opt.value
+        option.textContent = opt.text
+        select.appendChild(option)
+      })
+    } else {
+      // Match selected: show only teams in this match, grouped by alliance
+      const teams = this.matchTeamsValue[matchId] || []
+
+      const redTeams = teams.filter(t => t.color === "red")
+      const blueTeams = teams.filter(t => t.color === "blue")
+
+      if (redTeams.length > 0) {
+        const redGroup = document.createElement("optgroup")
+        redGroup.label = "Red Alliance"
+        redTeams.forEach(t => {
+          const option = document.createElement("option")
+          option.value = t.id
+          option.textContent = `${t.number} - ${t.name}`
+          redGroup.appendChild(option)
+        })
+        select.appendChild(redGroup)
+      }
+
+      if (blueTeams.length > 0) {
+        const blueGroup = document.createElement("optgroup")
+        blueGroup.label = "Blue Alliance"
+        blueTeams.forEach(t => {
+          const option = document.createElement("option")
+          option.value = t.id
+          option.textContent = `${t.number} - ${t.name}`
+          blueGroup.appendChild(option)
+        })
+        select.appendChild(blueGroup)
+      }
+    }
+
+    // Restore previous selection if it's still a valid option
+    const validValues = new Set(Array.from(select.options).map(o => o.value))
+    if (validValues.has(currentTeamId)) {
+      select.value = currentTeamId
+    } else {
+      select.value = ""
     }
   }
 }

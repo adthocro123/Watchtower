@@ -5,7 +5,13 @@ class TeamComparisonsController < ApplicationController
   def show
     authorize :team_comparison, :show?
 
-    team_ids = (params[:teams] || "").split(",").map(&:to_i).reject(&:zero?)
+    # Support both comma-separated ?teams=1,2,3 and checkbox array ?team_ids[]=1&team_ids[]=2
+    team_ids = if params[:team_ids].present?
+      Array(params[:team_ids]).map(&:to_i).reject(&:zero?)
+    else
+      (params[:teams] || "").split(",").map(&:to_i).reject(&:zero?)
+    end
+    team_ids = team_ids.first(6) # Limit to 6 teams
     @teams = FrcTeam.where(id: team_ids).order(:team_number)
     @all_teams = FrcTeam.at_event(current_event).order(:team_number)
 

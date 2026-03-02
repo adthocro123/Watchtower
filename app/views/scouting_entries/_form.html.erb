@@ -1,16 +1,17 @@
 <%= form_with(model: scouting_entry, id: "scouting-form",
-             data: {
-               controller: "scouting",
-               scouting_auton_made_value: scouting_entry.data&.dig("auton_fuel_made") || 0,
-               scouting_auton_missed_value: scouting_entry.data&.dig("auton_fuel_missed") || 0,
-               scouting_teleop_made_value: scouting_entry.data&.dig("teleop_fuel_made") || 0,
-               scouting_teleop_missed_value: scouting_entry.data&.dig("teleop_fuel_missed") || 0,
-               scouting_endgame_made_value: scouting_entry.data&.dig("endgame_fuel_made") || 0,
-               scouting_endgame_missed_value: scouting_entry.data&.dig("endgame_fuel_missed") || 0,
-               scouting_auton_climb_value: scouting_entry.data&.dig("auton_climb") || false,
-               scouting_endgame_climb_value: scouting_entry.data&.dig("endgame_climb") || "None",
-               action: "submit->scouting#submitForm"
-             }) do |f| %>
+              data: {
+                controller: "scouting",
+                scouting_match_teams_value: @match_teams.to_json,
+                scouting_auton_made_value: scouting_entry.data&.dig("auton_fuel_made") || 0,
+                scouting_auton_missed_value: scouting_entry.data&.dig("auton_fuel_missed") || 0,
+                scouting_teleop_made_value: scouting_entry.data&.dig("teleop_fuel_made") || 0,
+                scouting_teleop_missed_value: scouting_entry.data&.dig("teleop_fuel_missed") || 0,
+                scouting_endgame_made_value: scouting_entry.data&.dig("endgame_fuel_made") || 0,
+                scouting_endgame_missed_value: scouting_entry.data&.dig("endgame_fuel_missed") || 0,
+                scouting_auton_climb_value: scouting_entry.data&.dig("auton_climb") || false,
+                scouting_endgame_climb_value: scouting_entry.data&.dig("endgame_climb") || "None",
+                action: "submit->scouting#submitForm"
+              }) do |f| %>
   <% if scouting_entry.errors.any? %>
     <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4 animate-slide-down" role="alert">
       <h3 class="text-sm font-semibold text-red-400 mb-2"><%= pluralize(scouting_entry.errors.count, "error") %> prevented this entry from being saved:</h3>
@@ -28,21 +29,23 @@
   <%# Hidden field that receives the JSON payload on submit %>
   <%= f.hidden_field "data[_json]", value: "", data: { scouting_target: "dataField" } %>
 
-  <%# ===== TEAM & MATCH SELECTOR ===== %>
+  <%# ===== MATCH & TEAM SELECTOR ===== %>
   <div class="grid grid-cols-2 gap-3 mb-4">
-    <div>
-      <%= f.label :frc_team_id, "Team", class: "block text-sm font-medium text-gray-300 mb-1" %>
-      <%= f.select :frc_team_id,
-            options_from_collection_for_select(@teams, :id, ->(t) { "#{t.team_number} - #{t.nickname}" }, scouting_entry.frc_team_id),
-            { prompt: "Select team..." },
-            class: "input-field text-sm" %>
-    </div>
     <div>
       <%= f.label :match_id, "Match", class: "block text-sm font-medium text-gray-300 mb-1" %>
       <%= f.select :match_id,
             options_from_collection_for_select(@matches, :id, :display_name, scouting_entry.match_id),
             { prompt: "Select match..." },
-            class: "input-field text-sm" %>
+            { class: "input-field text-sm",
+              data: { scouting_target: "matchSelect", action: "change->scouting#matchChanged" } } %>
+    </div>
+    <div>
+      <%= f.label :frc_team_id, "Team", class: "block text-sm font-medium text-gray-300 mb-1" %>
+      <%= f.select :frc_team_id,
+            options_from_collection_for_select(@teams, :id, ->(t) { "#{t.team_number} - #{t.nickname}" }, scouting_entry.frc_team_id),
+            { prompt: "Select team..." },
+            { class: "input-field text-sm",
+              data: { scouting_target: "teamSelect" } } %>
     </div>
   </div>
 
@@ -50,7 +53,7 @@
   <div class="scout-card p-3 mb-4" aria-live="polite" aria-atomic="true">
     <div class="grid grid-cols-4 gap-2 text-center">
       <div>
-        <p class="text-xl font-bold text-orange-400 font-mono" data-scouting-target="totalMade">0</p>
+        <p class="text-xl font-bold text-emerald-400 font-mono" data-scouting-target="totalMade">0</p>
         <p class="text-[11px] text-gray-400 font-medium">Total Made</p>
       </div>
       <div>
@@ -117,7 +120,7 @@
       <%# Score display %>
       <div class="grid grid-cols-2 gap-3 mb-4 text-center">
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-orange-400 font-mono" data-scouting-target="autonMade">0</p>
+          <p class="text-3xl font-bold text-emerald-400 font-mono" data-scouting-target="autonMade">0</p>
           <p class="text-xs text-gray-400">Made</p>
         </div>
         <div class="bg-gray-800 rounded-lg p-3">
@@ -129,7 +132,7 @@
       <%# HUGE MAKE / MISS buttons %>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white shadow-lg shadow-orange-500/20 transition-all duration-150 active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMade"
                 data-phase="auton"
                 aria-label="Score made fuel in autonomous">
@@ -210,7 +213,7 @@
       <%# Score display %>
       <div class="grid grid-cols-2 gap-3 mb-4 text-center">
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-orange-400 font-mono" data-scouting-target="teleopMade">0</p>
+          <p class="text-3xl font-bold text-emerald-400 font-mono" data-scouting-target="teleopMade">0</p>
           <p class="text-xs text-gray-400">Made</p>
         </div>
         <div class="bg-gray-800 rounded-lg p-3">
@@ -222,7 +225,7 @@
       <%# HUGE MAKE / MISS buttons %>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white shadow-lg shadow-orange-500/20 transition-all duration-150 active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMade"
                 data-phase="teleop"
                 aria-label="Score made fuel in teleop">
@@ -281,7 +284,7 @@
       <%# Score display %>
       <div class="grid grid-cols-2 gap-3 mb-4 text-center">
         <div class="bg-gray-800 rounded-lg p-3">
-          <p class="text-3xl font-bold text-orange-400 font-mono" data-scouting-target="endgameMade">0</p>
+          <p class="text-3xl font-bold text-emerald-400 font-mono" data-scouting-target="endgameMade">0</p>
           <p class="text-xs text-gray-400">Made</p>
         </div>
         <div class="bg-gray-800 rounded-lg p-3">
@@ -293,7 +296,7 @@
       <%# HUGE MAKE / MISS buttons %>
       <div class="grid grid-cols-2 gap-3 mb-3">
         <button type="button"
-                class="h-20 w-full text-4xl font-black rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white shadow-lg shadow-orange-500/20 transition-all duration-150 active:scale-95 select-none"
+                class="h-20 w-full text-4xl font-black rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all duration-150 active:scale-95 select-none"
                 data-action="click->scouting#incrementMade"
                 data-phase="endgame"
                 aria-label="Score made fuel in endgame">

@@ -24,12 +24,39 @@
     </div>
   </div>
 
+  <%# Statbotics EPA Stats %>
+  <% if @epa %>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div class="stat-card group text-center border-emerald-500/20">
+        <p class="text-3xl font-bold text-emerald-400 font-mono"><%= @epa[:epa_mean] %></p>
+        <p class="text-xs text-gray-400 mt-1 font-medium">EPA (Statbotics)</p>
+      </div>
+      <div class="stat-card group text-center border-emerald-500/20">
+        <p class="text-3xl font-bold text-emerald-400 font-mono"><%= @epa[:epa_sd] %></p>
+        <p class="text-xs text-gray-400 mt-1 font-medium">EPA Std Dev</p>
+      </div>
+      <div class="stat-card group text-center">
+        <p class="text-3xl font-bold text-white font-mono"><%= @epa[:record] || "---" %></p>
+        <p class="text-xs text-gray-400 mt-1 font-medium">Record (W-L-T)</p>
+      </div>
+      <div class="stat-card group text-center">
+        <% if @epa[:epa_rank] %>
+          <p class="text-3xl font-bold text-amber-400 font-mono">#<%= @epa[:epa_rank] %></p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Global Rank (<%= (@epa[:epa_percentile].to_f * 100).round(1) %>%)</p>
+        <% else %>
+          <p class="text-3xl font-bold text-gray-500 font-mono">---</p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Global Rank</p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <%# Summary Stats %>
   <% if @summary %>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <div class="stat-card group text-center">
         <p class="text-3xl font-bold text-orange-400 font-mono"><%= @summary.avg_total_points.to_f.round(1) %></p>
-        <p class="text-xs text-gray-400 mt-1 font-medium">Avg Points</p>
+        <p class="text-xs text-gray-400 mt-1 font-medium">Avg Points (Scouted)</p>
       </div>
       <div class="stat-card group text-center">
         <p class="text-3xl font-bold text-amber-400 font-mono"><%= @summary.fuel_accuracy_pct.to_f.round(1) %>%</p>
@@ -71,10 +98,10 @@
           <div>
             <div class="flex items-center justify-between text-sm mb-1">
               <span class="text-gray-400">Avg Fuel Made</span>
-              <span class="font-mono text-orange-400 font-semibold"><%= made %></span>
+              <span class="font-mono text-emerald-400 font-semibold"><%= made %></span>
             </div>
             <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden" role="progressbar" aria-label="Average fuel made: <%= made %>">
-              <div class="h-full bg-orange-500 rounded-full transition-all duration-500" style="width: <%= (made.to_f / max_fuel * 100).round(0) %>%"></div>
+              <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: <%= (made.to_f / max_fuel * 100).round(0) %>%"></div>
             </div>
           </div>
           <div>
@@ -245,7 +272,7 @@
                   <% end %>
                 </td>
                 <td class="text-gray-400"><%= entry.user.full_name %></td>
-                <td class="text-right font-mono text-orange-400"><%= entry.total_fuel_made %></td>
+                <td class="text-right font-mono text-emerald-400"><%= entry.total_fuel_made %></td>
                 <td class="text-right font-mono text-red-400"><%= entry.total_fuel_missed %></td>
                 <td class="text-right font-mono text-gray-300 hidden sm:table-cell"><%= entry.data&.dig("endgame_climb") || "None" %></td>
                 <td class="text-right font-mono font-bold text-white"><%= entry.total_points %></td>

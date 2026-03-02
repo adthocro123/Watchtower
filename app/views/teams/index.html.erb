@@ -37,14 +37,19 @@
             <th scope="col" class="text-left">#</th>
             <th scope="col" class="text-left">Team</th>
             <th scope="col" class="text-right">Avg Pts</th>
+            <th scope="col" class="text-right hidden sm:table-cell">EPA</th>
             <th scope="col" class="text-right hidden sm:table-cell">Accuracy</th>
-            <th scope="col" class="text-right hidden md:table-cell">Avg Climb</th>
+            <th scope="col" class="text-right hidden md:table-cell">Record</th>
             <th scope="col" class="text-right hidden lg:table-cell">Std Dev</th>
             <th scope="col" class="text-right">Scouted</th>
           </tr>
         </thead>
         <tbody>
-          <% sorted_teams = @teams.sort_by { |t| -(@summaries[t.id]&.avg_total_points.to_f || 0) } %>
+          <% sorted_teams = @teams.sort_by { |t|
+            scouted = @summaries[t.id]&.avg_total_points.to_f || 0
+            epa = @statbotics_epa.dig(t.id, :epa_mean) || 0
+            -(scouted > 0 ? scouted : epa)
+          } %>
           <% sorted_teams.each_with_index do |team, idx| %>
             <% summary = @summaries[team.id] %>
             <tr data-search-target="item"
@@ -56,8 +61,12 @@
                   <span class="text-gray-500 text-xs hidden sm:inline"><%= team.nickname %></span>
                 <% end %>
               </td>
+              <% epa_data = @statbotics_epa[team.id] %>
               <td class="text-right">
                 <span class="font-mono font-bold text-orange-400"><%= summary&.avg_total_points.to_f.round(1) || "---" %></span>
+              </td>
+              <td class="text-right hidden sm:table-cell">
+                <span class="font-mono font-semibold text-emerald-400"><%= epa_data ? epa_data[:epa_mean] : "---" %></span>
               </td>
               <td class="text-right hidden sm:table-cell">
                 <% acc = summary&.fuel_accuracy_pct.to_f.round(0) || 0 %>
@@ -73,7 +82,14 @@
                   <span class="text-xs font-mono text-gray-400 w-8 text-right"><%= acc %>%</span>
                 </div>
               </td>
-              <td class="text-right font-mono text-gray-300 hidden md:table-cell"><%= summary&.avg_climb_points.to_f.round(1) || "---" %></td>
+              <td class="text-right hidden md:table-cell">
+                <% if epa_data&.dig(:record) %>
+                  <span class="font-mono text-gray-300"><%= epa_data[:record] %></span>
+                  <span class="text-xs text-gray-500 ml-1">(<%= epa_data[:winrate] %>%)</span>
+                <% else %>
+                  <span class="font-mono text-gray-500">---</span>
+                <% end %>
+              </td>
               <td class="text-right font-mono text-gray-500 hidden lg:table-cell"><%= summary&.stddev_total_points.to_f.round(1) || "---" %></td>
               <td class="text-right font-mono text-gray-400"><%= summary&.matches_scouted || 0 %></td>
             </tr>

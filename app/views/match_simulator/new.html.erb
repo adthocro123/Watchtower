@@ -98,9 +98,8 @@
         <%# Win Probability Bars %>
         <div class="scout-card p-5 mb-4">
           <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-medium">Win Probability</h3>
-          <% total = @red_score + @blue_score
-             red_pct = total > 0 ? (@red_score / total * 100).round(1) : 50
-             blue_pct = total > 0 ? (@blue_score / total * 100).round(1) : 50 %>
+          <% red_pct = @red_win_pct
+             blue_pct = @blue_win_pct %>
           <div class="flex items-center gap-3 mb-2">
             <span class="text-sm font-bold text-red-400 w-16 text-right font-mono"><%= red_pct %>%</span>
             <div class="flex-1 h-6 bg-gray-800 rounded-full overflow-hidden flex" role="progressbar" aria-label="Win probability: Red <%= red_pct %>%, Blue <%= blue_pct %>%">

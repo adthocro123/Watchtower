@@ -38,6 +38,9 @@ class PredictionsController < ApplicationController
   def generate
     authorize :prediction, :generate?
 
+    # Warm Statbotics cache first, then generate predictions
+    SyncStatboticsJob.perform_later(current_event.id)
+
     service = PredictionService.new(current_event, current_organization)
     count = service.generate_all!
 

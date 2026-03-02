@@ -3,10 +3,13 @@
 class MatchSimulatorService
   ITERATIONS = 1000
   DEFAULT_STDDEV = 5.0
+  # Fallback EPA when both scouting and Statbotics data are unavailable
+  FALLBACK_EPA = 20.0
 
-  def initialize(event)
+  def initialize(event, statbotics: nil)
     @event = event
     @aggregation_service = AggregationService.new(event)
+    @statbotics = statbotics
   end
 
   # Runs a Monte Carlo simulation for a hypothetical match.
@@ -57,10 +60,49 @@ class MatchSimulatorService
 
   def team_stats(frc_team)
     agg = @aggregation_service.aggregate_team(frc_team)
+
+    # If we have real scouting data, use it
+    if agg[:matches_scouted] > 0
+      {
+        avg: agg[:avg_total_points],
+        stddev: agg[:stddev_total_points].positive? ? agg[:stddev_total_points] : DEFAULT_STDDEV
+      }
+    else
+      # Fall back to Statbotics EPA data
+      epa = fetch_statbotics_epa(frc_team)
+      if epa
+        {
+          avg: epa[:mean],
+          stddev: epa[:sd].positive? ? epa[:sd] : DEFAULT_STDDEV
+        }
+      else
+        # No data at all — use conservative fallback
+        {
+          avg: FALLBACK_EPA,
+          stddev: DEFAULT_STDDEV
+        }
+      end
+    end
+  end
+
+  # Fetches Statbotics EPA for a team in the event year.
+  # Returns { mean:, sd: } or nil.
+  def fetch_statbotics_epa(frc_team)
+    return nil unless @statbotics && @event.year.present?
+
+    data = @statbotics.team_year(frc_team.team_number, @event.year)
+    return nil unless data.is_a?(Hash)
+
+    epa = data.dig("epa", "total_points")
+    return nil unless epa
+
     {
-      avg: agg[:avg_total_points],
-      stddev: agg[:stddev_total_points].positive? ? agg[:stddev_total_points] : DEFAULT_STDDEV
+      mean: epa["mean"].to_f,
+      sd: epa["sd"].to_f
     }
+  rescue StandardError => e
+    Rails.logger.warn("[MatchSimulatorService] Statbotics EPA fetch failed for team #{frc_team.team_number}: #{e.message}")
+    nil
   end
 
   # Samples from a normal distribution using the Box-Muller transform.
@@ -69,6 +111,6 @@ class MatchSimulatorService
     u1 = rand
     u2 = rand
     z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math::PI * u2)
-    [mean + z * stddev, 0].max
+    [ mean + z * stddev, 0 ].max
   end
 end

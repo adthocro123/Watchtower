@@ -18,8 +18,9 @@ class ScoutingEntriesController < ApplicationController
     authorize @scouting_entry
 
     @game_config = GameConfig.current
-    @matches = current_event.matches.ordered
+    @matches = current_event.matches.includes(match_alliances: :frc_team).ordered
     @teams = FrcTeam.at_event(current_event).order(:team_number)
+    @match_teams = build_match_teams_map(@matches)
   end
 
   def create
@@ -43,11 +44,13 @@ class ScoutingEntriesController < ApplicationController
         partial: "scouting_entries/scouting_entry",
         locals: { scouting_entry: @scouting_entry }
       )
+      RefreshSummariesJob.perform_later(current_event.id)
       redirect_to @scouting_entry, notice: "Scouting entry was successfully created."
     else
       @game_config = GameConfig.current
-      @matches = current_event.matches.ordered
+      @matches = current_event.matches.includes(match_alliances: :frc_team).ordered
       @teams = FrcTeam.at_event(current_event).order(:team_number)
+      @match_teams = build_match_teams_map(@matches)
       render :new, status: :unprocessable_entity
     end
   end
@@ -55,26 +58,31 @@ class ScoutingEntriesController < ApplicationController
   def edit
     authorize @scouting_entry
     @game_config = GameConfig.current
-    @matches = current_event.matches.ordered
+    @matches = current_event.matches.includes(match_alliances: :frc_team).ordered
     @teams = FrcTeam.at_event(current_event).order(:team_number)
+    @match_teams = build_match_teams_map(@matches)
   end
 
   def update
     authorize @scouting_entry
 
     if @scouting_entry.update(scouting_entry_params)
+      RefreshSummariesJob.perform_later(current_event.id)
       redirect_to @scouting_entry, notice: "Scouting entry was successfully updated."
     else
       @game_config = GameConfig.current
-      @matches = current_event.matches.ordered
+      @matches = current_event.matches.includes(match_alliances: :frc_team).ordered
       @teams = FrcTeam.at_event(current_event).order(:team_number)
+      @match_teams = build_match_teams_map(@matches)
       render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
     authorize @scouting_entry
+    event_id = @scouting_entry.event_id
     @scouting_entry.destroy!
+    RefreshSummariesJob.perform_later(event_id)
     redirect_to scouting_entries_path, notice: "Scouting entry was successfully deleted.", status: :see_other
   end
 
@@ -104,6 +112,11 @@ class ScoutingEntriesController < ApplicationController
       end
     end
 
+    # Refresh summaries if any entries were created
+    if results.any? { |r| r[:status] == "created" } && current_event
+      RefreshSummariesJob.perform_later(current_event.id)
+    end
+
     render json: { results: results }
   end
 
@@ -118,5 +131,22 @@ class ScoutingEntriesController < ApplicationController
       :match_id, :frc_team_id, :notes, :photo_url, :client_uuid, :status,
       data: {}
     )
+  end
+
+  # Returns a Hash mapping match_id to an array of team info for the team dropdown.
+  # { match.id => [ { id: frc_team.id, number: 254, name: "The Cheesy Poofs", color: "red" }, ... ] }
+  def build_match_teams_map(matches)
+    matches.each_with_object({}) do |match, map|
+      map[match.id] = match.match_alliances
+        .sort_by { |ma| [ma.alliance_color, ma.station] }
+        .map do |ma|
+          {
+            id: ma.frc_team.id,
+            number: ma.frc_team.team_number,
+            name: ma.frc_team.nickname,
+            color: ma.alliance_color
+          }
+        end
+    end
   end
 end

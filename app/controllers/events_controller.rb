@@ -56,12 +56,18 @@ class EventsController < ApplicationController
     redirect_to root_path, notice: "Switched to #{@event.name}."
   end
 
-  # POST /events/:id/sync — triggers TBA sync
+  # POST /events/:id/sync — triggers TBA sync + Statbotics cache warming + predictions
   def sync
     authorize @event, :sync?
 
     TbaSyncService.new(@event.tba_key).sync_all!
-    redirect_to @event, notice: "Event data synced from The Blue Alliance."
+
+    # Refresh materialized views, warm Statbotics cache, and regenerate predictions
+    RefreshSummariesJob.perform_later(@event.id)
+    SyncStatboticsJob.perform_later(@event.id)
+    RefreshPredictionsJob.perform_later(@event.id)
+
+    redirect_to @event, notice: "Event data synced from The Blue Alliance. Statbotics data and predictions are updating in the background."
   rescue StandardError => e
     redirect_to @event, alert: "Sync failed: #{e.message}"
   end

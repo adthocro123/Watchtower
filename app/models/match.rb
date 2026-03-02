@@ -4,6 +4,7 @@ class Match < ApplicationRecord
   has_many :match_alliances, dependent: :destroy
   has_many :frc_teams, through: :match_alliances
   has_many :scouting_entries, dependent: :destroy
+  has_many :predictions, dependent: :destroy
 
   # Scopes
   COMP_LEVEL_ORDER = { "qm" => 0, "qf" => 1, "sf" => 2, "f" => 3 }.freeze
