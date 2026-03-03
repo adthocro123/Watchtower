@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+# Seeds are for development/test only. Skip in production unless explicitly requested.
+if Rails.env.production? && !ENV["FORCE_SEED"]
+  puts "Skipping seeds in production. Set FORCE_SEED=1 to override."
+  return
+end
+
 puts "Seeding database..."
 
 # --- Default Organization ---
