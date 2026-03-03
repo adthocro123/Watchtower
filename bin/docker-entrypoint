@@ -5,14 +5,29 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   # Prepare the primary database (create + migrate).
   ./bin/rails db:prepare
 
-  # Load schemas for Solid Queue, Cache, and Cable databases.
-  # These use standalone schema files, not migrations, so db:prepare
-  # doesn't handle them. DISABLE_DATABASE_ENVIRONMENT_CHECK is needed
-  # because schema:load is considered destructive in production.
-  # The "|| true" makes re-runs safe (tables already exist).
-  DISABLE_DATABASE_ENVIRONMENT_CHECK=1 ./bin/rails db:schema:load:queue || true
-  DISABLE_DATABASE_ENVIRONMENT_CHECK=1 ./bin/rails db:schema:load:cache || true
-  DISABLE_DATABASE_ENVIRONMENT_CHECK=1 ./bin/rails db:schema:load:cable || true
+  # Load Solid Queue/Cache/Cable schemas into their databases.
+  # The app uses config.active_record.schema_format = :sql globally, which
+  # causes db:prepare to try psql on the Ruby schema files. We load them
+  # directly via Rails runner instead.
+  ./bin/rails runner '
+    { queue: :solid_queue_jobs, cache: :solid_cache_entries, cable: :solid_cable_messages }.each do |db_name, check_table|
+      begin
+        config = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env, name: db_name.to_s)
+        next unless config
+        ActiveRecord::Base.establish_connection(config)
+        unless ActiveRecord::Base.connection.table_exists?(check_table)
+          schema = Rails.root.join("db", "#{db_name}_schema.rb")
+          load(schema) if schema.exist?
+          puts "Loaded schema for #{db_name}"
+        else
+          puts "Schema for #{db_name} already loaded"
+        end
+      rescue => e
+        puts "Warning: #{db_name} schema: #{e.message}"
+      end
+    end
+    ActiveRecord::Base.establish_connection(:primary)
+  ' || true
 fi
 
 exec "${@}"
