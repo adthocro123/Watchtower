@@ -17,8 +17,26 @@ class EventsController < ApplicationController
   end
 
   def create
-    @event = Event.new(event_params)
+    year = params[:event][:year].to_i
+    event_code = params[:event][:event_code].to_s.strip.downcase
+    tba_key = "#{year}#{event_code}"
+
+    @event = Event.new(name: params[:event][:name], tba_key: tba_key, year: year)
     authorize @event
+
+    # Fetch details from TBA to auto-populate fields
+    tba_data = TbaClient.new.event(tba_key)
+    if tba_data
+      @event.assign_attributes(
+        start_date: tba_data["start_date"],
+        end_date: tba_data["end_date"],
+        city: tba_data["city"],
+        state_prov: tba_data["state_prov"],
+        country: tba_data["country"],
+        event_type: tba_data["event_type"],
+        week: tba_data["week"]
+      )
+    end
 
     if @event.save
       redirect_to @event, notice: "Event was successfully created."
@@ -34,7 +52,7 @@ class EventsController < ApplicationController
   def update
     authorize @event
 
-    if @event.update(event_params)
+    if @event.update(update_event_params)
       redirect_to @event, notice: "Event was successfully updated."
     else
       render :edit, status: :unprocessable_entity
@@ -78,7 +96,7 @@ class EventsController < ApplicationController
     @event = Event.find(params[:id])
   end
 
-  def event_params
-    params.require(:event).permit(:name, :tba_key, :year, :start_date, :end_date, :location, :event_type)
+  def update_event_params
+    params.require(:event).permit(:name, :start_date, :end_date, :city, :state_prov, :country, :event_type)
   end
 end

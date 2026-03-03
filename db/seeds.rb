@@ -26,7 +26,7 @@ game_config = GameConfig.find_or_create_by!(year: 2026) do |gc|
     simple_shooting_mode: true,
     scoring: {
       fuel_point_value: 1,
-      auton_climb_points: 10,
+      auton_climb_points: 15,
       climb_points: { "None" => 0, "L1" => 10, "L2" => 20, "L3" => 30 }
     },
     phases: {
@@ -34,7 +34,7 @@ game_config = GameConfig.find_or_create_by!(year: 2026) do |gc|
         fields: [
           { key: "auton_fuel_made", type: "counter", label: "Fuel Made", color: "green" },
           { key: "auton_fuel_missed", type: "counter", label: "Fuel Missed", color: "red" },
-          { key: "auton_climb", type: "toggle", label: "Auton Climb (10 pts)", default: false }
+          { key: "auton_climb", type: "toggle", label: "Auton Climb (15 pts)", default: false }
         ],
         actions: [
           { key: "bump", label: "Bump", icon: "collision" },

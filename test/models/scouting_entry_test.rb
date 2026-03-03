@@ -94,8 +94,8 @@ class ScoutingEntryTest < ActiveSupport::TestCase
     assert_equal expected, ScoutingEntry::CLIMB_POINTS
   end
 
-  test "AUTON_CLIMB_POINTS is 10" do
-    assert_equal 10, ScoutingEntry::AUTON_CLIMB_POINTS
+  test "AUTON_CLIMB_POINTS is 15" do
+    assert_equal 15, ScoutingEntry::AUTON_CLIMB_POINTS
   end
 
   # --- Computed Methods: entry_qm1_254 ---
@@ -123,10 +123,10 @@ class ScoutingEntryTest < ActiveSupport::TestCase
   test "total_points for entry_qm1_254" do
     entry = scouting_entries(:entry_qm1_254)
     # fuel: 17 * 1 = 17
-    # auton_climb: true -> +10
+    # auton_climb: true -> +15
     # endgame_climb: L3 -> +30
-    # total: 17 + 10 + 30 = 57
-    assert_equal 57, entry.total_points
+    # total: 17 + 15 + 30 = 62
+    assert_equal 62, entry.total_points
   end
 
   # --- Computed Methods: entry_qm1_1678 ---
@@ -185,10 +185,10 @@ class ScoutingEntryTest < ActiveSupport::TestCase
   test "total_points for entry_qm2_254" do
     entry = scouting_entries(:entry_qm2_254)
     # fuel: 20 * 1 = 20
-    # auton_climb: true -> +10
+    # auton_climb: true -> +15
     # endgame_climb: L3 -> +30
-    # total: 20 + 10 + 30 = 60
-    assert_equal 60, entry.total_points
+    # total: 20 + 15 + 30 = 65
+    assert_equal 65, entry.total_points
   end
 
   # --- Computed Methods: entry_qm2_1678 ---
@@ -216,10 +216,10 @@ class ScoutingEntryTest < ActiveSupport::TestCase
   test "total_points for entry_qm2_1678" do
     entry = scouting_entries(:entry_qm2_1678)
     # fuel: 15 * 1 = 15
-    # auton_climb: true -> +10
+    # auton_climb: true -> +15
     # endgame_climb: L2 -> +20
-    # total: 15 + 10 + 20 = 45
-    assert_equal 45, entry.total_points
+    # total: 15 + 15 + 20 = 50
+    assert_equal 50, entry.total_points
   end
 
   # --- Edge cases for computed methods ---

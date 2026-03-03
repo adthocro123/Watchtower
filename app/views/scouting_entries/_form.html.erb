@@ -28,7 +28,7 @@
   <%= hidden_field_tag "scouting_entry[event_id]", scouting_entry.event_id || current_event&.id %>
 
   <%# Hidden field that receives the JSON payload on submit %>
-  <%= f.hidden_field "data[_json]", value: "", data: { scouting_target: "dataField" } %>
+  <%= hidden_field_tag "scouting_entry[data][_json]", "", data: { scouting_target: "dataField" } %>
 
   <%# ===== MATCH & TEAM SELECTOR ===== %>
   <div class="grid grid-cols-2 gap-3 mb-4">
@@ -164,25 +164,32 @@
         </button>
       </div>
 
-      <%# Auton Actions - Pill Buttons with toggle state %>
-      <div class="mb-4">
-        <p class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Auton Actions</p>
-        <div class="flex flex-wrap gap-2">
-          <% %w[Mobility Preload Intake].each do |action_name| %>
-            <button type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-full border border-gray-700 bg-gray-800 text-gray-400 transition-all duration-150 active:scale-95 select-none hover:border-gray-600 hover:text-gray-300"
-                    data-action="click->scouting#addAutonAction"
-                    data-action-name="<%= action_name %>"
-                    data-auton-pill>
-              <span class="inline-flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 hidden" data-check-icon fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                </svg>
-                <%= action_name %>
-              </span>
-            </button>
-          <% end %>
+      <%# Auton Path Drawing %>
+      <div class="mb-4"
+           data-controller="field-map"
+           data-field-map-strokes-value="<%= (scouting_entry.data&.dig('auton_path') || []).to_json %>">
+        <p class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Auton Path</p>
+        <div class="relative rounded-lg overflow-hidden border border-gray-700 bg-gray-800 touch-none">
+          <%= image_tag "field_2026.jpeg", class: "w-full block select-none pointer-events-none", alt: "Field map", data: { field_map_target: "image" } %>
+          <canvas class="absolute inset-0 w-full h-full cursor-crosshair"
+                  data-field-map-target="canvas"
+                  data-action="pointerdown->field-map#startStroke pointermove->field-map#continueStroke pointerup->field-map#endStroke pointerleave->field-map#endStroke"></canvas>
         </div>
+        <div class="flex gap-2 mt-2">
+          <button type="button"
+                  class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 transition-all duration-150 select-none"
+                  data-action="click->field-map#undo">
+            Undo
+          </button>
+          <button type="button"
+                  class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 transition-all duration-150 select-none"
+                  data-action="click->field-map#clear">
+            Clear
+          </button>
+        </div>
+        <input type="hidden" data-field-map-target="hiddenField"
+               data-auton-path-field
+               value="<%= (scouting_entry.data&.dig('auton_path') || []).to_json %>">
       </div>
 
       <%# Auton Climb Toggle %>
@@ -193,7 +200,7 @@
            aria-checked="<%= scouting_entry.data&.dig('auton_climb') == true ? 'true' : 'false' %>"
            aria-label="Toggle autonomous climb"
            tabindex="0">
-        <span class="text-sm font-medium text-gray-300">Auton Climb (+10 pts)</span>
+        <span class="text-sm font-medium text-gray-300">Auton Climb (+15 pts)</span>
         <div class="w-12 h-7 rounded-full transition-colors duration-200 bg-gray-700 flex items-center relative" data-toggle-track>
           <div class="w-5 h-5 bg-white rounded-full shadow-md transition-all duration-200 absolute left-1" data-toggle-knob></div>
         </div>
@@ -257,18 +264,6 @@
         </button>
       </div>
 
-      <%# Live accuracy display %>
-      <div class="bg-gray-800 rounded-lg p-3">
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="text-xs text-gray-400 font-medium">Live Accuracy</span>
-          <span class="text-xs font-mono text-amber-400 font-semibold" data-scouting-target="teleopAccuracy">0.0%</span>
-        </div>
-        <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden" role="progressbar" aria-label="Teleop accuracy">
-          <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-300"
-               data-scouting-target="accuracyBar"
-               style="width: 0%"></div>
-        </div>
-      </div>
     </div>
   </div>
 

@@ -36,16 +36,16 @@ class AggregationServiceTest < ActiveSupport::TestCase
     # Fuel accuracy: (17+20) / (17+20+4+2) = 37/43 * 100 ~ 86.0
     assert_in_delta 86.0, agg[:fuel_accuracy_pct], 0.1
 
-    # Climb: both entries have auton_climb=true (10) + L3 (30) = 40 each
-    assert_in_delta 40.0, agg[:avg_climb_points], 0.01
+    # Climb: both entries have auton_climb=true (15) + L3 (30) = 45 each
+    assert_in_delta 45.0, agg[:avg_climb_points], 0.01
 
     # Total points per entry:
-    #   Entry 1: 17*1 + 10 + 30 = 57
-    #   Entry 2: 20*1 + 10 + 30 = 60
-    #   Avg: (57+60)/2 = 58.5
-    assert_in_delta 58.5, agg[:avg_total_points], 0.01
+    #   Entry 1: 17*1 + 15 + 30 = 62
+    #   Entry 2: 20*1 + 15 + 30 = 65
+    #   Avg: (62+65)/2 = 63.5
+    assert_in_delta 63.5, agg[:avg_total_points], 0.01
 
-    # stddev of [57, 60]: sqrt(((57-58.5)^2 + (60-58.5)^2) / 1) = sqrt(4.5) ~ 2.12
+    # stddev of [62, 65]: sqrt(((62-63.5)^2 + (65-63.5)^2) / 1) = sqrt(4.5) ~ 2.12
     assert_in_delta 2.12, agg[:stddev_total_points], 0.01
   end
 
@@ -53,9 +53,9 @@ class AggregationServiceTest < ActiveSupport::TestCase
     agg = @service.aggregate_team(frc_teams(:team_1678))
 
     # Entry 1 (qm1_1678): fuel_made = 3+10+0 = 13, auton_climb=false (0), L2 (20) => 13 + 0 + 20 = 33
-    # Entry 2 (qm2_1678): fuel_made = 4+11+0 = 15, auton_climb=true (10), L2 (20) => 15 + 10 + 20 = 45
+    # Entry 2 (qm2_1678): fuel_made = 4+11+0 = 15, auton_climb=true (15), L2 (20) => 15 + 15 + 20 = 50
     assert_equal 2, agg[:matches_scouted]
-    assert_in_delta 39.0, agg[:avg_total_points], 0.01 # (33+45)/2
+    assert_in_delta 41.5, agg[:avg_total_points], 0.01 # (33+50)/2
   end
 
   test "aggregate_team returns empty aggregation for unscouted team" do

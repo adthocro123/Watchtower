@@ -71,13 +71,17 @@
             <%= @scouting_entry.data&.dig("auton_climb").to_s == "true" ? "Yes" : "No" %>
           </span>
         </div>
-        <% if @scouting_entry.auton_actions.any? %>
+        <% auton_path = @scouting_entry.data&.dig("auton_path") %>
+        <% if auton_path.present? && auton_path.is_a?(Array) && auton_path.any? %>
           <div class="pt-2 border-t border-gray-800">
-            <span class="text-xs text-gray-500">Actions:</span>
-            <div class="flex flex-wrap gap-1 mt-1">
-              <% @scouting_entry.auton_actions.each do |action| %>
-                <span class="badge-gray text-[10px]"><%= action %></span>
-              <% end %>
+            <span class="text-xs text-gray-500">Auton Path:</span>
+            <div class="mt-1 relative rounded-lg overflow-hidden border border-gray-700"
+                 data-controller="field-map"
+                 data-field-map-strokes-value="<%= auton_path.to_json %>"
+                 data-field-map-readonly-value="true">
+              <%= image_tag "field_2026.jpeg", class: "w-full block select-none pointer-events-none", alt: "Field map", data: { field_map_target: "image" } %>
+              <canvas class="absolute inset-0 w-full h-full"
+                      data-field-map-target="canvas"></canvas>
             </div>
           </div>
         <% end %>

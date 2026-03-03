@@ -43,7 +43,7 @@ class CreateTeamEventSummariesMaterializedView < ActiveRecord::Migration[8.1]
           COALESCE((se.data->>'auton_fuel_made')::numeric, 0) +
           COALESCE((se.data->>'teleop_fuel_made')::numeric, 0) +
           COALESCE((se.data->>'endgame_fuel_made')::numeric, 0) +
-          CASE WHEN (se.data->>'auton_climb')::boolean THEN 10 ELSE 0 END +
+          CASE WHEN (se.data->>'auton_climb')::boolean THEN 15 ELSE 0 END +
           CASE
             WHEN se.data->>'endgame_climb' = 'L3' THEN 30
             WHEN se.data->>'endgame_climb' = 'L2' THEN 20
@@ -55,7 +55,7 @@ class CreateTeamEventSummariesMaterializedView < ActiveRecord::Migration[8.1]
           COALESCE((se.data->>'auton_fuel_made')::numeric, 0) +
           COALESCE((se.data->>'teleop_fuel_made')::numeric, 0) +
           COALESCE((se.data->>'endgame_fuel_made')::numeric, 0) +
-          CASE WHEN (se.data->>'auton_climb')::boolean THEN 10 ELSE 0 END +
+          CASE WHEN (se.data->>'auton_climb')::boolean THEN 15 ELSE 0 END +
           CASE
             WHEN se.data->>'endgame_climb' = 'L3' THEN 30
             WHEN se.data->>'endgame_climb' = 'L2' THEN 20

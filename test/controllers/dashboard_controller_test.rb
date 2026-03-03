@@ -14,9 +14,10 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should get index without event selected" do
+  test "should redirect to events without event selected" do
     get root_path
-    assert_response :success
+    assert_response :redirect
+    assert_redirected_to events_path
   end
 
   test "should redirect to sign in when not authenticated" do
@@ -27,12 +28,13 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_user_session_path
   end
 
-  test "any role can access dashboard without event" do
+  test "any role redirects to events without event" do
     sign_out :user
     sign_in_as(users(:scout_user))
 
     get root_path
-    assert_response :success
+    assert_response :redirect
+    assert_redirected_to events_path
   end
 
   test "any role can access dashboard with event" do

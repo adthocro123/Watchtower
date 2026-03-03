@@ -127,10 +127,18 @@ class ScoutingEntriesController < ApplicationController
   end
 
   def scouting_entry_params
-    params.require(:scouting_entry).permit(
+    permitted = params.require(:scouting_entry).permit(
       :match_id, :frc_team_id, :notes, :photo_url, :client_uuid, :status,
       data: {}
     )
+
+    # The scouting form JS packs all scoring data into data[_json] as a JSON string.
+    # Parse it and replace the raw data hash so the JSONB column gets real values.
+    if permitted[:data].is_a?(ActionController::Parameters) && permitted[:data][:_json].present?
+      permitted[:data] = JSON.parse(permitted[:data][:_json])
+    end
+
+    permitted
   end
 
   # Returns a Hash mapping match_id to an array of team info for the team dropdown.

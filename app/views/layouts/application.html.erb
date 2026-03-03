@@ -32,7 +32,7 @@
     <%= turbo_stream_from "scouting_entries" if user_signed_in? %>
 
     <%# Top navigation %>
-    <%= render "shared/nav" %>
+    <%= render "shared/nav" unless devise_controller? %>
 
     <%# Offline / sync indicator %>
     <div data-controller="connectivity">
@@ -70,7 +70,7 @@
     </div>
 
     <%# Main content area %>
-    <main id="main-content" class="pt-16 pb-20 md:pb-6 min-h-screen" role="main">
+    <main id="main-content" class="<%= devise_controller? ? 'pb-6' : 'pt-16 pb-20 md:pb-6' %> min-h-screen" role="main">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <%= render "shared/flash" %>
         <%= yield %>
@@ -78,6 +78,6 @@
     </main>
 
     <%# Mobile bottom navigation %>
-    <%= render "shared/mobile_nav" %>
+    <%= render "shared/mobile_nav" unless devise_controller? %>
   </body>
 </html>

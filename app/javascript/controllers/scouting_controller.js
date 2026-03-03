@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // Scoring constants matching app/models/concerns/scoring.rb
 const FUEL_POINT_VALUE = 1
-const AUTON_CLIMB_POINTS = 10
+const AUTON_CLIMB_POINTS = 15
 const CLIMB_POINTS = { None: 0, L1: 10, L2: 20, L3: 30 }
 
 export default class extends Controller {
@@ -11,7 +11,7 @@ export default class extends Controller {
     "teleopMade", "teleopMissed",
     "endgameMade", "endgameMissed",
     "autonClimb", "endgameClimb",
-    "summaryAccuracy", "teleopAccuracy", "accuracyBar",
+    "summaryAccuracy",
     "totalPoints", "totalMade", "totalMissed",
     "dataField", "tabContent",
     "matchSelect", "teamSelect"
@@ -30,7 +30,6 @@ export default class extends Controller {
   }
 
   connect() {
-    this.autonActions = []
     this.updateDisplay()
     this.#initializeToggleState()
     this.#initializeTeamFilter()
@@ -44,11 +43,6 @@ export default class extends Controller {
     this.#haptic()
     this.#pulseElement(event.currentTarget)
     this.#bounceCounter(phase, "Made")
-
-    if (phase === "auton") {
-      this.#addAutonActionEntry("fuel_made")
-    }
-
     this.updateDisplay()
   }
 
@@ -58,11 +52,6 @@ export default class extends Controller {
     this.#haptic()
     this.#pulseElement(event.currentTarget)
     this.#bounceCounter(phase, "Missed")
-
-    if (phase === "auton") {
-      this.#addAutonActionEntry("fuel_missed")
-    }
-
     this.updateDisplay()
   }
 
@@ -86,11 +75,6 @@ export default class extends Controller {
     this.autonClimbValue = !this.autonClimbValue
     this.#haptic()
     this.#updateToggleVisual()
-
-    if (this.autonClimbValue) {
-      this.#addAutonActionEntry("climb")
-    }
-
     this.updateDisplay()
   }
 
@@ -124,38 +108,6 @@ export default class extends Controller {
     })
 
     this.updateDisplay()
-  }
-
-  // --- Auton actions timeline ---
-
-  addAutonAction(event) {
-    // Bug fix: use dataset.actionName, not dataset.action (which returns the Stimulus action string)
-    const actionName = event.currentTarget.dataset.actionName
-    this.#haptic()
-
-    // Toggle the pill visual state
-    const pill = event.currentTarget
-    const isActive = pill.classList.contains("bg-orange-500/15")
-
-    if (!isActive) {
-      // Activate the pill and add to data
-      this.#addAutonActionEntry(actionName)
-      pill.classList.remove("bg-gray-800", "border-gray-700", "text-gray-400")
-      pill.classList.add("bg-orange-500/15", "border-orange-500/50", "text-orange-400")
-
-      // Show checkmark
-      const checkIcon = pill.querySelector("[data-check-icon]")
-      if (checkIcon) checkIcon.classList.remove("hidden")
-    } else {
-      // Deactivate the pill and remove from data
-      this.#removeAutonActionEntry(actionName)
-      pill.classList.remove("bg-orange-500/15", "border-orange-500/50", "text-orange-400")
-      pill.classList.add("bg-gray-800", "border-gray-700", "text-gray-400")
-
-      // Hide checkmark
-      const checkIcon = pill.querySelector("[data-check-icon]")
-      if (checkIcon) checkIcon.classList.add("hidden")
-    }
   }
 
   // --- Tab switching ---
@@ -241,17 +193,18 @@ export default class extends Controller {
     this.#setTargetText("totalMissed", missed)
     this.#setTargetText("totalPoints", points)
 
-    // Update accuracy displays (separate targets for summary bar and teleop panel)
+    // Update accuracy display
     this.#setTargetText("summaryAccuracy", `${accuracy}%`)
-    this.#setTargetText("teleopAccuracy", `${accuracy}%`)
-
-    // Update accuracy bar width
-    if (this.hasAccuracyBarTarget) {
-      this.accuracyBarTarget.style.width = `${accuracy}%`
-    }
   }
 
   #buildDataPayload() {
+    // Read the auton_path from the field-map controller's hidden field
+    const pathField = this.element.querySelector("[data-auton-path-field]")
+    let autonPath = []
+    try {
+      autonPath = pathField ? JSON.parse(pathField.value) : []
+    } catch { /* empty */ }
+
     return {
       auton_fuel_made: this.autonMadeValue,
       auton_fuel_missed: this.autonMissedValue,
@@ -261,7 +214,7 @@ export default class extends Controller {
       endgame_fuel_missed: this.endgameMissedValue,
       auton_climb: this.autonClimbValue,
       endgame_climb: this.endgameClimbValue,
-      auton_actions: this.autonActions
+      auton_path: autonPath
     }
   }
 
@@ -344,20 +297,6 @@ export default class extends Controller {
   #decrementValue(phase, suffix) {
     const key = `${phase}${suffix}Value`
     this[key] = Math.max(0, this[key] - 1)
-  }
-
-  #addAutonActionEntry(action) {
-    this.autonActions.push({
-      action: action,
-      timestamp: Date.now()
-    })
-  }
-
-  #removeAutonActionEntry(action) {
-    const index = this.autonActions.findLastIndex(e => e.action === action)
-    if (index !== -1) {
-      this.autonActions.splice(index, 1)
-    }
   }
 
   #setTargetText(name, value) {

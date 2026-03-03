@@ -8,5 +8,5 @@ module Scoring
     "L2" => 20,
     "L3" => 30
   }.freeze
-  AUTON_CLIMB_POINTS = 10
+  AUTON_CLIMB_POINTS = 15
 end

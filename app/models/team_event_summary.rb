@@ -16,7 +16,7 @@ class TeamEventSummary < ApplicationRecord
   def self.refresh!
     connection.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY #{table_name}")
   rescue ActiveRecord::StatementInvalid => e
-    raise unless e.message.include?("has not been populated")
+    raise unless e.message.include?("has not been populated") || e.message.include?("is not populated")
 
     connection.execute("REFRESH MATERIALIZED VIEW #{table_name}")
   end
