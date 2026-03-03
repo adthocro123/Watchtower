@@ -70,6 +70,7 @@ production:
     database: lighthouse_production_queue
     migrations_paths: db/queue_migrate
     schema_dump: false
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 }.to_i + 5 %>
   cable:
     <<: *primary_production
     database: lighthouse_production_cable
