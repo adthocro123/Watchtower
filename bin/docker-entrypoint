@@ -2,15 +2,15 @@
 
 # If running the rails server then create or migrate existing database.
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  # Prepare the primary database (create + migrate)
+  # Prepare all databases: creates if missing, loads schema, runs migrations.
   ./bin/rails db:prepare
 
-  # Load schemas for Solid Queue, Cache, and Cable databases.
-  # These use standalone schema files, not migrations.
-  # "|| true" so it's safe to re-run when tables already exist.
-  ./bin/rails db:schema:load:queue 2>/dev/null || true
-  ./bin/rails db:schema:load:cache 2>/dev/null || true
-  ./bin/rails db:schema:load:cable 2>/dev/null || true
+  # Ensure Solid Queue/Cache/Cable schemas are loaded.
+  # db:prepare may not load schemas for secondary databases that use
+  # standalone schema files instead of migrations.
+  ./bin/rails db:schema:load:queue || true
+  ./bin/rails db:schema:load:cache || true
+  ./bin/rails db:schema:load:cable || true
 fi
 
 exec "${@}"
