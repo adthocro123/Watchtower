@@ -28,6 +28,9 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
     end
     ActiveRecord::Base.establish_connection(:primary)
   ' || true
+
+  # Ensure the materialized view is populated (required on first deploy).
+  ./bin/rails runner 'TeamEventSummary.refresh!' || true
 fi
 
 exec "${@}"
