@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Organization < ApplicationRecord
+  # Associations
+  belongs_to :creator, class_name: "User", optional: true
+
   has_many :memberships, dependent: :destroy
   has_many :users, through: :memberships
   has_many :events, dependent: :destroy

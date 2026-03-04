@@ -1,4 +1,12 @@
 # Users (Devise-authenticated)
+owner_user:
+  email: "admin@frc7790.com"
+  encrypted_password: "<%= Devise::Encryptor.digest(User, 'password123') %>"
+  first_name: "Owner"
+  last_name: "User"
+  team_number: 254
+  api_token: "owner_api_token_0123456789abcdef0123456789abcdef"
+
 admin_user:
   email: "admin@example.com"
   encrypted_password: "<%= Devise::Encryptor.digest(User, 'password123') %>"

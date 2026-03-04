@@ -3,7 +3,8 @@ class OrganizationsController < ApplicationController
   before_action :set_organization, only: %i[show edit update]
 
   def show
-    @members = @organization.memberships.includes(:user).order(:role)
+    @members = @organization.memberships.includes(:user).order(role: :desc, created_at: :asc).load
+    @can_manage = current_user.admin_of?(@organization)
   end
 
   def new
@@ -12,6 +13,7 @@ class OrganizationsController < ApplicationController
 
   def create
     @organization = Organization.new(organization_params)
+    @organization.creator = current_user
 
     if @organization.save
       # Make the creator the owner

@@ -1,4 +1,9 @@
 # Memberships (user <-> organization with role)
+owner_membership:
+  user: owner_user
+  organization: team_254
+  role: 4
+
 admin_membership:
   user: admin_user
   organization: team_254

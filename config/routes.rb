@@ -9,6 +9,13 @@ Rails.application.routes.draw do
       post :switch
       post :invite
     end
+
+    resources :memberships, only: %i[update destroy] do
+      collection do
+        post :bulk_update
+        post :bulk_destroy
+      end
+    end
   end
 
   resources :events do
