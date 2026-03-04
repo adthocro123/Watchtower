@@ -375,26 +375,29 @@ export default class extends Controller {
       this._prefetchBannerTimeout = null
     }
 
+    const completedCount = Number.isFinite(data.cached) ? data.cached : data.completed
+    const pct = data.total > 0 ? Math.round((completedCount / data.total) * 100) : 0
+
     this.#showBanner()
     if (this.hasStatusTarget) {
-      this.statusTarget.textContent = `Caching for offline: ${data.completed}/${data.total}`
+      this.statusTarget.textContent = `Caching for offline: ${completedCount}/${data.total}`
     }
     if (this.hasProgressTarget) {
       this.progressTarget.classList.remove("hidden")
     }
     if (this.hasProgressBarTarget) {
-      const pct = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0
       this.progressBarTarget.style.width = `${pct}%`
     }
     if (this.hasProgressTextTarget) {
-      this.progressTextTarget.textContent = `${data.completed} of ${data.total} pages`
+      this.progressTextTarget.textContent = `${completedCount} of ${data.total} pages`
     }
   }
 
   #handlePrefetchComplete(data) {
+    const completedCount = Number.isFinite(data.cached) ? data.cached : (Number.isFinite(data.completed) ? data.completed : data.total)
     this.#hideProgress()
     if (this.hasStatusTarget) {
-      this.statusTarget.textContent = `Offline ready (${data.total} pages cached)`
+      this.statusTarget.textContent = `Offline ready (${completedCount} pages cached)`
     }
     this.#showBanner()
     this._prefetchBannerTimeout = setTimeout(() => {

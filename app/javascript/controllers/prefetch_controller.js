@@ -242,8 +242,9 @@ export default class extends Controller {
     }
   }
 
-  #handlePrefetchProgress({ completed, total }) {
-    const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+  #handlePrefetchProgress({ completed, cached, total }) {
+    const completedCount = Number.isFinite(cached) ? cached : completed
+    const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0
 
     if (this.hasProgressContainerTarget) {
       this.progressContainerTarget.classList.remove("hidden")
@@ -252,7 +253,7 @@ export default class extends Controller {
       this.progressBarTarget.style.width = `${pct}%`
     }
     if (this.hasProgressTextTarget) {
-      this.progressTextTarget.textContent = `${completed} / ${total} pages`
+      this.progressTextTarget.textContent = `${completedCount} / ${total} pages`
     }
     if (this.hasCacheButtonTarget) {
       this.cacheButtonTarget.disabled = true
@@ -260,18 +261,21 @@ export default class extends Controller {
     }
   }
 
-  #handlePrefetchComplete({ total }) {
+  #handlePrefetchComplete({ total, cached, completed }) {
     this._caching = false
 
+    const completedCount = Number.isFinite(cached) ? cached : (Number.isFinite(completed) ? completed : total)
+    const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0
+
     if (this.hasProgressBarTarget) {
-      this.progressBarTarget.style.width = "100%"
+      this.progressBarTarget.style.width = `${pct}%`
     }
     if (this.hasProgressTextTarget) {
       if (this._manifestTruncated) {
         const totalCount = this._manifestTotal || total
-        this.progressTextTarget.textContent = `Cached ${total} of ${totalCount} pages`
+        this.progressTextTarget.textContent = `Cached ${completedCount} of ${totalCount} pages`
       } else {
-        this.progressTextTarget.textContent = `${total} pages cached`
+        this.progressTextTarget.textContent = `${completedCount} pages cached`
       }
     }
     if (this.hasCacheButtonTarget) {
