@@ -3,6 +3,10 @@ Rails.application.routes.draw do
 
   root "dashboard#index"
 
+  # PWA files served from app/views/pwa/*
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+
   # Organizations
   resources :organizations, only: %i[show new create edit update] do
     member do
@@ -22,6 +26,7 @@ Rails.application.routes.draw do
     member do
       post :select
       post :sync
+      get :offline_manifest
     end
   end
 
@@ -31,7 +36,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :pit_scouting_entries
+  resources :pit_scouting_entries do
+    collection do
+      post :sync
+    end
+  end
 
   resources :teams, only: [ :index, :show ]
 
