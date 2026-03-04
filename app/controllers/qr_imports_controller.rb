@@ -89,19 +89,26 @@ class QrImportsController < ApplicationController
         status:      entry_params[:status] || :submitted
       )
 
-      if entry.save
-        RefreshSummariesJob.perform_later(entry.event_id)
+      begin
+        if entry.save
+          RefreshSummariesJob.perform_later(entry.event_id)
 
-        render json: {
-          status: "created",
-          id: entry.id,
-          team_number: entry.frc_team.team_number,
-          match_name: entry.match&.display_name || "N/A"
-        }
-      else
+          render json: {
+            status: "created",
+            id: entry.id,
+            team_number: entry.frc_team.team_number,
+            match_name: entry.match&.display_name || "N/A"
+          }
+        else
+          render json: {
+            status: "error",
+            errors: entry.errors.full_messages
+          }, status: :unprocessable_entity
+        end
+      rescue ActiveRecord::RecordNotUnique
         render json: {
           status: "error",
-          errors: entry.errors.full_messages
+          errors: ["You already have an entry for Team #{entry.frc_team.team_number} in #{entry.match&.display_name || 'this match'}"]
         }, status: :unprocessable_entity
       end
     end
