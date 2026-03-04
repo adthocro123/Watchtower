@@ -14,22 +14,35 @@ class QrImportsController < ApplicationController
     authorize :qr_import, :import?
 
     entry_params = params.require(:entry).permit(
-      :client_uuid, :match_id, :frc_team_id, :event_id,
+      :client_uuid, :match_key, :team_number, :event_key,
       :notes, :status, :updated_at,
       data: {}
     )
 
     # Validate required fields
-    unless entry_params[:client_uuid].present? && entry_params[:event_id].present? && entry_params[:frc_team_id].present?
-      render json: { status: "error", errors: [ "Missing required fields (client_uuid, event_id, frc_team_id)" ] }, status: :unprocessable_entity
+    unless entry_params[:client_uuid].present? && entry_params[:event_key].present? && entry_params[:team_number].present?
+      render json: { status: "error", errors: [ "Missing required fields (client_uuid, event_key, team_number)" ] }, status: :unprocessable_entity
       return
     end
 
-    # Validate the event exists
-    event = Event.find_by(id: entry_params[:event_id])
+    # Look up the event by TBA key
+    event = Event.find_by(tba_key: entry_params[:event_key])
     unless event
-      render json: { status: "error", errors: [ "Invalid event" ] }, status: :unprocessable_entity
+      render json: { status: "error", errors: [ "Invalid event: #{entry_params[:event_key]}" ] }, status: :unprocessable_entity
       return
+    end
+
+    # Look up the team
+    team = FrcTeam.find_by(team_number: entry_params[:team_number])
+    unless team
+      render json: { status: "error", errors: [ "Invalid team: #{entry_params[:team_number]}" ] }, status: :unprocessable_entity
+      return
+    end
+
+    # Look up the match (optional)
+    match = nil
+    if entry_params[:match_key].present?
+      match = Match.find_by(event: event, tba_key: entry_params[:match_key])
     end
 
     existing = ScoutingEntry.find_by(client_uuid: entry_params[:client_uuid])
@@ -67,9 +80,9 @@ class QrImportsController < ApplicationController
       # New entry — create it, attributed to the current user (the importer)
       entry = ScoutingEntry.new(
         user:        current_user,
-        match_id:    entry_params[:match_id],
-        frc_team_id: entry_params[:frc_team_id],
-        event_id:    entry_params[:event_id],
+        match_id:    match&.id,
+        frc_team_id: team.id,
+        event_id:    event.id,
         data:        entry_params[:data] || {},
         notes:       entry_params[:notes],
         client_uuid: entry_params[:client_uuid],

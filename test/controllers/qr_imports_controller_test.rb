@@ -54,9 +54,9 @@ class QrImportsControllerTest < ActionDispatch::IntegrationTest
         params: {
           entry: {
             client_uuid: uuid,
-            match_id: @match.id,
-            frc_team_id: @team.id,
-            event_id: @event.id,
+            match_key: @match.tba_key,
+            team_number: @team.team_number,
+            event_key: @event.tba_key,
             notes: "Imported via QR",
             status: 0,
             updated_at: Time.current.iso8601,
@@ -89,9 +89,9 @@ class QrImportsControllerTest < ActionDispatch::IntegrationTest
         params: {
           entry: {
             client_uuid: existing.client_uuid,
-            match_id: existing.match_id,
-            frc_team_id: existing.frc_team_id,
-            event_id: existing.event_id,
+            match_key: existing.match.tba_key,
+            team_number: existing.frc_team.team_number,
+            event_key: existing.event.tba_key,
             notes: "Should not overwrite",
             status: 0,
             updated_at: old_time,
@@ -122,9 +122,9 @@ class QrImportsControllerTest < ActionDispatch::IntegrationTest
         params: {
           entry: {
             client_uuid: existing.client_uuid,
-            match_id: existing.match_id,
-            frc_team_id: existing.frc_team_id,
-            event_id: existing.event_id,
+            match_key: existing.match.tba_key,
+            team_number: existing.frc_team.team_number,
+            event_key: existing.event.tba_key,
             notes: "Updated via QR LWW",
             status: 0,
             updated_at: future_time,
@@ -155,8 +155,8 @@ class QrImportsControllerTest < ActionDispatch::IntegrationTest
         params: {
           entry: {
             client_uuid: "scout-attempt-#{SecureRandom.hex(4)}",
-            frc_team_id: @team.id,
-            event_id: @event.id,
+            team_number: @team.team_number,
+            event_key: @event.tba_key,
             data: {}
           }
         },
@@ -197,8 +197,8 @@ class QrImportsControllerTest < ActionDispatch::IntegrationTest
       params: {
         entry: {
           client_uuid: "invalid-event-#{SecureRandom.hex(4)}",
-          frc_team_id: @team.id,
-          event_id: 999999,
+          team_number: @team.team_number,
+          event_key: "invalid_key",
           data: {}
         }
       },

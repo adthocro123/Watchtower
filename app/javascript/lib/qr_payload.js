@@ -19,9 +19,9 @@ const MAX_PATH_POINTS = 150
 const KEY_MAP = {
   v:   "_version",
   u:   "client_uuid",
-  m:   "match_id",
-  t:   "frc_team_id",
-  e:   "event_id",
+  mk:  "match_key",
+  tn:  "team_number",
+  ek:  "event_key",
   n:   "notes",
   s:   "status",
   ts:  "updated_at",
@@ -46,7 +46,7 @@ const REVERSE_KEY_MAP = Object.fromEntries(
  * Encode a scouting entry object into a compact JSON string for QR code.
  *
  * @param {Object} entry - The scouting entry data. Expected shape:
- *   { client_uuid, match_id, frc_team_id, event_id, notes, status,
+ *   { client_uuid, match_key, team_number, event_key, notes, status,
  *     updated_at, data: { auton_fuel_made, ..., auton_path } }
  * @returns {string} Compact JSON string
  */
@@ -56,9 +56,9 @@ export function encode(entry) {
   const payload = {
     v:   1,
     u:   entry.client_uuid,
-    m:   entry.match_id,
-    t:   entry.frc_team_id,
-    e:   entry.event_id,
+    mk:  entry.match_key,
+    tn:  entry.team_number,
+    ek:  entry.event_key,
     s:   entry.status ?? 0,
     ts:  entry.updated_at || new Date().toISOString(),
   }
@@ -104,9 +104,9 @@ export function decode(jsonString) {
 
   const entry = {
     client_uuid: payload.u,
-    match_id:    payload.m,
-    frc_team_id: payload.t,
-    event_id:    payload.e,
+    match_key:   payload.mk,
+    team_number: payload.tn,
+    event_key:   payload.ek,
     notes:       payload.n || "",
     status:      payload.s ?? 0,
     updated_at:  payload.ts,

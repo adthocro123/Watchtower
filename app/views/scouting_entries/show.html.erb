@@ -213,9 +213,9 @@
       <%
         qr_entry = {
           client_uuid: @scouting_entry.client_uuid,
-          match_id:    @scouting_entry.match_id,
-          frc_team_id: @scouting_entry.frc_team_id,
-          event_id:    @scouting_entry.event_id,
+          match_key:   @scouting_entry.match&.tba_key,
+          team_number: @scouting_entry.frc_team.team_number,
+          event_key:   @scouting_entry.event.tba_key,
           notes:       @scouting_entry.notes,
           status:      ScoutingEntry.statuses[@scouting_entry.status],
           updated_at:  @scouting_entry.updated_at&.iso8601,

@@ -41,8 +41,8 @@ export default class extends Controller {
         width: 280,
         margin: 2,
         color: {
-          dark: "#FFFFFF",
-          light: "#00000000", // transparent background
+          dark: "#000000",
+          light: "#FFFFFF",
         },
         errorCorrectionLevel: byteSize > 2000 ? "L" : "M",
       })
