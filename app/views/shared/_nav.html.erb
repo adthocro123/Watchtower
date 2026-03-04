@@ -15,7 +15,7 @@
       <% if user_signed_in? && current_event %>
         <div class="hidden sm:flex items-center gap-2 text-sm">
           <% if current_organization %>
-            <span class="text-gray-500 truncate max-w-24"><%= current_organization.name %></span>
+            <%= link_to current_organization.name, organization_path(current_organization), class: "text-gray-500 truncate max-w-24 hover:text-gray-200 transition-colors duration-150 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" %>
             <span class="text-gray-700">/</span>
           <% end %>
           <span class="text-orange-400 font-semibold truncate max-w-48"><%= current_event.name %></span>

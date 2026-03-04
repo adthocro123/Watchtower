@@ -96,10 +96,14 @@ export default class extends Controller {
 
       db.close()
 
-      // Skip if prefetched within the last hour
+      // Re-prefetch if the cache version changed (e.g. after a SW update that
+      // purged the old cache) even if the timestamp is still fresh.
+      const currentCacheVersion = document.querySelector('meta[name="sw-cache-version"]')?.content
+
       if (existing?.prefetched_at) {
+        const versionMatch = existing.cache_version === currentCacheVersion
         const elapsed = Date.now() - new Date(existing.prefetched_at).getTime()
-        if (elapsed < 60 * 60 * 1000) return
+        if (versionMatch && elapsed < 60 * 60 * 1000) return
       }
 
       await this.#prefetch()
@@ -169,7 +173,7 @@ export default class extends Controller {
     // Last resort: cache directly via the Cache API.
     // Read cache version from meta tag (set by Rails from config.sw_cache_version)
     try {
-      const cacheName = document.querySelector('meta[name="sw-cache-version"]')?.content || "lighthouse-v4"
+      const cacheName = document.querySelector('meta[name="sw-cache-version"]')?.content || "lighthouse-v6"
       const cache = await caches.open(cacheName)
       const concurrency = 3
       const total = urls.length
@@ -211,6 +215,7 @@ export default class extends Controller {
 
       const record = existing || { event_id: this.eventIdValue }
       record.prefetched_at = new Date().toISOString()
+      record.cache_version = document.querySelector('meta[name="sw-cache-version"]')?.content
       store.put(record)
 
       await new Promise((resolve, reject) => {
