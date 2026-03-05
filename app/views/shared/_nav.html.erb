@@ -14,8 +14,11 @@
       <%# Current Event + Org %>
       <% if user_signed_in? && current_event %>
         <div class="hidden sm:flex items-center gap-2 text-sm">
-          <%= link_to events_path, class: "text-orange-400 font-semibold tracking-wide hover:text-orange-300 transition-colors duration-150 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" do %>
+          <%= link_to events_path, class: "inline-flex items-center gap-1.5 text-orange-400 font-semibold tracking-wide hover:text-orange-300 transition-colors duration-150 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500", title: "Switch event" do %>
             <%= current_event.tba_key&.upcase || current_event.name %>
+            <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+            </svg>
           <% end %>
         </div>
       <% end %>
