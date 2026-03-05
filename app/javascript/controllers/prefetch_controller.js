@@ -177,26 +177,29 @@ export default class extends Controller {
       const cache = await caches.open(cacheName)
       const concurrency = 3
       const total = urls.length
-      let completed = 0
+      let cached = 0
 
       for (let i = 0; i < urls.length; i += concurrency) {
         const batch = urls.slice(i, i + concurrency)
         await Promise.allSettled(
           batch.map(async (url) => {
             try {
-              const response = await fetch(url, { credentials: "same-origin" })
+              const response = await fetch(url, {
+                credentials: "same-origin",
+                headers: { "Accept": "text/html" }
+              })
               if (response.ok) {
                 if (response.redirected && response.url.includes("/users/sign_in")) return
-                await cache.put(url, response)
+                await cache.put(this.#htmlCacheKey(url), response.clone())
+                cached++
               }
             } catch { /* skip */ }
-            completed++
           })
         )
         // Update progress locally since SW messages won't fire
-        this.#handlePrefetchProgress({ completed, total })
+        this.#handlePrefetchProgress({ cached, total })
       }
-      this.#handlePrefetchComplete({ total })
+      this.#handlePrefetchComplete({ cached, total })
     } catch { /* Cache API not available */ }
   }
 
@@ -242,8 +245,9 @@ export default class extends Controller {
     }
   }
 
-  #handlePrefetchProgress({ completed, total }) {
-    const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+  #handlePrefetchProgress({ completed, cached, total }) {
+    const completedCount = Number.isFinite(cached) ? cached : completed
+    const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0
 
     if (this.hasProgressContainerTarget) {
       this.progressContainerTarget.classList.remove("hidden")
@@ -252,7 +256,7 @@ export default class extends Controller {
       this.progressBarTarget.style.width = `${pct}%`
     }
     if (this.hasProgressTextTarget) {
-      this.progressTextTarget.textContent = `${completed} / ${total} pages`
+      this.progressTextTarget.textContent = `${completedCount} / ${total} pages`
     }
     if (this.hasCacheButtonTarget) {
       this.cacheButtonTarget.disabled = true
@@ -260,18 +264,21 @@ export default class extends Controller {
     }
   }
 
-  #handlePrefetchComplete({ total }) {
+  #handlePrefetchComplete({ total, cached, completed }) {
     this._caching = false
 
+    const completedCount = Number.isFinite(cached) ? cached : (Number.isFinite(completed) ? completed : total)
+    const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0
+
     if (this.hasProgressBarTarget) {
-      this.progressBarTarget.style.width = "100%"
+      this.progressBarTarget.style.width = `${pct}%`
     }
     if (this.hasProgressTextTarget) {
       if (this._manifestTruncated) {
         const totalCount = this._manifestTotal || total
-        this.progressTextTarget.textContent = `Cached ${total} of ${totalCount} pages`
+        this.progressTextTarget.textContent = `Cached ${completedCount} of ${totalCount} pages`
       } else {
-        this.progressTextTarget.textContent = `${total} pages cached`
+        this.progressTextTarget.textContent = `${completedCount} pages cached`
       }
     }
     if (this.hasCacheButtonTarget) {
@@ -324,6 +331,15 @@ export default class extends Controller {
       this.cacheButtonTarget.disabled = false
       this.cacheButtonTarget.textContent = "Cache for Offline"
     }
+  }
+
+  #htmlCacheKey(url) {
+    return new Request(url, {
+      headers: {
+        "Accept": "text/html",
+        "Turbo-Visit": "true"
+      }
+    })
   }
 
 }

@@ -7,20 +7,7 @@ Rails.application.routes.draw do
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Organizations
-  resources :organizations, only: %i[show new create edit update] do
-    member do
-      post :switch
-      post :invite
-    end
-
-    resources :memberships, only: %i[update destroy] do
-      collection do
-        post :bulk_update
-        post :bulk_destroy
-      end
-    end
-  end
+  resources :users, except: [ :show ]
 
   resources :events do
     member do
@@ -33,6 +20,14 @@ Rails.application.routes.draw do
   resources :scouting_entries do
     collection do
       post :sync
+    end
+  end
+
+  # QR code offline import (analysts/admins scan scout QR codes)
+  resources :qr_imports, only: [] do
+    collection do
+      get :scanner
+      post :import
     end
   end
 

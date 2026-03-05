@@ -1,7 +1,10 @@
 const CACHE_VERSION = "<%= Rails.application.config.sw_cache_version %>"
 
-const PRECACHE_URLS = [
-  "/",
+const PRECACHE_PAGES = [
+  "/"
+]
+
+const PRECACHE_ASSETS = [
   "/manifest.json",
   "/icon.png",
   "/icon.svg",
@@ -37,14 +40,7 @@ let csrfToken = null
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => {
-      // Use addAll but don't fail install if some assets aren't available yet
-      return cache.addAll(PRECACHE_URLS).catch((err) => {
-        console.warn("[Lighthouse SW] Some precache URLs failed:", err)
-        // Fall back to caching what we can
-        return Promise.allSettled(
-          PRECACHE_URLS.map((url) => cache.add(url).catch(() => null))
-        )
-      })
+      return precacheShell(cache)
     }).then(() => self.skipWaiting())
   )
 })
@@ -109,19 +105,21 @@ self.addEventListener("fetch", (event) => {
 // --- Caching strategies ---
 
 async function networkFirst(request) {
+  const acceptsHTML = (request.headers.get("Accept") || "").includes("text/html")
+  const cacheKey = acceptsHTML ? htmlCacheKey(request) : request
+
   try {
     const response = await fetch(request)
     if (response.ok) {
       const cache = await caches.open(CACHE_VERSION)
-      cache.put(request, response.clone())
+      cache.put(cacheKey, response.clone())
     }
     return response
   } catch {
-    const cached = await caches.match(request)
+    const cached = await caches.match(cacheKey)
     if (cached) return cached
 
     // Provide a contextual fallback based on request type
-    const acceptsHTML = (request.headers.get("Accept") || "").includes("text/html")
     if (acceptsHTML) return offlineFallback()
 
     return new Response(JSON.stringify({ error: "offline" }), {
@@ -195,40 +193,46 @@ function offlineFallback() {
 
 async function prefetchUrls(urls) {
   const cache = await caches.open(CACHE_VERSION)
-  let completed = 0
+  let cached = 0
   const total = urls.length
   const concurrency = 3
 
   // Process in batches of `concurrency`
   for (let i = 0; i < urls.length; i += concurrency) {
     const batch = urls.slice(i, i + concurrency)
-    const results = await Promise.allSettled(
+    await Promise.allSettled(
       batch.map(async (url) => {
         try {
-          const response = await fetch(url, { credentials: "same-origin" })
+          const response = await fetch(url, {
+            credentials: "same-origin",
+            headers: { "Accept": "text/html" }
+          })
           if (response.ok) {
             // Guard against auth redirects: avoid caching the sign-in page
             const finalUrl = response.url || ""
             if (response.redirected && finalUrl.includes("/users/sign_in")) return
-            await cache.put(url, response)
+            await cache.put(htmlCacheKey(url), response.clone())
+            cached++
           }
         } catch {
           // Silently skip failed prefetches
         }
-        completed++
       })
     )
 
     // Notify clients of progress
     await notifyClients({
       type: "prefetch-progress",
-      completed,
+      cached,
+      completed: cached,
       total
     })
   }
 
   await notifyClients({
     type: "prefetch-complete",
+    cached,
+    completed: cached,
     total
   })
 }
@@ -449,6 +453,46 @@ function openDB() {
 }
 
 // --- Helpers ---
+
+async function precacheShell(cache) {
+  // Use addAll but don't fail install if some assets aren't available yet
+  try {
+    await cache.addAll(PRECACHE_ASSETS)
+  } catch (err) {
+    console.warn("[Lighthouse SW] Some precache assets failed:", err)
+    await Promise.allSettled(
+      PRECACHE_ASSETS.map((url) => cache.add(url).catch(() => null))
+    )
+  }
+
+  await Promise.allSettled(
+    PRECACHE_PAGES.map(async (url) => {
+      try {
+        const response = await fetch(url, {
+          credentials: "same-origin",
+          headers: { "Accept": "text/html" }
+        })
+        if (!response.ok) return
+
+        // Guard against auth redirects: avoid caching the sign-in page
+        const finalUrl = response.url || ""
+        if (response.redirected && finalUrl.includes("/users/sign_in")) return
+
+        await cache.put(htmlCacheKey(url), response)
+      } catch {
+        // Skip failed precache pages
+      }
+    })
+  )
+}
+
+function htmlCacheKey(requestOrUrl) {
+  const url = typeof requestOrUrl === "string" ? requestOrUrl : requestOrUrl.url
+  const headers = new Headers()
+  headers.set("Accept", "text/html")
+  headers.set("Turbo-Visit", "true")
+  return new Request(url, { headers })
+}
 
 function isStaticAsset(pathname) {
   return /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)(\?.*)?$/.test(pathname) ||
