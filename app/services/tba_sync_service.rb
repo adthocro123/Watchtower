@@ -94,7 +94,9 @@ class TbaSyncService
       comp_level: data["comp_level"],
       set_number: data["set_number"],
       match_number: data["match_number"],
-      scheduled_time: parse_time(data["time"])
+      scheduled_time: parse_time(data["time"]),
+      red_score: data.dig("alliances", "red", "score"),
+      blue_score: data.dig("alliances", "blue", "score")
     )
     match.save!
 

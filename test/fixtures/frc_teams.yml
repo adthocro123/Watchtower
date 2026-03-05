@@ -34,3 +34,12 @@ team_118:
   country: "USA"
   website: "https://www.118robonauts.org"
   rookie_year: 1997
+
+team_971:
+  team_number: 971
+  nickname: "Spartan Robotics"
+  city: "Mountain View"
+  state_prov: "CA"
+  country: "USA"
+  website: "https://www.team971.com"
+  rookie_year: 2002

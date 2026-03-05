@@ -9,6 +9,8 @@ class Match < ApplicationRecord
   # Scopes
   COMP_LEVEL_ORDER = { "qm" => 0, "qf" => 1, "sf" => 2, "f" => 3 }.freeze
 
+  scope :with_scores, -> { where.not(red_score: nil, blue_score: nil) }
+
   scope :ordered, -> {
     order(
       Arel.sql(

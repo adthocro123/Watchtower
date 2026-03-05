@@ -152,15 +152,20 @@
     </div>
   </div>
 
-  <%# Scout Activity (Last 7 Days) %>
-  <% if @scout_activity.any? %>
+  <%# Scout Accuracy Leaderboard %>
+  <% if @scout_accuracy.any? %>
     <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6 mb-6">
-      <h2 class="text-lg font-semibold text-white mb-4">Scout Activity <span class="text-sm text-gray-500 font-normal">(Last 7 Days)</span></h2>
+      <h2 class="text-lg font-semibold text-white mb-4">Scout Accuracy Leaderboard</h2>
       <div class="space-y-2">
-        <% @scout_activity.sort_by { |_, count| -count }.first(8).each do |user_id, count| %>
-          <% scout = @top_scouts[user_id] %>
+        <% best_error = @scout_accuracy.filter_map { |r| r[:average_error] }.min %>
+        <% worst_error = @scout_accuracy.filter_map { |r| r[:average_error] }.max %>
+        <% @scout_accuracy.first(10).each_with_index do |result, idx| %>
+          <% scout = result[:user] %>
           <% next unless scout %>
           <div class="flex items-center gap-3">
+            <div class="w-6 text-center">
+              <span class="text-xs font-bold text-gray-500 font-mono"><%= idx + 1 %></span>
+            </div>
             <div class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
               <span class="text-xs font-bold text-orange-400"><%= scout.first_name[0] %><%= scout.last_name[0] %></span>
             </div>
@@ -168,11 +173,20 @@
               <p class="text-sm font-medium text-white truncate"><%= scout.full_name %></p>
             </div>
             <div class="flex items-center gap-2">
-              <div class="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
-                <% max_count = @scout_activity.values.max %>
-                <div class="h-full bg-orange-500 rounded-full" style="width: <%= (count.to_f / max_count * 100).round(0) %>%"></div>
-              </div>
-              <span class="text-sm font-mono text-gray-400 w-8 text-right"><%= count %></span>
+              <% if result[:average_error] %>
+                <% bar_pct = worst_error > 0 ? ((1.0 - (result[:average_error] / worst_error)) * 100).round(0) : 100 %>
+                <% bar_pct = [bar_pct, 10].max %>
+                <div class="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full <%= result[:average_error] <= 5 ? 'bg-green-500' : result[:average_error] <= 15 ? 'bg-amber-500' : 'bg-red-500' %>" style="width: <%= bar_pct %>%"></div>
+                </div>
+                <span class="text-sm font-mono text-gray-400 w-24 text-right">~<%= result[:average_error] %> pts off</span>
+              <% else %>
+                <div class="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-gray-700 rounded-full" style="width: 0%"></div>
+                </div>
+                <span class="text-sm font-mono text-gray-500 w-24 text-right">No data</span>
+              <% end %>
+              <span class="text-xs font-mono text-gray-600 w-6 text-right"><%= result[:total_entry_count] %></span>
             </div>
           </div>
         <% end %>

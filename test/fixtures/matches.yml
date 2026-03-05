@@ -6,6 +6,8 @@ qm1:
   set_number: 1
   tba_key: "2026cmp_qm1"
   scheduled_time: "2026-04-15 10:00:00"
+  red_score: 180
+  blue_score: 120
 
 qm2:
   event: championship
@@ -14,3 +16,5 @@ qm2:
   set_number: 1
   tba_key: "2026cmp_qm2"
   scheduled_time: "2026-04-15 10:10:00"
+  red_score: 150
+  blue_score: 200

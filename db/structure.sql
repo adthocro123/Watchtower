@@ -1,7 +1,6 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
--- SET transaction_timeout = 0; -- Requires PostgreSQL 17+
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -353,7 +352,9 @@ CREATE TABLE public.matches (
     scheduled_time timestamp(6) without time zone,
     set_number integer,
     tba_key character varying,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    red_score integer,
+    blue_score integer
 );
 
 
@@ -657,58 +658,58 @@ ALTER SEQUENCE public.statbotics_caches_id_seq OWNED BY public.statbotics_caches
 --
 
 CREATE MATERIALIZED VIEW public.team_event_summaries AS
- SELECT event_id,
-    frc_team_id,
+ SELECT scouting_entries.event_id,
+    scouting_entries.frc_team_id,
     count(*) AS matches_scouted,
-    avg(((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric))) AS avg_fuel_made,
-    avg(((COALESCE(((data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))) AS avg_fuel_missed,
+    avg(((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric))) AS avg_fuel_made,
+    avg(((COALESCE(((scouting_entries.data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))) AS avg_fuel_missed,
         CASE
-            WHEN (sum((((((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))) > (0)::numeric) THEN round(((sum(((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric))) * 100.0) / NULLIF(sum((((((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))), (0)::numeric)), 1)
+            WHEN (sum((((((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))) > (0)::numeric) THEN round(((sum(((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric))) * 100.0) / NULLIF(sum((((((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))), (0)::numeric)), 1)
             ELSE (0)::numeric
         END AS fuel_accuracy_pct,
     avg((
         CASE
-            WHEN ((data ->> 'auton_climb'::text))::boolean THEN 15
+            WHEN ((scouting_entries.data ->> 'auton_climb'::text))::boolean THEN 15
             ELSE 0
         END +
-        CASE (data ->> 'endgame_climb'::text)
+        CASE (scouting_entries.data ->> 'endgame_climb'::text)
             WHEN 'L3'::text THEN 30
             WHEN 'L2'::text THEN 20
             WHEN 'L1'::text THEN 10
             ELSE 0
         END)) AS avg_climb_points,
-    avg(((((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + (
+    avg(((((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + (
         CASE
-            WHEN ((data ->> 'auton_climb'::text))::boolean THEN 15
+            WHEN ((scouting_entries.data ->> 'auton_climb'::text))::boolean THEN 15
             ELSE 0
         END)::numeric) + (
-        CASE (data ->> 'endgame_climb'::text)
+        CASE (scouting_entries.data ->> 'endgame_climb'::text)
             WHEN 'L3'::text THEN 30
             WHEN 'L2'::text THEN 20
             WHEN 'L1'::text THEN 10
             ELSE 0
         END)::numeric)) AS avg_total_points,
-    stddev_samp(((((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + (
+    stddev_samp(((((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + (
         CASE
-            WHEN ((data ->> 'auton_climb'::text))::boolean THEN 15
+            WHEN ((scouting_entries.data ->> 'auton_climb'::text))::boolean THEN 15
             ELSE 0
         END)::numeric) + (
-        CASE (data ->> 'endgame_climb'::text)
+        CASE (scouting_entries.data ->> 'endgame_climb'::text)
             WHEN 'L3'::text THEN 30
             WHEN 'L2'::text THEN 20
             WHEN 'L1'::text THEN 10
             ELSE 0
         END)::numeric)) AS stddev_total_points,
-    avg((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + (
+    avg((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + (
         CASE
-            WHEN ((data ->> 'auton_climb'::text))::boolean THEN 15
+            WHEN ((scouting_entries.data ->> 'auton_climb'::text))::boolean THEN 15
             ELSE 0
         END)::numeric)) AS avg_auton_points,
-    avg(NULLIF(COALESCE(((data ->> 'defense_rating'::text))::numeric, (0)::numeric), (0)::numeric)) AS avg_defense_rating,
-    max(updated_at) AS last_updated
+    avg(NULLIF(COALESCE(((scouting_entries.data ->> 'defense_rating'::text))::numeric, (0)::numeric), (0)::numeric)) AS avg_defense_rating,
+    max(scouting_entries.updated_at) AS last_updated
    FROM public.scouting_entries
-  WHERE (status = 0)
-  GROUP BY event_id, frc_team_id
+  WHERE (scouting_entries.status = 0)
+  GROUP BY scouting_entries.event_id, scouting_entries.frc_team_id
   WITH NO DATA;
 
 
@@ -1635,6 +1636,7 @@ ALTER TABLE ONLY public.predictions
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260305000000'),
 ('20260304154510'),
 ('20260304150742'),
 ('20260304043658'),
