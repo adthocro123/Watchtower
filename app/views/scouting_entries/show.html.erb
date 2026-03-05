@@ -17,7 +17,7 @@
         when 'rejected' then 'badge-red'
         else 'badge-gray'
         end %>">
-      <%= @scouting_entry.status&.capitalize || 'Draft' %>
+      <%= @scouting_entry.flagged? ? "Inaccurate" : (@scouting_entry.status&.capitalize || 'Draft') %>
     </span>
   </div>
 
@@ -45,6 +45,52 @@
       </div>
     </div>
   </div>
+
+  <%# Entry Accuracy — compare scouted alliance total vs actual match score %>
+  <% if @actual_score %>
+    <div class="scout-card p-4 mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider font-medium">Entry Accuracy</h3>
+        <span class="text-xs text-gray-600 ml-auto capitalize"><%= @alliance_color %> Alliance</span>
+      </div>
+      <% if @alliance_complete %>
+        <div class="grid grid-cols-3 gap-4 text-center mb-3">
+          <div>
+            <p class="text-2xl font-bold text-white font-mono"><%= @scouted_total %></p>
+            <p class="text-xs text-gray-400">Scouted Total</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-white font-mono"><%= @actual_score %></p>
+            <p class="text-xs text-gray-400">Actual Score</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold font-mono <%= @alliance_error <= 10 ? 'text-emerald-400' : @alliance_error <= 20 ? 'text-amber-400' : 'text-red-400' %>">
+              <%= @alliance_error %>
+            </p>
+            <p class="text-xs text-gray-400">Pts Off</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-gray-500">
+          <span>This entry contributed <span class="text-white font-mono font-medium"><%= @this_entry_points %></span> of the <span class="text-white font-mono font-medium"><%= @scouted_total %></span> scouted points</span>
+        </div>
+      <% else %>
+        <div class="grid grid-cols-2 gap-4 text-center mb-3">
+          <div>
+            <p class="text-2xl font-bold text-white font-mono"><%= @this_entry_points %></p>
+            <p class="text-xs text-gray-400">This Entry</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-white font-mono"><%= @actual_score %></p>
+            <p class="text-xs text-gray-400">Actual Score</p>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500">Full alliance comparison unavailable — not all 3 teams on this alliance were scouted in this match.</p>
+      <% end %>
+    </div>
+  <% end %>
 
   <%# Scoring Summary - Phase cards with color-coded borders %>
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">

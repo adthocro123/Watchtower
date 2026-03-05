@@ -63,12 +63,6 @@ class EventTest < ActiveSupport::TestCase
     assert_includes event.predictions, predictions(:prediction_qm1)
   end
 
-  test "has many reports" do
-    event = events(:championship)
-    assert_respond_to event, :reports
-    assert_includes event.reports, reports(:team_summary_report)
-  end
-
   test "has many simulation_results" do
     event = events(:championship)
     assert_respond_to event, :simulation_results

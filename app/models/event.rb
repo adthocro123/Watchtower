@@ -6,7 +6,6 @@ class Event < ApplicationRecord
   has_many :scouting_entries, dependent: :destroy
   has_many :pit_scouting_entries, dependent: :destroy
   has_many :predictions, dependent: :destroy
-  has_many :reports, dependent: :destroy
   has_many :simulation_results, dependent: :destroy
   has_many :data_conflicts, dependent: :destroy
   has_many :pick_lists, dependent: :destroy

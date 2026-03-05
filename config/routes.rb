@@ -59,13 +59,6 @@ Rails.application.routes.draw do
     end
   end
 
-  # Custom Reports
-  resources :reports do
-    member do
-      post :generate
-    end
-  end
-
   # Exports
   scope :exports, controller: :exports do
     get :csv, as: :exports_csv

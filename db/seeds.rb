@@ -342,30 +342,6 @@ PickList.find_or_create_by!(event: event, user: admin, name: "Houston Regional D
 end
 puts "  Pick list: created with #{ranked_teams.size} teams"
 
-# --- Reports ---
-Report.find_or_create_by!(event: event, user: admin, name: "Top Scorers") do |r|
-  
-  r.config = {
-    "metrics" => [ "avg_total_points", "fuel_accuracy_pct", "avg_climb_points" ],
-    "filters" => { "min_matches" => 2 },
-    "sort_by" => "avg_total_points",
-    "sort_dir" => "desc",
-    "chart_type" => "bar"
-  }
-end
-
-Report.find_or_create_by!(event: event, user: admin, name: "Accuracy Report") do |r|
-  
-  r.config = {
-    "metrics" => [ "fuel_accuracy_pct", "avg_fuel_made", "avg_fuel_missed" ],
-    "filters" => { "min_matches" => 2 },
-    "sort_by" => "fuel_accuracy_pct",
-    "sort_dir" => "desc",
-    "chart_type" => "bar"
-  }
-end
-puts "  Reports: 2 created"
-
 # --- Data conflicts (simulate a disagreement between scouts) ---
 conflict_match = matches.first
 conflict_team = teams[0] # team 254
@@ -408,5 +384,4 @@ puts "  Pit scouting entries: #{PitScoutingEntry.count}"
 puts "  Team summaries: #{TeamEventSummary.count}"
 puts "  Predictions: #{Prediction.count}"
 puts "  Pick lists: #{PickList.count}"
-puts "  Reports: #{Report.count}"
 puts "  Data conflicts: #{DataConflict.count}"

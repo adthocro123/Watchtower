@@ -19,6 +19,9 @@ class RefreshSummariesJob < ApplicationJob
       Rails.logger.info("[RefreshSummariesJob] Found #{new_conflicts.size} new conflicts for event #{event.name}")
     end
 
+    # Auto-flag entries with high alliance error vs actual match scores
+    AccuracyFlaggingService.new(event).call
+
     Rails.logger.info("[RefreshSummariesJob] Refreshed summaries for event #{event.name}")
   end
 end

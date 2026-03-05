@@ -1,6 +1,7 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -489,42 +490,6 @@ ALTER SEQUENCE public.predictions_id_seq OWNED BY public.predictions.id;
 
 
 --
--- Name: reports; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.reports (
-    id bigint NOT NULL,
-    cached_data jsonb DEFAULT '{}'::jsonb,
-    config jsonb DEFAULT '{}'::jsonb NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    event_id bigint NOT NULL,
-    last_generated_at timestamp(6) without time zone,
-    name character varying NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    user_id bigint NOT NULL
-);
-
-
---
--- Name: reports_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.reports_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.reports_id_seq OWNED BY public.reports.id;
-
-
---
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -658,58 +623,58 @@ ALTER SEQUENCE public.statbotics_caches_id_seq OWNED BY public.statbotics_caches
 --
 
 CREATE MATERIALIZED VIEW public.team_event_summaries AS
- SELECT scouting_entries.event_id,
-    scouting_entries.frc_team_id,
+ SELECT event_id,
+    frc_team_id,
     count(*) AS matches_scouted,
-    avg(((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric))) AS avg_fuel_made,
-    avg(((COALESCE(((scouting_entries.data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))) AS avg_fuel_missed,
+    avg(((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric))) AS avg_fuel_made,
+    avg(((COALESCE(((data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))) AS avg_fuel_missed,
         CASE
-            WHEN (sum((((((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))) > (0)::numeric) THEN round(((sum(((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric))) * 100.0) / NULLIF(sum((((((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))), (0)::numeric)), 1)
+            WHEN (sum((((((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))) > (0)::numeric) THEN round(((sum(((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric))) * 100.0) / NULLIF(sum((((((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'auton_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'teleop_fuel_missed'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_missed'::text))::numeric, (0)::numeric))), (0)::numeric)), 1)
             ELSE (0)::numeric
         END AS fuel_accuracy_pct,
     avg((
         CASE
-            WHEN ((scouting_entries.data ->> 'auton_climb'::text))::boolean THEN 15
+            WHEN ((data ->> 'auton_climb'::text))::boolean THEN 15
             ELSE 0
         END +
-        CASE (scouting_entries.data ->> 'endgame_climb'::text)
+        CASE (data ->> 'endgame_climb'::text)
             WHEN 'L3'::text THEN 30
             WHEN 'L2'::text THEN 20
             WHEN 'L1'::text THEN 10
             ELSE 0
         END)) AS avg_climb_points,
-    avg(((((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + (
+    avg(((((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + (
         CASE
-            WHEN ((scouting_entries.data ->> 'auton_climb'::text))::boolean THEN 15
+            WHEN ((data ->> 'auton_climb'::text))::boolean THEN 15
             ELSE 0
         END)::numeric) + (
-        CASE (scouting_entries.data ->> 'endgame_climb'::text)
+        CASE (data ->> 'endgame_climb'::text)
             WHEN 'L3'::text THEN 30
             WHEN 'L2'::text THEN 20
             WHEN 'L1'::text THEN 10
             ELSE 0
         END)::numeric)) AS avg_total_points,
-    stddev_samp(((((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((scouting_entries.data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((scouting_entries.data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + (
+    stddev_samp(((((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + COALESCE(((data ->> 'teleop_fuel_made'::text))::numeric, (0)::numeric)) + COALESCE(((data ->> 'endgame_fuel_made'::text))::numeric, (0)::numeric)) + (
         CASE
-            WHEN ((scouting_entries.data ->> 'auton_climb'::text))::boolean THEN 15
+            WHEN ((data ->> 'auton_climb'::text))::boolean THEN 15
             ELSE 0
         END)::numeric) + (
-        CASE (scouting_entries.data ->> 'endgame_climb'::text)
+        CASE (data ->> 'endgame_climb'::text)
             WHEN 'L3'::text THEN 30
             WHEN 'L2'::text THEN 20
             WHEN 'L1'::text THEN 10
             ELSE 0
         END)::numeric)) AS stddev_total_points,
-    avg((COALESCE(((scouting_entries.data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + (
+    avg((COALESCE(((data ->> 'auton_fuel_made'::text))::numeric, (0)::numeric) + (
         CASE
-            WHEN ((scouting_entries.data ->> 'auton_climb'::text))::boolean THEN 15
+            WHEN ((data ->> 'auton_climb'::text))::boolean THEN 15
             ELSE 0
         END)::numeric)) AS avg_auton_points,
-    avg(NULLIF(COALESCE(((scouting_entries.data ->> 'defense_rating'::text))::numeric, (0)::numeric), (0)::numeric)) AS avg_defense_rating,
-    max(scouting_entries.updated_at) AS last_updated
+    avg(NULLIF(COALESCE(((data ->> 'defense_rating'::text))::numeric, (0)::numeric), (0)::numeric)) AS avg_defense_rating,
+    max(updated_at) AS last_updated
    FROM public.scouting_entries
-  WHERE (scouting_entries.status = 0)
-  GROUP BY scouting_entries.event_id, scouting_entries.frc_team_id
+  WHERE (status = 0)
+  GROUP BY event_id, frc_team_id
   WITH NO DATA;
 
 
@@ -844,13 +809,6 @@ ALTER TABLE ONLY public.pit_scouting_entries ALTER COLUMN id SET DEFAULT nextval
 --
 
 ALTER TABLE ONLY public.predictions ALTER COLUMN id SET DEFAULT nextval('public.predictions_id_seq'::regclass);
-
-
---
--- Name: reports id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reports ALTER COLUMN id SET DEFAULT nextval('public.reports_id_seq'::regclass);
 
 
 --
@@ -991,14 +949,6 @@ ALTER TABLE ONLY public.pit_scouting_entries
 
 ALTER TABLE ONLY public.predictions
     ADD CONSTRAINT predictions_pkey PRIMARY KEY (id);
-
-
---
--- Name: reports reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT reports_pkey PRIMARY KEY (id);
 
 
 --
@@ -1280,20 +1230,6 @@ CREATE INDEX index_predictions_on_match_id ON public.predictions USING btree (ma
 
 
 --
--- Name: index_reports_on_event_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_reports_on_event_id ON public.reports USING btree (event_id);
-
-
---
--- Name: index_reports_on_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_reports_on_user_id ON public.reports USING btree (user_id);
-
-
---
 -- Name: index_scouting_entries_on_client_uuid; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1411,14 +1347,6 @@ CREATE UNIQUE INDEX index_users_on_username ON public.users USING btree (usernam
 
 ALTER TABLE ONLY public.simulation_results
     ADD CONSTRAINT fk_rails_1306ef9ab8 FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: reports fk_rails_13bc38ca00; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT fk_rails_13bc38ca00 FOREIGN KEY (event_id) REFERENCES public.events(id);
 
 
 --
@@ -1598,14 +1526,6 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 
 --
--- Name: reports fk_rails_c7699d537d; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT fk_rails_c7699d537d FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
 -- Name: data_conflicts fk_rails_cf41e98d82; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1636,6 +1556,7 @@ ALTER TABLE ONLY public.predictions
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260305183933'),
 ('20260305000000'),
 ('20260304154510'),
 ('20260304150742'),

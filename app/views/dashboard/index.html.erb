@@ -177,7 +177,7 @@
                 <% bar_pct = worst_error > 0 ? ((1.0 - (result[:average_error] / worst_error)) * 100).round(0) : 100 %>
                 <% bar_pct = [bar_pct, 10].max %>
                 <div class="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
-                  <div class="h-full rounded-full <%= result[:average_error] <= 5 ? 'bg-green-500' : result[:average_error] <= 15 ? 'bg-amber-500' : 'bg-red-500' %>" style="width: <%= bar_pct %>%"></div>
+                  <div class="h-full rounded-full <%= result[:average_error] <= 10 ? 'bg-green-500' : result[:average_error] <= 20 ? 'bg-amber-500' : 'bg-red-500' %>" style="width: <%= bar_pct %>%"></div>
                 </div>
                 <span class="text-sm font-mono text-gray-400 w-24 text-right">~<%= result[:average_error] %> pts off</span>
               <% else %>

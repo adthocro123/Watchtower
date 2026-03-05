@@ -53,7 +53,7 @@
         <span class="text-[10px] font-medium">Teams</span>
       <% end %>
 
-      <%# More (Picks/Predict/Simulate/Reports/Exports) %>
+      <%# More (Picks/Predict/Simulate/Exports) %>
       <details class="relative" id="mobile-more-menu">
         <summary class="flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-all duration-150 text-gray-500 hover:text-gray-300 cursor-pointer list-none" aria-label="More options">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +67,6 @@
             <%= link_to "Simulator", new_match_simulator_path, class: "block px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 transition-colors duration-150" %>
             <%= link_to "Compare", team_comparison_path, class: "block px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 transition-colors duration-150" %>
             <%= link_to "Pick Lists", pick_lists_path, class: "block px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 transition-colors duration-150" %>
-            <%= link_to "Reports", reports_path, class: "block px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 transition-colors duration-150" %>
           <% end %>
           <%= link_to "Entries", scouting_entries_path, class: "block px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 transition-colors duration-150" %>
           <% if current_user.admin? %>
