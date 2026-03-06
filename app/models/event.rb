@@ -1,4 +1,6 @@
 class Event < ApplicationRecord
+  QUALIFICATION_MATCH_COUNT = 80
+
   # Associations
   has_many :matches, dependent: :destroy
   has_many :event_teams, dependent: :destroy
@@ -21,4 +23,15 @@ class Event < ApplicationRecord
     today = Date.current
     where("start_date <= ? AND end_date >= ?", today, today)
   }
+
+  def ensure_qualification_matches!
+    with_lock do
+      existing_numbers = matches.where(comp_level: "qm", match_number: 1..QUALIFICATION_MATCH_COUNT).pluck(:match_number)
+      missing_numbers = (1..QUALIFICATION_MATCH_COUNT).to_a - existing_numbers
+
+      missing_numbers.each do |match_number|
+        matches.create!(comp_level: "qm", set_number: 1, match_number: match_number)
+      end
+    end
+  end
 end

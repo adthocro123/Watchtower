@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class TbaSyncService
-  def initialize(event_key)
+  def initialize(event_key, client: TbaClient.new)
     @event_key = event_key
-    @client = TbaClient.new
+    @client = client
   end
 
   # Runs all syncs in order: event, teams, matches.
@@ -13,6 +13,7 @@ class TbaSyncService
 
     sync_teams!
     sync_matches!
+    event.ensure_qualification_matches!
     event
   end
 
@@ -88,11 +89,21 @@ class TbaSyncService
   private
 
   def sync_single_match(event, data)
-    match = Match.find_or_initialize_by(tba_key: data["key"])
+    set_number = normalized_set_number(data)
+    match = Match.find_by(tba_key: data["key"]) ||
+            event.matches.find_by(
+              comp_level: data["comp_level"],
+              set_number: set_number,
+              match_number: data["match_number"],
+              tba_key: nil
+            ) ||
+            Match.new
+
     match.assign_attributes(
+      tba_key: data["key"],
       event: event,
       comp_level: data["comp_level"],
-      set_number: data["set_number"],
+      set_number: set_number,
       match_number: data["match_number"],
       scheduled_time: parse_time(data["time"]),
       red_score: data.dig("alliances", "red", "score"),
@@ -136,5 +147,11 @@ class TbaSyncService
   def parse_time(epoch)
     return nil unless epoch
     Time.at(epoch).utc
+  end
+
+  def normalized_set_number(data)
+    return 1 if data["comp_level"] == "qm" && data["set_number"].blank?
+
+    data["set_number"]
   end
 end

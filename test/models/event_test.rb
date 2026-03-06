@@ -97,6 +97,34 @@ class EventTest < ActiveSupport::TestCase
     end
   end
 
+  # --- Qualification schedule scaffolding ---
+
+  test "ensure_qualification_matches! creates qm1 through qm80" do
+    event = Event.create!(name: "No Sync Event", year: 2026)
+
+    assert_difference("event.matches.where(comp_level: 'qm').count", 80) do
+      event.ensure_qualification_matches!
+    end
+
+    assert_equal(
+      (1..Event::QUALIFICATION_MATCH_COUNT).to_a,
+      event.matches.where(comp_level: "qm").order(:match_number).pluck(:match_number)
+    )
+  end
+
+  test "ensure_qualification_matches! does not duplicate existing qualification matches" do
+    event = Event.create!(name: "Partial Event", year: 2026)
+    event.matches.create!(comp_level: "qm", set_number: 1, match_number: 1)
+
+    assert_difference("event.matches.where(comp_level: 'qm').count", Event::QUALIFICATION_MATCH_COUNT - 1) do
+      event.ensure_qualification_matches!
+    end
+
+    assert_no_difference("event.matches.where(comp_level: 'qm').count") do
+      event.ensure_qualification_matches!
+    end
+  end
+
   # --- Dependent destroy ---
 
   test "destroying event destroys dependent matches" do

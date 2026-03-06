@@ -1,5 +1,6 @@
 class ScoutingAssignmentsController < ApplicationController
   before_action :require_event!
+  before_action :ensure_qualification_matches!, only: :index
   before_action :set_matches, only: :index
 
   def index
@@ -25,6 +26,7 @@ class ScoutingAssignmentsController < ApplicationController
 
   def bulk_create
     authorize ScoutingAssignment, :bulk_create?
+    current_event.ensure_qualification_matches!
 
     range = assignment_range
     if range.nil?
@@ -48,6 +50,7 @@ class ScoutingAssignmentsController < ApplicationController
 
   def bulk_destroy
     authorize ScoutingAssignment, :bulk_destroy?
+    current_event.ensure_qualification_matches!
 
     range = assignment_range
     if range.nil?
@@ -79,7 +82,13 @@ class ScoutingAssignmentsController < ApplicationController
   private
 
   def set_matches
-    @matches = current_event.matches.where(comp_level: "qm").ordered
+    @matches = current_event.matches
+                           .where(comp_level: "qm", match_number: 1..Event::QUALIFICATION_MATCH_COUNT)
+                           .ordered
+  end
+
+  def ensure_qualification_matches!
+    current_event.ensure_qualification_matches!
   end
 
   def bulk_params
