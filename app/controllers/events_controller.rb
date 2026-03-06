@@ -99,6 +99,7 @@ class EventsController < ApplicationController
     urls = [
       "/",
       scouting_entries_path,
+      scouting_assignments_path,
       new_scouting_entry_path,
       pit_scouting_entries_path,
       new_pit_scouting_entry_path,

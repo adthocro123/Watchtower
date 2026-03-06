@@ -10,6 +10,7 @@
     <meta name="theme-color" content="#030712">
     <meta name="sw-cache-version" content="<%= Rails.application.config.sw_cache_version %>">
     <meta name="sign-in-url" content="<%= new_user_session_path %>">
+    <meta name="vapid-public-key" content="<%= ENV.fetch('VAPID_PUBLIC_KEY', '') %>">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 

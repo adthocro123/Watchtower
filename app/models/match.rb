@@ -4,6 +4,7 @@ class Match < ApplicationRecord
   has_many :match_alliances, dependent: :destroy
   has_many :frc_teams, through: :match_alliances
   has_many :scouting_entries, dependent: :destroy
+  has_many :scouting_assignments, dependent: :destroy
   has_many :predictions, dependent: :destroy
 
   # Scopes

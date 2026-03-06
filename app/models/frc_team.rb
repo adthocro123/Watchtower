@@ -5,6 +5,7 @@ class FrcTeam < ApplicationRecord
   has_many :match_alliances, dependent: :destroy
   has_many :matches, through: :match_alliances
   has_many :scouting_entries, dependent: :destroy
+  has_many :scouting_assignments, dependent: :nullify
   has_many :pit_scouting_entries, dependent: :destroy
   has_many :predictions, through: :matches
   has_many :statbotics_caches, class_name: "StatboticsCache", dependent: :destroy

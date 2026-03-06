@@ -1,0 +1,15 @@
+admin_qm1:
+  event: championship
+  user: admin_user
+  match: qm1
+  notes: "Lead lane"
+
+admin_qm2:
+  event: championship
+  user: admin_user
+  match: qm2
+
+scout_qm2:
+  event: championship
+  user: scout_user
+  match: qm2

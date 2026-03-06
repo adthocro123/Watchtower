@@ -94,6 +94,9 @@
   .badge-blue {
     @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30;
   }
+  .badge-emerald {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30;
+  }
   .badge-gray {
     @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/30;
   }

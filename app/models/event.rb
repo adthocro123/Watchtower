@@ -4,6 +4,7 @@ class Event < ApplicationRecord
   has_many :event_teams, dependent: :destroy
   has_many :frc_teams, through: :event_teams
   has_many :scouting_entries, dependent: :destroy
+  has_many :scouting_assignments, dependent: :destroy
   has_many :pit_scouting_entries, dependent: :destroy
   has_many :predictions, dependent: :destroy
   has_many :simulation_results, dependent: :destroy

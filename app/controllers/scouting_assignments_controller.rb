@@ -1,0 +1,114 @@
+class ScoutingAssignmentsController < ApplicationController
+  before_action :require_event!
+  before_action :set_matches, only: :index
+
+  def index
+    authorize ScoutingAssignment
+
+    scoped_assignments = policy_scope(ScoutingAssignment)
+                           .where(event: current_event)
+                           .includes(:user, :match)
+
+    if current_user.admin?
+      @users = User.order(:last_name, :first_name)
+      @assignments = scoped_assignments
+    else
+      @users = [ current_user ]
+      @assignments = scoped_assignments.where(user_id: current_user.id)
+    end
+
+    @assignment_lookup = @assignments.index_by { |assignment| [ assignment.user_id, assignment.match_id ] }
+    @coverage_counts = ScoutingAssignment.where(event: current_event, match_id: @matches.map(&:id)).group(:match_id).count
+    @match_position = @matches.each_with_index.to_h
+    @current_match_index = latest_completed_match_index(@matches) || 0
+  end
+
+  def bulk_create
+    authorize ScoutingAssignment, :bulk_create?
+
+    range = assignment_range
+    if range.nil?
+      redirect_to scouting_assignments_path, alert: "Provide a valid match range."
+      return
+    end
+
+    created = ScoutingAssignments::BulkAssignService.new(
+      event: current_event,
+      user_ids: bulk_params[:user_ids],
+      start_match_number: range.first,
+      end_match_number: range.last,
+      notes: bulk_params[:notes]
+    ).call
+
+    redirect_to scouting_assignments_path,
+                notice: "Saved #{created} assignment#{"s" unless created == 1}."
+  rescue StandardError => e
+    redirect_to scouting_assignments_path, alert: "Failed to save assignments: #{e.message}"
+  end
+
+  def bulk_destroy
+    authorize ScoutingAssignment, :bulk_destroy?
+
+    range = assignment_range
+    if range.nil?
+      redirect_to scouting_assignments_path, alert: "Provide a valid match range."
+      return
+    end
+
+    removed = ScoutingAssignments::BulkClearService.new(
+      event: current_event,
+      user_ids: bulk_params[:user_ids],
+      start_match_number: range.first,
+      end_match_number: range.last
+    ).call
+
+    redirect_to scouting_assignments_path,
+                notice: "Cleared #{removed} assignment#{"s" unless removed == 1}."
+  rescue StandardError => e
+    redirect_to scouting_assignments_path, alert: "Failed to clear assignments: #{e.message}"
+  end
+
+  def destroy
+    assignment = ScoutingAssignment.where(event: current_event).find(params[:id])
+    authorize assignment
+
+    assignment.destroy!
+    redirect_to scouting_assignments_path, notice: "Assignment removed.", status: :see_other
+  end
+
+  private
+
+  def set_matches
+    @matches = current_event.matches.where(comp_level: "qm").ordered
+  end
+
+  def bulk_params
+    allowed = params.permit(:start_match_number, :end_match_number, :match_count, :notes, user_ids: [])
+    allowed[:user_ids] ||= []
+    allowed
+  end
+
+  def assignment_range
+    start_match = bulk_params[:start_match_number].to_i
+    return nil if start_match <= 0
+
+    if bulk_params[:end_match_number].present?
+      end_match = bulk_params[:end_match_number].to_i
+    elsif bulk_params[:match_count].present?
+      count = bulk_params[:match_count].to_i
+      return nil if count <= 0
+
+      end_match = start_match + count - 1
+    else
+      end_match = start_match
+    end
+
+    return nil if end_match <= 0
+
+    [ start_match, end_match ].minmax
+  end
+
+  def latest_completed_match_index(matches)
+    matches.rindex { |match| match.red_score.present? && match.blue_score.present? }
+  end
+end

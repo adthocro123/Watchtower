@@ -1,0 +1,7 @@
+admin_phone:
+  user: admin_user
+  endpoint: "https://push.example.com/subscriptions/admin-1"
+  p256dh: "BEluQmV0d2VlblRlc3RLZXlGb3JQdXNo"
+  auth: "cHVzaEF1dGhUb2tlbg"
+  user_agent: "iOS Safari"
+  last_seen_at: <%= 1.hour.ago %>

@@ -10,6 +10,8 @@ class User < ApplicationRecord
   has_many :pit_scouting_entries, dependent: :destroy
   has_many :pick_lists, dependent: :destroy
   has_many :simulation_results, dependent: :destroy
+  has_many :scouting_assignments, dependent: :destroy
+  has_many :web_push_subscriptions, dependent: :destroy
 
   # Validations
   validates :first_name, presence: true

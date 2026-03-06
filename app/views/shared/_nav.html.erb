@@ -60,6 +60,15 @@
                   class: "nav-link #{request.path.include?('pick_list') ? 'nav-link-active' : 'nav-link-inactive'}",
                   "aria-current": (request.path.include?('pick_list') ? "page" : nil) %>
               <% end %>
+              <% if current_user.admin? %>
+                <%= link_to "Schedule", scouting_assignments_path,
+                  class: "nav-link #{request.path.include?('scouting_assignments') ? 'nav-link-active' : 'nav-link-inactive'}",
+                  "aria-current": (request.path.include?('scouting_assignments') ? "page" : nil) %>
+              <% else %>
+                <%= link_to "My Schedule", scouting_assignments_path,
+                  class: "nav-link #{request.path.include?('scouting_assignments') ? 'nav-link-active' : 'nav-link-inactive'}",
+                  "aria-current": (request.path.include?('scouting_assignments') ? "page" : nil) %>
+              <% end %>
               <%= link_to "Entries", scouting_entries_path,
                 class: "nav-link #{is_entries_active ? 'nav-link-active' : 'nav-link-inactive'}",
                 "aria-current": (is_entries_active ? "page" : nil) %>

@@ -38,6 +38,14 @@
     }
 
     mobile_nav_items << {
+      label: "Schedule",
+      path: scouting_assignments_path,
+      active: request.path.include?("scouting_assignments"),
+      aria_label: "Scouting schedule",
+      icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+    }
+
+    mobile_nav_items << {
       label: "Entries",
       path: scouting_entries_path,
       active: request.path == scouting_entries_path || (request.path.match?(/scouting_entries\/\d+$/) && !request.path.include?("pit_scouting")),

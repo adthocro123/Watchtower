@@ -9,6 +9,13 @@ Rails.application.routes.draw do
 
   resources :users, except: [ :show ]
 
+  resources :web_push_subscriptions, only: [ :create ] do
+    collection do
+      post :test_notification
+      delete :unsubscribe
+    end
+  end
+
   resources :events do
     member do
       post :select
@@ -20,6 +27,13 @@ Rails.application.routes.draw do
   resources :scouting_entries do
     collection do
       post :sync
+    end
+  end
+
+  resources :scouting_assignments, only: [ :index, :destroy ] do
+    collection do
+      post :bulk_create
+      post :bulk_destroy
     end
   end
 
