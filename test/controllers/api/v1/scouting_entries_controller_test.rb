@@ -34,6 +34,28 @@ class Api::V1::ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     assert json["id"].present?
   end
 
+  test "should create replay scouting entry with valid token" do
+    assert_difference("ScoutingEntry.count", 1) do
+      post api_v1_scouting_entries_path, params: {
+        scouting_entry: {
+          match_id: matches(:qm4).id,
+          frc_team_id: frc_teams(:team_1678).id,
+          event_id: @event.id,
+          scouting_mode: "replay",
+          video_key: "pastmatchtwo",
+          video_type: "youtube",
+          client_uuid: "api-replay-#{SecureRandom.hex(8)}",
+          data: { teleop_fuel_made: 9 }
+        }
+      }, headers: { "Authorization" => "Bearer #{@api_token}" }, as: :json
+    end
+
+    assert_response :created
+    entry = ScoutingEntry.find(JSON.parse(response.body)["id"])
+    assert entry.replay?
+    assert_equal "pastmatchtwo", entry.video_key
+  end
+
   test "should return unauthorized without token" do
     post api_v1_scouting_entries_path, params: {
       scouting_entry: {
@@ -164,12 +186,13 @@ class Api::V1::ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
 
   test "scout user can create via api" do
     scout = users(:scout_user)
+    api_team = frc_teams(:team_4414)
 
     assert_difference("ScoutingEntry.count", 1) do
       post api_v1_scouting_entries_path, params: {
         scouting_entry: {
           match_id: @match.id,
-          frc_team_id: @team.id,
+          frc_team_id: api_team.id,
           event_id: @event.id,
           client_uuid: "scout-api-#{SecureRandom.hex(8)}",
           data: { auton_fuel_made: 2 }

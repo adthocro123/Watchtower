@@ -39,7 +39,7 @@ class MatchTest < ActiveSupport::TestCase
   end
 
   test "COMP_LEVEL_ORDER constant" do
-    expected = { "qm" => 0, "qf" => 1, "sf" => 2, "f" => 3 }
+    expected = { "qm" => 0, "ef" => 1, "qf" => 2, "sf" => 3, "f" => 4 }
     assert_equal expected, Match::COMP_LEVEL_ORDER
   end
 
@@ -65,9 +65,57 @@ class MatchTest < ActiveSupport::TestCase
     assert_equal "F3", match.display_name
   end
 
+  test "display_name for eighthfinal match" do
+    match = Match.new(comp_level: "ef", set_number: 1, match_number: 2)
+    assert_equal "EF1-2", match.display_name
+  end
+
   test "display_name for unknown comp_level" do
-    match = Match.new(comp_level: "ef", match_number: 1)
-    assert_equal "EF1", match.display_name
+    match = Match.new(comp_level: "abc", match_number: 1)
+    assert_equal "ABC1", match.display_name
+  end
+
+  test "best_known_time prefers actual then predicted then scheduled" do
+    match = matches(:qm1)
+    assert_equal match.actual_time, match.best_known_time
+
+    match.actual_time = nil
+    assert_equal match.predicted_time, match.best_known_time
+
+    match.predicted_time = nil
+    assert_equal match.scheduled_time, match.best_known_time
+  end
+
+  test "occurred true when post_result_time exists" do
+    assert matches(:qm1).occurred?(Time.zone.parse("2026-04-15 10:04:00"))
+  end
+
+  test "upcoming true when predicted time is in future" do
+    assert matches(:qm2).upcoming?(Time.zone.parse("2026-04-15 10:04:00"))
+  end
+
+  test "occurred falls back to scheduled time when no actual or result time" do
+    assert matches(:qm2).occurred?(Time.zone.parse("2099-04-15 10:20:00"))
+  end
+
+  test "youtube_videos parses raw keys and timestamps" do
+    videos = matches(:qm1).youtube_videos
+
+    assert_equal 2, videos.length
+    assert_equal "pastmatchone", videos.first["video_id"]
+    assert_equal 15, videos.first["start_seconds"]
+  end
+
+  test "default_replay_video returns first youtube video" do
+    assert_equal "pastmatchone?t=15", matches(:qm1).default_replay_video["raw_key"]
+  end
+
+  test "video urls include start offsets" do
+    match = matches(:qm1)
+    video = match.default_replay_video
+
+    assert_equal "https://www.youtube.com/embed/pastmatchone?start=15", match.video_embed_url(video)
+    assert_equal "https://www.youtube.com/watch?v=pastmatchone&t=15s", match.video_watch_url(video)
   end
 
   # --- Dependent destroy ---

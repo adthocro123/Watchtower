@@ -43,3 +43,12 @@ team_971:
   country: "USA"
   website: "https://www.team971.com"
   rookie_year: 2002
+
+team_6328:
+  team_number: 6328
+  nickname: "Mechanical Advantage"
+  city: "Littleton"
+  state_prov: "MA"
+  country: "USA"
+  website: "https://www.team6328.org"
+  rookie_year: 2016

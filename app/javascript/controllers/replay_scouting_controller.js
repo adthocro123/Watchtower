@@ -1,0 +1,229 @@
+import { Controller } from "@hotwired/stimulus"
+
+const FUEL_POINT_VALUE = 1
+const AUTON_CLIMB_POINTS = 15
+const CLIMB_POINTS = { None: 0, L1: 10, L2: 20, L3: 30 }
+
+export default class extends Controller {
+  static targets = [
+    "autonMade", "autonMissed",
+    "teleopMade", "teleopMissed",
+    "endgameMade", "endgameMissed",
+    "autonClimb",
+    "summaryAccuracy",
+    "totalPoints", "totalMade", "totalMissed",
+    "dataField", "tabContent", "questionPanel"
+  ]
+
+  static values = {
+    autonMade: { type: Number, default: 0 },
+    autonMissed: { type: Number, default: 0 },
+    teleopMade: { type: Number, default: 0 },
+    teleopMissed: { type: Number, default: 0 },
+    endgameMade: { type: Number, default: 0 },
+    endgameMissed: { type: Number, default: 0 },
+    autonClimb: { type: Boolean, default: false },
+    endgameClimb: { type: String, default: "None" },
+    defenseRating: { type: Number, default: 0 }
+  }
+
+  connect() {
+    this.updateDisplay()
+    this.#updateToggleVisual()
+  }
+
+  incrementMade(event) {
+    const phase = event.currentTarget.dataset.phase
+    this.#incrementValue(phase, "Made")
+    this.updateDisplay()
+  }
+
+  incrementMissed(event) {
+    const phase = event.currentTarget.dataset.phase
+    this.#incrementValue(phase, "Missed")
+    this.updateDisplay()
+  }
+
+  undoMade(event) {
+    const phase = event.currentTarget.dataset.phase
+    this.#decrementValue(phase, "Made")
+    this.updateDisplay()
+  }
+
+  undoMissed(event) {
+    const phase = event.currentTarget.dataset.phase
+    this.#decrementValue(phase, "Missed")
+    this.updateDisplay()
+  }
+
+  switchTab(event) {
+    const tab = event.currentTarget.dataset.tab
+
+    this.element.querySelectorAll("[data-tab-button]").forEach(button => {
+      const active = button.dataset.tab === tab
+      button.setAttribute("aria-selected", active)
+      button.classList.toggle("bg-orange-500/15", active)
+      button.classList.toggle("text-orange-400", active)
+      button.classList.toggle("shadow-sm", active)
+      button.classList.toggle("text-gray-400", !active)
+      button.classList.toggle("hover:text-gray-300", !active)
+      button.classList.toggle("hover:bg-gray-800/70", !active)
+    })
+
+    this.tabContentTargets.forEach(panel => {
+      panel.classList.toggle("hidden", panel.dataset.tabPanel !== tab)
+    })
+  }
+
+  showQuestions() {
+    this.questionPanelTarget.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  showOverlay() {
+    this.element.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  toggleAutonClimb() {
+    this.autonClimbValue = !this.autonClimbValue
+    this.#updateToggleVisual()
+    this.updateDisplay()
+  }
+
+  selectClimb(event) {
+    const level = event.currentTarget.dataset.level
+    this.endgameClimbValue = level
+
+    this.element.querySelectorAll("[data-climb-card]").forEach(card => {
+      const selected = card.dataset.level === level
+      card.classList.toggle("ring-2", selected)
+      card.classList.toggle("ring-orange-400", selected)
+      card.classList.toggle("bg-orange-500/15", selected)
+      card.classList.toggle("border-orange-500", selected)
+      card.classList.toggle("shadow-lg", selected)
+      card.classList.toggle("shadow-orange-500/10", selected)
+      card.classList.toggle("bg-gray-900", !selected)
+      card.classList.toggle("border-gray-800", !selected)
+
+      const label = card.querySelector("p:first-child")
+      if (label) {
+        label.classList.toggle("text-orange-400", selected)
+        label.classList.toggle("text-gray-300", !selected)
+      }
+    })
+
+    this.updateDisplay()
+  }
+
+  selectDefense(event) {
+    const rating = parseInt(event.currentTarget.dataset.rating, 10)
+    this.defenseRatingValue = rating
+
+    this.element.querySelectorAll("[data-defense-card]").forEach(card => {
+      const selected = parseInt(card.dataset.rating, 10) === rating
+      card.classList.toggle("ring-2", selected)
+      card.classList.toggle("ring-orange-400", selected)
+      card.classList.toggle("bg-orange-500/15", selected)
+      card.classList.toggle("border-orange-500", selected)
+      card.classList.toggle("shadow-lg", selected)
+      card.classList.toggle("shadow-orange-500/10", selected)
+      card.classList.toggle("bg-gray-900", !selected)
+      card.classList.toggle("border-gray-800", !selected)
+
+      const label = card.querySelector("p:first-child")
+      if (label) {
+        label.classList.toggle("text-orange-400", selected)
+        label.classList.toggle("text-gray-300", !selected)
+      }
+    })
+  }
+
+  submitForm() {
+    if (this.hasDataFieldTarget) {
+      this.dataFieldTarget.value = JSON.stringify(this.#buildDataPayload())
+    }
+  }
+
+  updateDisplay() {
+    const made = this.autonMadeValue + this.teleopMadeValue + this.endgameMadeValue
+    const missed = this.autonMissedValue + this.teleopMissedValue + this.endgameMissedValue
+    const total = made + missed
+    const accuracy = total > 0 ? ((made / total) * 100).toFixed(1) : "0.0"
+
+    let points = made * FUEL_POINT_VALUE
+    if (this.autonClimbValue) points += AUTON_CLIMB_POINTS
+    points += CLIMB_POINTS[this.endgameClimbValue] || 0
+
+    this.#setTargetText("autonMade", this.autonMadeValue)
+    this.#setTargetText("autonMissed", this.autonMissedValue)
+    this.#setTargetText("teleopMade", this.teleopMadeValue)
+    this.#setTargetText("teleopMissed", this.teleopMissedValue)
+    this.#setTargetText("endgameMade", this.endgameMadeValue)
+    this.#setTargetText("endgameMissed", this.endgameMissedValue)
+    this.#setTargetText("totalMade", made)
+    this.#setTargetText("totalMissed", missed)
+    this.#setTargetText("summaryAccuracy", `${accuracy}%`)
+    this.#setTargetText("totalPoints", points)
+  }
+
+  #buildDataPayload() {
+    const pathField = this.element.querySelector("[data-auton-path-field]")
+    let autonPath = []
+    try {
+      autonPath = pathField ? JSON.parse(pathField.value) : []
+    } catch {
+      autonPath = []
+    }
+
+    return {
+      auton_fuel_made: this.autonMadeValue,
+      auton_fuel_missed: this.autonMissedValue,
+      teleop_fuel_made: this.teleopMadeValue,
+      teleop_fuel_missed: this.teleopMissedValue,
+      endgame_fuel_made: this.endgameMadeValue,
+      endgame_fuel_missed: this.endgameMissedValue,
+      auton_climb: this.autonClimbValue,
+      endgame_climb: this.endgameClimbValue,
+      defense_rating: this.defenseRatingValue,
+      auton_path: autonPath
+    }
+  }
+
+  #incrementValue(phase, suffix) {
+    const key = `${phase}${suffix}Value`
+    this[key] = this[key] + 1
+  }
+
+  #decrementValue(phase, suffix) {
+    const key = `${phase}${suffix}Value`
+    this[key] = Math.max(0, this[key] - 1)
+  }
+
+  #setTargetText(name, value) {
+    const capitalized = name.charAt(0).toUpperCase() + name.slice(1)
+    if (this[`has${capitalized}Target`]) {
+      this[`${name}Target`].textContent = value
+    }
+  }
+
+  #updateToggleVisual() {
+    if (!this.hasAutonClimbTarget) return
+
+    const track = this.autonClimbTarget.querySelector("[data-toggle-track]")
+    const knob = this.autonClimbTarget.querySelector("[data-toggle-knob]")
+
+    this.autonClimbTarget.setAttribute("aria-checked", this.autonClimbValue)
+    this.autonClimbTarget.classList.toggle("ring-2", this.autonClimbValue)
+    this.autonClimbTarget.classList.toggle("ring-orange-400", this.autonClimbValue)
+    this.autonClimbTarget.classList.toggle("bg-orange-900/50", this.autonClimbValue)
+
+    if (track) {
+      track.classList.toggle("bg-orange-500", this.autonClimbValue)
+      track.classList.toggle("bg-gray-700", !this.autonClimbValue)
+    }
+
+    if (knob) {
+      knob.style.left = this.autonClimbValue ? "auto" : "4px"
+      knob.style.right = this.autonClimbValue ? "4px" : "auto"
+    }
+  }
+}

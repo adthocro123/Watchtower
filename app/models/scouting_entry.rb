@@ -9,9 +9,11 @@ class ScoutingEntry < ApplicationRecord
 
   # Enums
   enum :status, { submitted: 0, flagged: 1, rejected: 2 }
+  enum :scouting_mode, { live: 0, replay: 1 }
 
   # Validations
   validates :client_uuid, uniqueness: true, allow_nil: true
+  validates :match_id, uniqueness: { scope: %i[event_id frc_team_id user_id scouting_mode] }, allow_nil: true
 
   # Callbacks
   after_create_commit -> {
@@ -91,8 +93,15 @@ class ScoutingEntry < ApplicationRecord
       notes: params[:notes],
       photo_url: params[:photo_url],
       client_uuid: params[:client_uuid],
-      status: params[:status] || :submitted
+      status: params[:status] || :submitted,
+      scouting_mode: params[:scouting_mode] || :live,
+      video_key: params[:video_key],
+      video_type: params[:video_type]
     )
+  end
+
+  def mode_label
+    replay? ? "Replay" : "Live"
   end
 
   private

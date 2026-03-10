@@ -1,10 +1,13 @@
 class ScoutingEntriesController < ApplicationController
   include SyncCsrfProtection
 
+  helper_method :replay_embed_url_for, :replay_watch_url_for
+
   before_action :require_event!, except: :sync
   skip_forgery_protection only: :sync
   before_action :verify_sync_origin, only: :sync
   before_action :set_scouting_entry, only: %i[show edit update destroy]
+  before_action :set_replay_form, only: :replay
 
   def index
     @scouting_entries = policy_scope(ScoutingEntry)
@@ -16,18 +19,20 @@ class ScoutingEntriesController < ApplicationController
   def show
     authorize @scouting_entry
     compute_entry_accuracy
+    @next_match = NextScoutMatchService.new(current_event).next_match(after_match: @scouting_entry.match)
   end
 
   def new
-    @scouting_entry = ScoutingEntry.new(event: current_event)
+    @scouting_entry = ScoutingEntry.new(event: current_event, scouting_mode: :live)
     @scouting_entry.match_id = params[:match_id] if params[:match_id].present?
     @scouting_entry.frc_team_id = params[:frc_team_id] if params[:frc_team_id].present?
     authorize @scouting_entry
 
-    @game_config = GameConfig.current
-    @matches = current_event.matches.includes(match_alliances: :frc_team).ordered
-    @teams = FrcTeam.at_event(current_event).order(:team_number)
-    @match_teams = build_match_teams_map(@matches)
+    setup_live_form
+  end
+
+  def replay
+    authorize @scouting_entry
   end
 
   def create
@@ -52,22 +57,27 @@ class ScoutingEntriesController < ApplicationController
         locals: { scouting_entry: @scouting_entry }
       )
       RefreshSummariesJob.perform_later(current_event.id)
-      redirect_to @scouting_entry, notice: "Scouting entry was successfully created."
+      redirect_to @scouting_entry, notice: success_notice_for(@scouting_entry)
     else
-      @game_config = GameConfig.current
-      @matches = current_event.matches.includes(match_alliances: :frc_team).ordered
-      @teams = FrcTeam.at_event(current_event).order(:team_number)
-      @match_teams = build_match_teams_map(@matches)
-      render :new, status: :unprocessable_entity
+      if @scouting_entry.replay?
+        set_replay_form
+        render :replay, status: :unprocessable_entity
+      else
+        setup_live_form
+        render :new, status: :unprocessable_entity
+      end
     end
   end
 
   def edit
     authorize @scouting_entry
-    @game_config = GameConfig.current
-    @matches = current_event.matches.includes(match_alliances: :frc_team).ordered
-    @teams = FrcTeam.at_event(current_event).order(:team_number)
-    @match_teams = build_match_teams_map(@matches)
+
+    if replay_entry_locked?
+      set_replay_form
+      render :replay
+    else
+      setup_live_form(include_match: @scouting_entry.match)
+    end
   end
 
   def update
@@ -77,11 +87,13 @@ class ScoutingEntriesController < ApplicationController
       RefreshSummariesJob.perform_later(current_event.id)
       redirect_to @scouting_entry, notice: "Scouting entry was successfully updated."
     else
-      @game_config = GameConfig.current
-      @matches = current_event.matches.includes(match_alliances: :frc_team).ordered
-      @teams = FrcTeam.at_event(current_event).order(:team_number)
-      @match_teams = build_match_teams_map(@matches)
-      render :edit, status: :unprocessable_entity
+      if replay_entry_locked?
+        set_replay_form
+        render :replay, status: :unprocessable_entity
+      else
+        setup_live_form(include_match: @scouting_entry.match)
+        render :edit, status: :unprocessable_entity
+      end
     end
   end
 
@@ -113,7 +125,10 @@ class ScoutingEntriesController < ApplicationController
           existing.update!(
             data:   entry_data[:data].is_a?(ActionController::Parameters) ? entry_data[:data].to_unsafe_h : (entry_data[:data] || {}),
             notes:  entry_data[:notes],
-            status: entry_data[:status] || :submitted
+            status: entry_data[:status] || :submitted,
+            scouting_mode: entry_data[:scouting_mode] || existing.scouting_mode,
+            video_key: entry_data[:video_key],
+            video_type: entry_data[:video_type]
           )
           results << { client_uuid: entry_data[:client_uuid], status: "updated", id: existing.id }
           created_event_ids << existing.event_id
@@ -121,8 +136,9 @@ class ScoutingEntriesController < ApplicationController
           results << { client_uuid: entry_data[:client_uuid], status: "existing", id: existing.id }
         end
       else
-        permitted = entry_data.permit(:match_id, :frc_team_id, :event_id, :notes, :photo_url, :client_uuid, :status, data: {})
-                              .merge(user_id: current_user.id)
+        permitted = entry_data.permit(:match_id, :frc_team_id, :event_id, :notes, :photo_url, :client_uuid,
+                                      :status, :scouting_mode, :video_key, :video_type, data: {})
+                               .merge(user_id: current_user.id)
 
         # Validate the caller-supplied event_id references a real event
         sync_event = Event.find_by(id: permitted[:event_id])
@@ -157,6 +173,7 @@ class ScoutingEntriesController < ApplicationController
   def scouting_entry_params
     permitted = params.require(:scouting_entry).permit(
       :match_id, :frc_team_id, :notes, :photo_url, :client_uuid, :status,
+      :scouting_mode, :video_key, :video_type,
       data: {}
     )
 
@@ -166,7 +183,93 @@ class ScoutingEntriesController < ApplicationController
       permitted[:data] = JSON.parse(permitted[:data][:_json])
     end
 
+    if replay_entry_locked?
+      permitted[:scouting_mode] = @scouting_entry.scouting_mode
+      permitted[:match_id] = @scouting_entry.match_id
+      permitted[:frc_team_id] = @scouting_entry.frc_team_id
+      permitted[:video_key] = @scouting_entry.video_key
+      permitted[:video_type] = @scouting_entry.video_type
+    end
+
     permitted
+  end
+
+  def setup_live_form(include_match: nil)
+    @game_config = GameConfig.current
+    @matches = ScoutableMatchesQuery.new(current_event).live
+    @matches = (@matches + [ include_match ]).compact.uniq if include_match.present?
+    @matches = @matches.sort_by do |match|
+      [ Match::COMP_LEVEL_ORDER.fetch(match.comp_level, 99), match.set_number.to_i, match.match_number.to_i ]
+    end
+    @teams = FrcTeam.at_event(current_event).order(:team_number)
+    @match_teams = build_match_teams_map(@matches)
+    @replay_entry_path = replay_scouting_entries_path
+  end
+
+  def set_replay_form
+    @scouting_entry ||= ScoutingEntry.new(event: current_event, scouting_mode: :replay)
+    match_id = replay_entry_locked? ? @scouting_entry.match_id : (params[:match_id] || @scouting_entry&.match_id)
+    selected_match = replay_match_scope.find { |match| match.id == match_id.to_i }
+    selected_team_id = replay_entry_locked? ? @scouting_entry.frc_team_id : (params[:frc_team_id] || @scouting_entry&.frc_team_id)
+
+    @scouting_entry.match = selected_match if selected_match.present?
+    @scouting_entry.frc_team_id = selected_team_id if selected_team_id.present?
+
+    @game_config = GameConfig.current
+    @replay_matches = replay_match_scope
+    @coverage_map = MatchCoverageService.new(current_event).coverage_for(@replay_matches)
+    @selected_match = selected_match
+    @selected_video = selected_video_for(@selected_match)
+    @replay_videos = @selected_match&.youtube_videos || []
+    @replay_teams = replay_teams_for(@selected_match)
+    @replay_submit_url = @scouting_entry.persisted? ? scouting_entry_path(@scouting_entry) : scouting_entries_path
+    @replay_submit_method = @scouting_entry.persisted? ? :patch : :post
+  end
+
+  def replay_match_scope
+    @replay_match_scope ||= ScoutableMatchesQuery.new(current_event).replay.select(&:replay_available?)
+  end
+
+  def replay_teams_for(match)
+    return [] if match.blank?
+
+    coverage = @coverage_map[match] || { teams: [] }
+    coverage[:teams].sort_by { |team| [ team[:covered] ? 1 : 0, team[:alliance_color], team[:station] ] }
+  end
+
+  def selected_video_for(match)
+    return if match.blank?
+
+    video_key = selected_video_key
+    return match.default_replay_video unless video_key.present?
+
+    match.video_data_for_key(video_key) || match.default_replay_video
+  end
+
+  def selected_video_key
+    return @scouting_entry.video_key if replay_entry_locked?
+
+    params.dig(:scouting_entry, :video_key) || params[:video_key] || @scouting_entry&.video_key
+  end
+
+  def replay_entry_locked?
+    @scouting_entry&.persisted? && @scouting_entry&.replay?
+  end
+
+  def success_notice_for(entry)
+    return "Replay scouting entry was successfully created." if entry.replay?
+
+    "Scouting entry was successfully created."
+  end
+
+  def replay_embed_url_for(match, raw_key)
+    video = match&.video_data_for_key(raw_key)
+    match&.video_embed_url(video)
+  end
+
+  def replay_watch_url_for(match, raw_key)
+    video = match&.video_data_for_key(raw_key)
+    match&.video_watch_url(video)
   end
 
   # Computes accuracy stats for this specific scouting entry by comparing the

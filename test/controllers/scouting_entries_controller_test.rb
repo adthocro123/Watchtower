@@ -45,6 +45,9 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
   test "should get new" do
     get new_scouting_entry_path
     assert_response :success
+    assert_select "option", text: "Q2"
+    assert_select "option", text: "Q3"
+    assert_select "option", text: "Q1", count: 0
   end
 
   test "scout can get new" do
@@ -54,6 +57,36 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
 
     get new_scouting_entry_path
     assert_response :success
+  end
+
+  test "should get replay page" do
+    get replay_scouting_entries_path(match_id: matches(:qm4).id)
+
+    assert_response :success
+    assert_select "h1", text: "Replay Scout"
+    assert_includes response.body, "Q4"
+    assert_includes response.body, "Q1"
+  end
+
+  test "edit replay entry renders replay workflow" do
+    entry = ScoutingEntry.create!(
+      user: @user,
+      match: matches(:qm4),
+      frc_team: frc_teams(:team_254),
+      event: @event,
+      scouting_mode: :replay,
+      video_key: "pastmatchtwo",
+      video_type: "youtube",
+      data: {},
+      client_uuid: "replay-edit-#{SecureRandom.hex(8)}"
+    )
+
+    get edit_scouting_entry_path(entry)
+
+    assert_response :success
+    assert_select "h1", text: "Replay Scout"
+    assert_select "form#replay-scouting-form"
+    assert_select "input[name='_method'][value='patch']"
   end
 
   # --- Create ---
@@ -76,12 +109,87 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to scouting_entry_path(ScoutingEntry.last)
   end
 
+  test "should create replay scouting entry alongside live entry" do
+    match = matches(:qm4)
+
+    assert_difference("ScoutingEntry.count", 1) do
+      post scouting_entries_path, params: {
+        scouting_entry: {
+          scouting_mode: "replay",
+          match_id: match.id,
+          frc_team_id: frc_teams(:team_254).id,
+          video_key: "pastmatchtwo",
+          video_type: "youtube",
+          notes: "Replay fill-in",
+          client_uuid: "replay-create-uuid-#{SecureRandom.hex(8)}",
+          data: { auton_fuel_made: 2, teleop_fuel_made: 5 }
+        }
+      }
+    end
+
+    entry = ScoutingEntry.last
+    assert entry.replay?
+    assert_equal "pastmatchtwo", entry.video_key
+    assert_redirected_to scouting_entry_path(entry)
+  end
+
+  test "replay create failure preserves selected video source" do
+    post scouting_entries_path, params: {
+      scouting_entry: {
+        scouting_mode: "replay",
+        match_id: matches(:qm4).id,
+        video_key: "pastmatchtwo",
+        video_type: "youtube",
+        notes: "Missing team should fail",
+        client_uuid: "replay-failure-#{SecureRandom.hex(8)}",
+        data: { auton_fuel_made: 2 }
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select "form#replay-scouting-form input[name='scouting_entry[video_key]'][value='pastmatchtwo']"
+  end
+
+  test "updating replay entry keeps replay match and team assignment locked" do
+    entry = ScoutingEntry.create!(
+      user: @user,
+      match: matches(:qm4),
+      frc_team: frc_teams(:team_254),
+      event: @event,
+      scouting_mode: :replay,
+      video_key: "pastmatchtwo",
+      video_type: "youtube",
+      notes: "Original replay note",
+      data: {},
+      client_uuid: "replay-lock-#{SecureRandom.hex(8)}"
+    )
+
+    patch scouting_entry_path(entry), params: {
+      scouting_entry: {
+        scouting_mode: "replay",
+        match_id: matches(:qm3).id,
+        frc_team_id: frc_teams(:team_6328).id,
+        video_key: "different-video",
+        notes: "Updated replay note",
+        data: { auton_fuel_made: 1 }
+      }
+    }
+
+    assert_redirected_to scouting_entry_path(entry)
+
+    entry.reload
+    assert_equal matches(:qm4).id, entry.match_id
+    assert_equal frc_teams(:team_254).id, entry.frc_team_id
+    assert_equal "pastmatchtwo", entry.video_key
+    assert_equal "Updated replay note", entry.notes
+  end
+
   test "scout can create scouting entry" do
     sign_out :user
     sign_in_as(users(:scout_user))
     select_event(@event)
 
-    match = matches(:qm1)
+    match = matches(:qm2)
     team = frc_teams(:team_4414)
 
     assert_difference("ScoutingEntry.count", 1) do
@@ -112,6 +220,13 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
       }
     end
     assert_redirected_to scouting_entry_path(existing)
+  end
+
+  test "show includes scout next match for live entries" do
+    get scouting_entry_path(scouting_entries(:entry_qm2_254))
+
+    assert_response :success
+    assert_select "a", text: "Scout Next Match"
   end
 
   # --- Sync with LWW ---

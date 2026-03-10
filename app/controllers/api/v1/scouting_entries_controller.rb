@@ -31,6 +31,7 @@ module Api
           permitted = entry_data.permit(
             :match_id, :frc_team_id, :event_id,
             :notes, :photo_url, :client_uuid, :status,
+            :scouting_mode, :video_key, :video_type,
             data: {}
           ).merge(user_id: current_api_user.id)
 
@@ -57,6 +58,7 @@ module Api
         params.require(:scouting_entry).permit(
           :match_id, :frc_team_id, :event_id,
           :notes, :photo_url, :client_uuid, :status,
+          :scouting_mode, :video_key, :video_type,
           data: {}
         )
       end

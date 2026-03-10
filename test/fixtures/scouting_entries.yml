@@ -143,6 +143,25 @@ entry_qm2_118:
   status: 0
   client_uuid: "scout-entry-uuid-0008"
 
+entry_qm4_254_live:
+  user: admin_user
+  match: qm4
+  frc_team: team_254
+  event: championship
+  scouting_mode: 0
+  data:
+    auton_fuel_made: 4
+    auton_fuel_missed: 1
+    teleop_fuel_made: 8
+    teleop_fuel_missed: 2
+    endgame_fuel_made: 0
+    endgame_fuel_missed: 1
+    endgame_climb: "L2"
+    auton_climb: true
+  notes: "Live coverage for replayable match."
+  status: 0
+  client_uuid: "scout-entry-uuid-0010"
+
 # owner_user entry on incomplete blue alliance (only 1 team) — no accuracy data
 entry_qm1_1678_owner:
   user: owner_user

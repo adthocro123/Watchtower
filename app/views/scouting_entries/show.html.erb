@@ -38,6 +38,7 @@
       <div>
         <span class="text-xs text-gray-400 uppercase tracking-wider font-medium">Scout</span>
         <p class="text-lg font-bold text-white mt-1"><%= @scouting_entry.user.full_name %></p>
+        <p class="text-xs text-gray-500 mt-1"><%= @scouting_entry.mode_label %> scouting</p>
       </div>
       <div>
         <span class="text-xs text-gray-400 uppercase tracking-wider font-medium">Total Points</span>
@@ -243,6 +244,22 @@
     </div>
   <% end %>
 
+  <% if @scouting_entry.replay? && @scouting_entry.match&.replay_available? %>
+    <div class="scout-card p-4 mb-4">
+      <% replay_watch_url = replay_watch_url_for(@scouting_entry.match, @scouting_entry.video_key) %>
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <div>
+          <h3 class="text-xs text-gray-400 uppercase tracking-wider font-medium">Replay Source</h3>
+          <p class="text-sm text-gray-300 mt-1">This entry was captured from a replay video source.</p>
+        </div>
+        <%= link_to "Open Video", replay_watch_url, class: "btn-secondary", target: "_blank", rel: "noopener" if replay_watch_url.present? %>
+      </div>
+      <% if @scouting_entry.video_key.present? %>
+        <p class="text-xs text-gray-500 font-mono break-all"><%= @scouting_entry.video_key %></p>
+      <% end %>
+    </div>
+  <% end %>
+
   <%# QR Code for Offline Transfer %>
   <details class="scout-card mb-4 group">
     <summary class="flex items-center gap-2 p-4 cursor-pointer select-none list-none">
@@ -264,6 +281,9 @@
           event_key:   @scouting_entry.event.tba_key,
           notes:       @scouting_entry.notes,
           status:      ScoutingEntry.statuses[@scouting_entry.status],
+          scouting_mode: @scouting_entry.scouting_mode,
+          video_key:   @scouting_entry.video_key,
+          video_type:  @scouting_entry.video_type,
           updated_at:  @scouting_entry.updated_at&.iso8601,
           data:        @scouting_entry.data || {},
         }
@@ -282,6 +302,9 @@
 
   <%# Actions %>
   <div class="flex items-center gap-3 mt-4">
+    <% if @next_match.present? && @scouting_entry.live? %>
+      <%= link_to "Scout Next Match", new_scouting_entry_path(match_id: @next_match.id), class: "btn-primary" %>
+    <% end %>
     <% if policy(@scouting_entry).update? %>
       <%= link_to "Edit", edit_scouting_entry_path(@scouting_entry), class: "btn-secondary" %>
     <% end %>

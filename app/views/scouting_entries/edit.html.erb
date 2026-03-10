@@ -11,5 +11,5 @@
     <span class="text-xs text-gray-400 ml-auto">Team <%= @scouting_entry.frc_team.team_number %></span>
   </div>
 
-  <%= render "form", scouting_entry: @scouting_entry %>
+  <%= render "form", scouting_entry: @scouting_entry, form_url: scouting_entry_path(@scouting_entry) %>
 </div>

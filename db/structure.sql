@@ -355,7 +355,11 @@ CREATE TABLE public.matches (
     tba_key character varying,
     updated_at timestamp(6) without time zone NOT NULL,
     red_score integer,
-    blue_score integer
+    blue_score integer,
+    actual_time timestamp(6) without time zone,
+    predicted_time timestamp(6) without time zone,
+    post_result_time timestamp(6) without time zone,
+    videos jsonb DEFAULT '[]'::jsonb NOT NULL
 );
 
 
@@ -554,7 +558,10 @@ CREATE TABLE public.scouting_entries (
     photo_url character varying,
     status integer DEFAULT 0 NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    user_id bigint NOT NULL
+    user_id bigint NOT NULL,
+    scouting_mode integer DEFAULT 0 NOT NULL,
+    video_key character varying,
+    video_type character varying
 );
 
 
@@ -1129,7 +1136,7 @@ CREATE UNIQUE INDEX idx_scouting_assignments_unique ON public.scouting_assignmen
 -- Name: idx_scouting_entries_unique; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_scouting_entries_unique ON public.scouting_entries USING btree (event_id, frc_team_id, match_id, user_id);
+CREATE UNIQUE INDEX idx_scouting_entries_unique ON public.scouting_entries USING btree (event_id, frc_team_id, match_id, user_id, scouting_mode);
 
 
 --
@@ -1797,4 +1804,3 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20260302004449'),
 ('20260302004444'),
 ('20260302004440');
-

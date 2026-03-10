@@ -11,5 +11,15 @@
     <span class="text-xs text-gray-400 ml-auto truncate max-w-32"><%= current_event.name %></span>
   </div>
 
-  <%= render "form", scouting_entry: @scouting_entry %>
+  <div class="mb-4 rounded-xl border border-blue-500/20 bg-blue-500/10 p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-sm font-semibold text-white">Need to scout a played match?</p>
+        <p class="text-xs text-blue-100/70 mt-1">Replay scouting uses the official-match video workflow for past matches and highlights teams that still need coverage.</p>
+      </div>
+      <%= link_to "Open Replay Scout", replay_scouting_entries_path, class: "btn-secondary whitespace-nowrap" %>
+    </div>
+  </div>
+
+  <%= render "form", scouting_entry: @scouting_entry, form_url: scouting_entries_path %>
 </div>

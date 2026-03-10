@@ -15,7 +15,7 @@ class QrImportsController < ApplicationController
 
     entry_params = params.require(:entry).permit(
       :client_uuid, :match_key, :team_number, :event_key,
-      :notes, :status, :updated_at,
+      :notes, :status, :updated_at, :scouting_mode, :video_key, :video_type,
       data: {}
     )
 
@@ -57,7 +57,10 @@ class QrImportsController < ApplicationController
         existing.update!(
           data:   entry_params[:data] || {},
           notes:  entry_params[:notes],
-          status: entry_params[:status] || :submitted
+          status: entry_params[:status] || :submitted,
+          scouting_mode: entry_params[:scouting_mode] || existing.scouting_mode,
+          video_key: entry_params[:video_key],
+          video_type: entry_params[:video_type]
         )
         RefreshSummariesJob.perform_later(existing.event_id)
 
@@ -77,17 +80,20 @@ class QrImportsController < ApplicationController
         }
       end
     else
-      # New entry — create it, attributed to the current user (the importer)
-      entry = ScoutingEntry.new(
-        user:        current_user,
-        match_id:    match&.id,
-        frc_team_id: team.id,
-        event_id:    event.id,
-        data:        entry_params[:data] || {},
-        notes:       entry_params[:notes],
-        client_uuid: entry_params[:client_uuid],
-        status:      entry_params[:status] || :submitted
-      )
+        # New entry — create it, attributed to the current user (the importer)
+        entry = ScoutingEntry.new(
+          user:        current_user,
+          match_id:    match&.id,
+          frc_team_id: team.id,
+          event_id:    event.id,
+          data:        entry_params[:data] || {},
+          notes:       entry_params[:notes],
+          client_uuid: entry_params[:client_uuid],
+          status:      entry_params[:status] || :submitted,
+          scouting_mode: entry_params[:scouting_mode] || :live,
+          video_key:   entry_params[:video_key],
+          video_type:  entry_params[:video_type]
+        )
 
       begin
         if entry.save

@@ -26,6 +26,7 @@ Rails.application.routes.draw do
 
   resources :scouting_entries do
     collection do
+      get :replay
       post :sync
     end
   end

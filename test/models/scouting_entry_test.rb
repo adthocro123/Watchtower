@@ -34,7 +34,7 @@ class ScoutingEntryTest < ActiveSupport::TestCase
   end
 
   test "allows multiple nil client_uuids" do
-    entry1 = ScoutingEntry.create!(
+    ScoutingEntry.create!(
       user: users(:admin_user),
       frc_team: frc_teams(:team_254),
       event: events(:championship),
@@ -49,6 +49,20 @@ class ScoutingEntryTest < ActiveSupport::TestCase
       client_uuid: nil
     )
     assert entry2.valid?
+  end
+
+  test "allows live and replay entries for same user match and team" do
+    entry = ScoutingEntry.new(
+      user: users(:admin_user),
+      match: matches(:qm4),
+      frc_team: frc_teams(:team_254),
+      event: events(:championship),
+      scouting_mode: :replay,
+      data: {},
+      client_uuid: "duplicate-mode-test"
+    )
+
+    assert entry.valid?
   end
 
   # --- Associations ---
@@ -75,8 +89,17 @@ class ScoutingEntryTest < ActiveSupport::TestCase
     assert_equal({ "submitted" => 0, "flagged" => 1, "rejected" => 2 }, ScoutingEntry.statuses)
   end
 
+  test "scouting_mode enum values" do
+    assert_equal({ "live" => 0, "replay" => 1 }, ScoutingEntry.scouting_modes)
+  end
+
   test "entry_qm1_254 is submitted" do
     assert scouting_entries(:entry_qm1_254).submitted?
+  end
+
+  test "mode_label returns replay or live" do
+    assert_equal "Live", scouting_entries(:entry_qm1_254).mode_label
+    assert_equal "Replay", ScoutingEntry.new(scouting_mode: :replay).mode_label
   end
 
   # --- Scoring concern constants ---
@@ -284,7 +307,10 @@ class ScoutingEntryTest < ActiveSupport::TestCase
       notes: "Offline entry",
       photo_url: "https://example.com/photo.jpg",
       client_uuid: "offline-uuid-001",
-      status: :submitted
+      status: :submitted,
+      scouting_mode: :replay,
+      video_key: "pastmatchone?t=15",
+      video_type: "youtube"
     }
     entry = ScoutingEntry.from_offline_data(params)
 
@@ -297,6 +323,9 @@ class ScoutingEntryTest < ActiveSupport::TestCase
     assert_equal "Offline entry", entry.notes
     assert_equal "https://example.com/photo.jpg", entry.photo_url
     assert_equal "offline-uuid-001", entry.client_uuid
+    assert entry.replay?
+    assert_equal "pastmatchone?t=15", entry.video_key
+    assert_equal "youtube", entry.video_type
   end
 
   test "from_offline_data defaults to empty hash for data and submitted status" do
@@ -307,5 +336,6 @@ class ScoutingEntryTest < ActiveSupport::TestCase
     }
     entry = ScoutingEntry.from_offline_data(params)
     assert_equal({}, entry.data)
+    assert entry.live?
   end
 end

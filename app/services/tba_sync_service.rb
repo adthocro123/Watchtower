@@ -106,6 +106,10 @@ class TbaSyncService
       set_number: set_number,
       match_number: data["match_number"],
       scheduled_time: parse_time(data["time"]),
+      actual_time: parse_time(data["actual_time"]),
+      predicted_time: parse_time(data["predicted_time"]),
+      post_result_time: parse_time(data["post_result_time"]),
+      videos: Array(data["videos"]),
       red_score: data.dig("alliances", "red", "score"),
       blue_score: data.dig("alliances", "blue", "score")
     )

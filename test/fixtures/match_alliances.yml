@@ -49,3 +49,87 @@ qm2_blue_1:
   frc_team: team_254
   alliance_color: "blue"
   station: 1
+
+qm2_blue_2:
+  match: qm2
+  frc_team: team_4414
+  alliance_color: "blue"
+  station: 2
+
+qm2_blue_3:
+  match: qm2
+  frc_team: team_6328
+  alliance_color: "blue"
+  station: 3
+
+qm3_red_1:
+  match: qm3
+  frc_team: team_254
+  alliance_color: "red"
+  station: 1
+
+qm3_red_2:
+  match: qm3
+  frc_team: team_118
+  alliance_color: "red"
+  station: 2
+
+qm3_red_3:
+  match: qm3
+  frc_team: team_971
+  alliance_color: "red"
+  station: 3
+
+qm3_blue_1:
+  match: qm3
+  frc_team: team_1678
+  alliance_color: "blue"
+  station: 1
+
+qm3_blue_2:
+  match: qm3
+  frc_team: team_4414
+  alliance_color: "blue"
+  station: 2
+
+qm3_blue_3:
+  match: qm3
+  frc_team: team_6328
+  alliance_color: "blue"
+  station: 3
+
+qm4_red_1:
+  match: qm4
+  frc_team: team_254
+  alliance_color: "red"
+  station: 1
+
+qm4_red_2:
+  match: qm4
+  frc_team: team_6328
+  alliance_color: "red"
+  station: 2
+
+qm4_red_3:
+  match: qm4
+  frc_team: team_118
+  alliance_color: "red"
+  station: 3
+
+qm4_blue_1:
+  match: qm4
+  frc_team: team_1678
+  alliance_color: "blue"
+  station: 1
+
+qm4_blue_2:
+  match: qm4
+  frc_team: team_4414
+  alliance_color: "blue"
+  station: 2
+
+qm4_blue_3:
+  match: qm4
+  frc_team: team_971
+  alliance_color: "blue"
+  station: 3

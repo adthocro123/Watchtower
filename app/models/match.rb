@@ -1,4 +1,6 @@
 class Match < ApplicationRecord
+  VIDEO_TIMESTAMP_PATTERN = /\A(?<id>[A-Za-z0-9_-]+)(?:\?t=(?<seconds>\d+))?\z/
+
   # Associations
   belongs_to :event
   has_many :match_alliances, dependent: :destroy
@@ -8,7 +10,7 @@ class Match < ApplicationRecord
   has_many :predictions, dependent: :destroy
 
   # Scopes
-  COMP_LEVEL_ORDER = { "qm" => 0, "qf" => 1, "sf" => 2, "f" => 3 }.freeze
+  COMP_LEVEL_ORDER = { "qm" => 0, "ef" => 1, "qf" => 2, "sf" => 3, "f" => 4 }.freeze
 
   scope :with_scores, -> { where.not(red_score: nil, blue_score: nil) }
 
@@ -17,10 +19,11 @@ class Match < ApplicationRecord
       Arel.sql(
         "CASE comp_level " \
         "WHEN 'qm' THEN 0 " \
-        "WHEN 'qf' THEN 1 " \
-        "WHEN 'sf' THEN 2 " \
-        "WHEN 'f'  THEN 3 " \
-        "ELSE 4 END ASC, " \
+        "WHEN 'ef' THEN 1 " \
+        "WHEN 'qf' THEN 2 " \
+        "WHEN 'sf' THEN 3 " \
+        "WHEN 'f'  THEN 4 " \
+        "ELSE 5 END ASC, " \
         "set_number ASC, match_number ASC"
       )
     )
@@ -35,6 +38,8 @@ class Match < ApplicationRecord
     case comp_level
     when "qm"
       "Q#{match_number}"
+    when "ef"
+      "EF#{set_number}-#{match_number}"
     when "qf"
       "QF#{set_number}-#{match_number}"
     when "sf"
@@ -44,5 +49,73 @@ class Match < ApplicationRecord
     else
       "#{comp_level&.upcase}#{match_number}"
     end
+  end
+
+  def best_known_time
+    actual_time || predicted_time || scheduled_time
+  end
+
+  def occurred?(reference_time = Time.current)
+    return true if post_result_time.present? || actual_time.present?
+    return false if best_known_time.blank?
+
+    best_known_time <= reference_time
+  end
+
+  def upcoming?(reference_time = Time.current)
+    !occurred?(reference_time)
+  end
+
+  def youtube_videos
+    Array(videos).filter_map do |video|
+      next unless video.is_a?(Hash)
+      next unless video["type"] == "youtube"
+
+      parsed = self.class.parse_video_key(video["key"])
+      next unless parsed
+
+      video.merge(parsed)
+    end
+  end
+
+  def default_replay_video
+    youtube_videos.first
+  end
+
+  def video_data_for_key(raw_key)
+    youtube_videos.find { |video| video["raw_key"] == raw_key }
+  end
+
+  def replay_available?
+    default_replay_video.present?
+  end
+
+  def video_embed_url(video = default_replay_video)
+    return if video.blank?
+
+    base = "https://www.youtube.com/embed/#{video.fetch('video_id')}"
+    start_seconds = video["start_seconds"].to_i
+    start_seconds.positive? ? "#{base}?start=#{start_seconds}" : base
+  end
+
+  def video_watch_url(video = default_replay_video)
+    return if video.blank?
+
+    base = "https://www.youtube.com/watch?v=#{video.fetch('video_id')}"
+    start_seconds = video["start_seconds"].to_i
+    start_seconds.positive? ? "#{base}&t=#{start_seconds}s" : base
+  end
+
+  def self.parse_video_key(raw_key)
+    return if raw_key.blank?
+
+    match = raw_key.match(VIDEO_TIMESTAMP_PATTERN)
+    return unless match
+
+    {
+      "raw_key" => raw_key,
+      "video_id" => match[:id],
+      "start_seconds" => match[:seconds].to_i
+    }
   end
 end

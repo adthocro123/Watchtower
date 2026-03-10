@@ -1,5 +1,8 @@
-<%= form_with(model: scouting_entry, id: "scouting-form",
-              data: {
+<%
+  form_options = {
+    model: scouting_entry,
+    id: "scouting-form",
+    data: {
                 controller: "scouting",
                 scouting_match_teams_value: @match_teams.to_json,
                 scouting_auton_made_value: scouting_entry.data&.dig("auton_fuel_made") || 0,
@@ -12,7 +15,11 @@
                 scouting_endgame_climb_value: scouting_entry.data&.dig("endgame_climb") || "None",
                 scouting_defense_rating_value: scouting_entry.data&.dig("defense_rating") || 0,
                 action: "submit->scouting#submitForm"
-              }) do |f| %>
+              }
+  }
+  form_options[:url] = local_assigns[:form_url] if local_assigns[:form_url].present?
+%>
+<%= form_with(**form_options) do |f| %>
   <% if scouting_entry.errors.any? %>
     <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4 animate-slide-down" role="alert">
       <h3 class="text-sm font-semibold text-red-400 mb-2"><%= pluralize(scouting_entry.errors.count, "error") %> prevented this entry from being saved:</h3>
@@ -26,6 +33,7 @@
 
   <%# UUID for offline sync %>
   <%= f.hidden_field :client_uuid, value: scouting_entry.client_uuid || SecureRandom.uuid %>
+  <%= f.hidden_field :scouting_mode, value: scouting_entry.scouting_mode || "live" %>
   <%= hidden_field_tag "scouting_entry[event_id]", scouting_entry.event_id || current_event&.id %>
 
   <%# Hidden field that receives the JSON payload on submit %>

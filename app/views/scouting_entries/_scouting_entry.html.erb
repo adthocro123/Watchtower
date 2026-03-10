@@ -17,7 +17,7 @@
         <% end %>
       </p>
       <p class="text-xs text-gray-500 truncate">
-        <%= scouting_entry.user.full_name %> &middot; <%= time_ago_in_words(scouting_entry.created_at) %> ago
+        <%= scouting_entry.user.full_name %> &middot; <%= scouting_entry.mode_label %> &middot; <%= time_ago_in_words(scouting_entry.created_at) %> ago
       </p>
     </div>
   </div>
