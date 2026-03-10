@@ -22,7 +22,7 @@ class ScoutingAssignmentsControllerTest < ActionDispatch::IntegrationTest
 
     get scouting_assignments_path
     assert_response :success
-    assert_match "My lane", response.body
+    assert_match "My Shifts", response.body
     assert_no_match "Admin User", response.body
   end
 

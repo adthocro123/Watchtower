@@ -24,6 +24,10 @@ class ScoutingAssignmentsController < ApplicationController
     @current_match_index = latest_completed_match_index(@matches) || 0
     @shift_starts = compute_shift_starts(@assignments)
     @is_admin = current_user.admin?
+
+    unless @is_admin
+      @shift_blocks = compute_shift_blocks(@assignments)
+    end
   end
 
   def toggle
@@ -170,6 +174,58 @@ class ScoutingAssignmentsController < ApplicationController
     end
 
     starts
+  end
+
+  # Returns an array of shift block hashes for a user's assignments.
+  # Each hash has :start_match, :end_match, :match_count, :notes, and :status.
+  def compute_shift_blocks(assignments)
+    sorted = assignments.sort_by { |a| a.match.match_number }
+    return [] if sorted.empty?
+
+    blocks = []
+    block_start = sorted.first
+    block_end = sorted.first
+
+    sorted.drop(1).each do |a|
+      if a.match.match_number == block_end.match.match_number + 1
+        block_end = a
+      else
+        blocks << build_shift_block(block_start, block_end, sorted)
+        block_start = a
+        block_end = a
+      end
+    end
+    blocks << build_shift_block(block_start, block_end, sorted)
+
+    # Determine status for each block
+    blocks.each do |block|
+      block[:status] = shift_block_status(block)
+    end
+
+    blocks
+  end
+
+  def build_shift_block(block_start, block_end, sorted)
+    match_count = block_end.match.match_number - block_start.match.match_number + 1
+    {
+      start_match: block_start.match,
+      end_match: block_end.match,
+      match_count: match_count,
+      notes: block_start.notes
+    }
+  end
+
+  def shift_block_status(block)
+    start_match = block[:start_match]
+    end_match = block[:end_match]
+
+    if end_match.red_score.present? && end_match.blue_score.present?
+      :completed
+    elsif start_match.red_score.present? && start_match.blue_score.present?
+      :active
+    else
+      :upcoming
+    end
   end
 
   # Checks whether a specific user+match assignment is a shift start by
