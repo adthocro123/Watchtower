@@ -45,4 +45,20 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_response :success
   end
+
+  test "dashboard displays scout accuracy leaderboard" do
+    select_event(@event)
+
+    get root_path
+    assert_response :success
+    assert_select "h2", text: "Scout Accuracy Leaderboard"
+  end
+
+  test "dashboard shows accuracy data for scouts with scored matches" do
+    select_event(@event)
+
+    get root_path
+    assert_response :success
+    assert_match(/pts off/, response.body)
+  end
 end

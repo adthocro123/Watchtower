@@ -42,6 +42,7 @@ if ("serviceWorker" in navigator) {
     document.addEventListener("turbo:load", () => {
       sendCsrfToken(navigator.serviceWorker.controller)
     })
+
   }).catch((error) => {
     console.warn("[Lighthouse] Service worker registration failed:", error)
   })

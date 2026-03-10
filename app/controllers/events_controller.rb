@@ -99,6 +99,7 @@ class EventsController < ApplicationController
     urls = [
       "/",
       scouting_entries_path,
+      scouting_assignments_path,
       new_scouting_entry_path,
       pit_scouting_entries_path,
       new_pit_scouting_entry_path,
@@ -108,7 +109,6 @@ class EventsController < ApplicationController
       data_conflicts_path,
       predictions_path,
       new_match_simulator_path,
-      reports_path,
       event_path(@event)
     ]
 
@@ -119,8 +119,7 @@ class EventsController < ApplicationController
         match_ids: @event.matches.pluck(:id),
         scouting_entry_ids: ScoutingEntry.where(event: @event).pluck(:id),
         pit_scouting_entry_ids: PitScoutingEntry.where(event: @event).pluck(:id),
-        pick_list_ids: PickList.where(event: @event).pluck(:id),
-        report_ids: Report.where(event: @event).pluck(:id)
+        pick_list_ids: PickList.where(event: @event).pluck(:id)
       }
     end
 
@@ -129,7 +128,6 @@ class EventsController < ApplicationController
     urls += cached_ids[:scouting_entry_ids].map { |id| scouting_entry_path(id) }
     urls += cached_ids[:pit_scouting_entry_ids].map { |id| pit_scouting_entry_path(id) }
     urls += cached_ids[:pick_list_ids].map { |id| pick_list_path(id) }
-    urls += cached_ids[:report_ids].map { |id| report_path(id) }
 
     expires_in 5.minutes, public: false
 

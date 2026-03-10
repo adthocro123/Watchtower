@@ -62,12 +62,6 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.pick_lists, pick_lists(:championship_picks)
   end
 
-  test "has many reports" do
-    user = users(:admin_user)
-    assert_respond_to user, :reports
-    assert_includes user.reports, reports(:team_summary_report)
-  end
-
   test "has many simulation_results" do
     user = users(:admin_user)
     assert_respond_to user, :simulation_results

@@ -47,6 +47,7 @@ gem "pundit"
 # API clients
 gem "faraday"
 gem "faraday-retry"
+gem "webpush"
 
 # Charts & exports
 gem "chartkick"

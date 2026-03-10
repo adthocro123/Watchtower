@@ -1,7 +1,7 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
--- SET transaction_timeout = 0; -- Requires PostgreSQL 17+
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -353,7 +353,9 @@ CREATE TABLE public.matches (
     scheduled_time timestamp(6) without time zone,
     set_number integer,
     tba_key character varying,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    red_score integer,
+    blue_score integer
 );
 
 
@@ -488,27 +490,40 @@ ALTER SEQUENCE public.predictions_id_seq OWNED BY public.predictions.id;
 
 
 --
--- Name: reports; Type: TABLE; Schema: public; Owner: -
+-- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.reports (
-    id bigint NOT NULL,
-    cached_data jsonb DEFAULT '{}'::jsonb,
-    config jsonb DEFAULT '{}'::jsonb NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    event_id bigint NOT NULL,
-    last_generated_at timestamp(6) without time zone,
-    name character varying NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    user_id bigint NOT NULL
+CREATE TABLE public.schema_migrations (
+    version character varying NOT NULL
 );
 
 
 --
--- Name: reports_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: scouting_assignments; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.reports_id_seq
+CREATE TABLE public.scouting_assignments (
+    id bigint NOT NULL,
+    event_id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    match_id bigint NOT NULL,
+    frc_team_id bigint,
+    alliance_color character varying,
+    station integer,
+    notes text,
+    notified_5_at timestamp(6) without time zone,
+    notified_2_at timestamp(6) without time zone,
+    notified_1_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: scouting_assignments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.scouting_assignments_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -517,19 +532,10 @@ CREATE SEQUENCE public.reports_id_seq
 
 
 --
--- Name: reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: scouting_assignments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE public.reports_id_seq OWNED BY public.reports.id;
-
-
---
--- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.schema_migrations (
-    version character varying NOT NULL
-);
+ALTER SEQUENCE public.scouting_assignments_id_seq OWNED BY public.scouting_assignments.id;
 
 
 --
@@ -755,6 +761,42 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: web_push_subscriptions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.web_push_subscriptions (
+    id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    endpoint character varying NOT NULL,
+    p256dh character varying NOT NULL,
+    auth character varying NOT NULL,
+    user_agent character varying,
+    last_seen_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: web_push_subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.web_push_subscriptions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: web_push_subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.web_push_subscriptions_id_seq OWNED BY public.web_push_subscriptions.id;
+
+
+--
 -- Name: active_storage_attachments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -846,10 +888,10 @@ ALTER TABLE ONLY public.predictions ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
--- Name: reports id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: scouting_assignments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.reports ALTER COLUMN id SET DEFAULT nextval('public.reports_id_seq'::regclass);
+ALTER TABLE ONLY public.scouting_assignments ALTER COLUMN id SET DEFAULT nextval('public.scouting_assignments_id_seq'::regclass);
 
 
 --
@@ -878,6 +920,13 @@ ALTER TABLE ONLY public.statbotics_caches ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: web_push_subscriptions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.web_push_subscriptions ALTER COLUMN id SET DEFAULT nextval('public.web_push_subscriptions_id_seq'::regclass);
 
 
 --
@@ -993,19 +1042,19 @@ ALTER TABLE ONLY public.predictions
 
 
 --
--- Name: reports reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT reports_pkey PRIMARY KEY (id);
-
-
---
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: scouting_assignments scouting_assignments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scouting_assignments
+    ADD CONSTRAINT scouting_assignments_pkey PRIMARY KEY (id);
 
 
 --
@@ -1041,6 +1090,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: web_push_subscriptions web_push_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.web_push_subscriptions
+    ADD CONSTRAINT web_push_subscriptions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: idx_data_conflicts_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1062,6 +1119,13 @@ CREATE UNIQUE INDEX idx_pit_scouting_entries_unique ON public.pit_scouting_entri
 
 
 --
+-- Name: idx_scouting_assignments_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_scouting_assignments_unique ON public.scouting_assignments USING btree (event_id, user_id, match_id);
+
+
+--
 -- Name: idx_scouting_entries_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1073,6 +1137,13 @@ CREATE UNIQUE INDEX idx_scouting_entries_unique ON public.scouting_entries USING
 --
 
 CREATE UNIQUE INDEX idx_team_event_summaries ON public.team_event_summaries USING btree (event_id, frc_team_id);
+
+
+--
+-- Name: idx_web_push_subscriptions_user_endpoint; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_web_push_subscriptions_user_endpoint ON public.web_push_subscriptions USING btree (user_id, endpoint);
 
 
 --
@@ -1279,17 +1350,38 @@ CREATE INDEX index_predictions_on_match_id ON public.predictions USING btree (ma
 
 
 --
--- Name: index_reports_on_event_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_scouting_assignments_on_event_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_reports_on_event_id ON public.reports USING btree (event_id);
+CREATE INDEX index_scouting_assignments_on_event_id ON public.scouting_assignments USING btree (event_id);
 
 
 --
--- Name: index_reports_on_user_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_scouting_assignments_on_event_id_and_match_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_reports_on_user_id ON public.reports USING btree (user_id);
+CREATE INDEX index_scouting_assignments_on_event_id_and_match_id ON public.scouting_assignments USING btree (event_id, match_id);
+
+
+--
+-- Name: index_scouting_assignments_on_frc_team_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scouting_assignments_on_frc_team_id ON public.scouting_assignments USING btree (frc_team_id);
+
+
+--
+-- Name: index_scouting_assignments_on_match_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scouting_assignments_on_match_id ON public.scouting_assignments USING btree (match_id);
+
+
+--
+-- Name: index_scouting_assignments_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scouting_assignments_on_user_id ON public.scouting_assignments USING btree (user_id);
 
 
 --
@@ -1405,19 +1497,25 @@ CREATE UNIQUE INDEX index_users_on_username ON public.users USING btree (usernam
 
 
 --
+-- Name: index_web_push_subscriptions_on_endpoint; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_web_push_subscriptions_on_endpoint ON public.web_push_subscriptions USING btree (endpoint);
+
+
+--
+-- Name: index_web_push_subscriptions_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_web_push_subscriptions_on_user_id ON public.web_push_subscriptions USING btree (user_id);
+
+
+--
 -- Name: simulation_results fk_rails_1306ef9ab8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.simulation_results
     ADD CONSTRAINT fk_rails_1306ef9ab8 FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: reports fk_rails_13bc38ca00; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT fk_rails_13bc38ca00 FOREIGN KEY (event_id) REFERENCES public.events(id);
 
 
 --
@@ -1434,6 +1532,14 @@ ALTER TABLE ONLY public.simulation_results
 
 ALTER TABLE ONLY public.match_alliances
     ADD CONSTRAINT fk_rails_206fee0bd5 FOREIGN KEY (match_id) REFERENCES public.matches(id);
+
+
+--
+-- Name: scouting_assignments fk_rails_22f020434b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scouting_assignments
+    ADD CONSTRAINT fk_rails_22f020434b FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -1458,6 +1564,14 @@ ALTER TABLE ONLY public.data_conflicts
 
 ALTER TABLE ONLY public.scouting_entries
     ADD CONSTRAINT fk_rails_358962f828 FOREIGN KEY (event_id) REFERENCES public.events(id);
+
+
+--
+-- Name: scouting_assignments fk_rails_397e4b711b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scouting_assignments
+    ADD CONSTRAINT fk_rails_397e4b711b FOREIGN KEY (frc_team_id) REFERENCES public.frc_teams(id);
 
 
 --
@@ -1517,6 +1631,14 @@ ALTER TABLE ONLY public.event_teams
 
 
 --
+-- Name: scouting_assignments fk_rails_63abad9228; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scouting_assignments
+    ADD CONSTRAINT fk_rails_63abad9228 FOREIGN KEY (event_id) REFERENCES public.events(id);
+
+
+--
 -- Name: pick_lists fk_rails_641ec6d54c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1573,11 +1695,27 @@ ALTER TABLE ONLY public.data_conflicts
 
 
 --
+-- Name: scouting_assignments fk_rails_a594d28feb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scouting_assignments
+    ADD CONSTRAINT fk_rails_a594d28feb FOREIGN KEY (match_id) REFERENCES public.matches(id);
+
+
+--
 -- Name: scouting_entries fk_rails_aa056b440d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.scouting_entries
     ADD CONSTRAINT fk_rails_aa056b440d FOREIGN KEY (match_id) REFERENCES public.matches(id);
+
+
+--
+-- Name: web_push_subscriptions fk_rails_b006f28dac; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.web_push_subscriptions
+    ADD CONSTRAINT fk_rails_b006f28dac FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -1594,14 +1732,6 @@ ALTER TABLE ONLY public.data_conflicts
 
 ALTER TABLE ONLY public.active_storage_attachments
     ADD CONSTRAINT fk_rails_c3b3935057 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
-
-
---
--- Name: reports fk_rails_c7699d537d; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT fk_rails_c7699d537d FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -1635,6 +1765,10 @@ ALTER TABLE ONLY public.predictions
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260306100100'),
+('20260306100000'),
+('20260305183933'),
+('20260305000000'),
 ('20260304154510'),
 ('20260304150742'),
 ('20260304043658'),

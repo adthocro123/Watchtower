@@ -15,10 +15,12 @@ class ScoutingEntriesController < ApplicationController
 
   def show
     authorize @scouting_entry
+    compute_entry_accuracy
   end
 
   def new
     @scouting_entry = ScoutingEntry.new(event: current_event)
+    @scouting_entry.match_id = params[:match_id] if params[:match_id].present?
     @scouting_entry.frc_team_id = params[:frc_team_id] if params[:frc_team_id].present?
     authorize @scouting_entry
 
@@ -165,6 +167,39 @@ class ScoutingEntriesController < ApplicationController
     end
 
     permitted
+  end
+
+  # Computes accuracy stats for this specific scouting entry by comparing the
+  # scouted alliance total against the actual match score from TBA.
+  def compute_entry_accuracy
+    match = @scouting_entry.match
+    return unless match&.red_score && match&.blue_score
+
+    # Find which alliance this entry's team was on
+    alliance = match.match_alliances.find_by(frc_team_id: @scouting_entry.frc_team_id)
+    return unless alliance
+
+    color = alliance.alliance_color
+    @actual_score = color == "red" ? match.red_score : match.blue_score
+
+    # Get all teams on this alliance
+    alliance_team_ids = match.match_alliances.where(alliance_color: color).pluck(:frc_team_id)
+    return if alliance_team_ids.size < 3
+
+    # Find scouting entries for all 3 alliance teams in this match
+    # Include both submitted and flagged entries (exclude only rejected)
+    entries = match.scouting_entries.where.not(status: :rejected).where(frc_team_id: alliance_team_ids)
+    entries_by_team = entries.group_by(&:frc_team_id)
+
+    @alliance_complete = alliance_team_ids.all? { |tid| entries_by_team.key?(tid) }
+    @alliance_color = color
+
+    if @alliance_complete
+      @scouted_total = alliance_team_ids.sum { |tid| entries_by_team[tid].first.total_points }
+      @alliance_error = (@scouted_total - @actual_score).abs
+    end
+
+    @this_entry_points = @scouting_entry.total_points
   end
 
   # Returns a Hash mapping match_id to an array of team info for the team dropdown.

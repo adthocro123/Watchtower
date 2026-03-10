@@ -8,18 +8,12 @@ end
 
 puts "Seeding database..."
 
-# --- Default Organization ---
-org = Organization.find_or_create_by!(slug: "default") do |o|
-  o.name = "Default Organization"
-  o.team_number = 1234
-end
-puts "  Organization: #{org.name} (slug: #{org.slug})"
 
 # --- Game Configuration for 2026 REBUILT ---
 game_config = GameConfig.find_or_create_by!(year: 2026) do |gc|
   gc.game_name = "REBUILT presented by Haas"
   gc.active = true
-  gc.organization = org
+  
   gc.config = {
     year: 2026,
     game_name: "REBUILT presented by Haas",
@@ -69,13 +63,9 @@ admin = User.find_or_create_by!(email: "admin@lighthouse.com") do |u|
   u.last_name = "User"
   u.team_number = 1234
 end
-admin.add_role(:admin) unless admin.has_role?(:admin)
+admin.update!(role: :admin)
 
-# Ensure admin has a membership in the default organization
-Membership.find_or_create_by!(user: admin, organization: org) do |m|
-  m.role = :owner
-end
-puts "  Admin user: #{admin.email} (role: admin, org membership: owner)"
+puts "  Admin user: #{admin.email} (role: admin)"
 
 # --- Scout User ---
 scout = User.find_or_create_by!(email: "scout@lighthouse.com") do |u|
@@ -85,13 +75,9 @@ scout = User.find_or_create_by!(email: "scout@lighthouse.com") do |u|
   u.last_name = "User"
   u.team_number = 1234
 end
-scout.add_role(:scout) unless scout.has_role?(:scout)
+scout.update!(role: :scout)
 
-# Ensure scout has a membership in the default organization
-Membership.find_or_create_by!(user: scout, organization: org) do |m|
-  m.role = :scout
-end
-puts "  Scout user: #{scout.email} (role: scout, org membership: scout)"
+puts "  Scout user: #{scout.email} (role: scout)"
 
 # =============================================================================
 # TEST EVENT: Fully populated with realistic data
@@ -107,8 +93,7 @@ scout2 = User.find_or_create_by!(email: "scout2@lighthouse.com") do |u|
   u.last_name = "Chen"
   u.team_number = 1234
 end
-scout2.add_role(:scout) unless scout2.has_role?(:scout)
-Membership.find_or_create_by!(user: scout2, organization: org) { |m| m.role = :scout }
+scout2.update!(role: :scout)
 
 scout3 = User.find_or_create_by!(email: "scout3@lighthouse.com") do |u|
   u.password = "password123"
@@ -117,8 +102,7 @@ scout3 = User.find_or_create_by!(email: "scout3@lighthouse.com") do |u|
   u.last_name = "Torres"
   u.team_number = 1234
 end
-scout3.add_role(:scout) unless scout3.has_role?(:scout)
-Membership.find_or_create_by!(user: scout3, organization: org) { |m| m.role = :scout }
+scout3.update!(role: :scout)
 
 analysts = [ admin, scout, scout2, scout3 ]
 
@@ -160,7 +144,7 @@ event = Event.find_or_create_by!(tba_key: "2026txhou") do |e|
   e.state_prov = "TX"
   e.country = "USA"
   e.week = 1
-  e.organization = org
+  
 end
 puts "  Event: #{event.name} (#{event.tba_key})"
 
@@ -275,7 +259,7 @@ match_assignments.each_with_index do |(match_num, red_indices, blue_indices), mi
       entry = ScoutingEntry.find_or_create_by!(
         event: event, frc_team: team, match: match, user: scouter
       ) do |se|
-        se.organization = org
+        
         se.status = :submitted
         se.data = {
           "auton_fuel_made" => auton_made,
@@ -315,7 +299,7 @@ pit_count = 0
 teams.each_with_index do |team, i|
   profile = profiles[team.team_number]
   PitScoutingEntry.find_or_create_by!(event: event, frc_team: team, user: analysts.sample) do |pe|
-    pe.organization = org
+    
     pe.status = :submitted
     pe.data = {
       "drivetrain" => drivetrains[i],
@@ -343,7 +327,7 @@ puts "  Team summaries: #{summary_count}"
 # --- Generate predictions ---
 puts "  Generating predictions..."
 begin
-  prediction_count = PredictionService.new(event, org).generate_all!
+  prediction_count = PredictionService.new(event).generate_all!
   puts "  Predictions: #{prediction_count} generated"
 rescue => e
   puts "  Predictions: failed (#{e.message}) -- this is OK if Statbotics is unreachable"
@@ -353,34 +337,10 @@ end
 # --- Pick list ---
 ranked_teams = TeamEventSummary.where(event: event).order(avg_total_points: :desc).pluck(:frc_team_id)
 PickList.find_or_create_by!(event: event, user: admin, name: "Houston Regional Draft Board") do |pl|
-  pl.organization = org
+  
   pl.entries = ranked_teams
 end
 puts "  Pick list: created with #{ranked_teams.size} teams"
-
-# --- Reports ---
-Report.find_or_create_by!(event: event, user: admin, name: "Top Scorers") do |r|
-  r.organization = org
-  r.config = {
-    "metrics" => [ "avg_total_points", "fuel_accuracy_pct", "avg_climb_points" ],
-    "filters" => { "min_matches" => 2 },
-    "sort_by" => "avg_total_points",
-    "sort_dir" => "desc",
-    "chart_type" => "bar"
-  }
-end
-
-Report.find_or_create_by!(event: event, user: admin, name: "Accuracy Report") do |r|
-  r.organization = org
-  r.config = {
-    "metrics" => [ "fuel_accuracy_pct", "avg_fuel_made", "avg_fuel_missed" ],
-    "filters" => { "min_matches" => 2 },
-    "sort_by" => "fuel_accuracy_pct",
-    "sort_dir" => "desc",
-    "chart_type" => "bar"
-  }
-end
-puts "  Reports: 2 created"
 
 # --- Data conflicts (simulate a disagreement between scouts) ---
 conflict_match = matches.first
@@ -391,7 +351,7 @@ DataConflict.find_or_create_by!(
   match: conflict_match,
   field_name: "endgame_climb"
 ) do |dc|
-  dc.organization = org
+  
   dc.values = { scout.id.to_s => "L3", scout2.id.to_s => "L2" }
   dc.resolved = false
 end
@@ -402,7 +362,7 @@ DataConflict.find_or_create_by!(
   match: matches[1],
   field_name: "auton_climb"
 ) do |dc|
-  dc.organization = org
+  
   dc.values = { scout.id.to_s => "true", scout3.id.to_s => "false" }
   dc.resolved = false
 end
@@ -411,10 +371,10 @@ puts "  Data conflicts: 2 created"
 # --- Summary ---
 puts ""
 puts "Seed complete!"
-puts "  Organizations: #{Organization.count}"
+
 puts "  Game configs: #{GameConfig.count}"
 puts "  Users: #{User.count}"
-puts "  Memberships: #{Membership.count}"
+
 puts "  Events: #{Event.count}"
 puts "  Teams: #{FrcTeam.count}"
 puts "  Matches: #{Match.count}"
@@ -424,5 +384,4 @@ puts "  Pit scouting entries: #{PitScoutingEntry.count}"
 puts "  Team summaries: #{TeamEventSummary.count}"
 puts "  Predictions: #{Prediction.count}"
 puts "  Pick lists: #{PickList.count}"
-puts "  Reports: #{Report.count}"
 puts "  Data conflicts: #{DataConflict.count}"

@@ -24,14 +24,15 @@
   <div class="flex items-center gap-3 shrink-0">
     <div class="text-right">
       <p class="text-sm font-bold text-white font-mono"><%= scouting_entry.total_points %> pts</p>
-      <span class="<%= case scouting_entry.status
-          when 'submitted' then 'badge-orange'
-          when 'flagged' then 'badge-amber'
-          when 'rejected' then 'badge-red'
-          else 'badge-gray'
-          end %> text-[10px]">
-        <%= scouting_entry.status&.capitalize || 'Draft' %>
-      </span>
+      <% unless scouting_entry.submitted? %>
+        <span class="<%= case scouting_entry.status
+            when 'flagged' then 'badge-amber'
+            when 'rejected' then 'badge-red'
+            else 'badge-gray'
+            end %> text-[10px]">
+          <%= scouting_entry.flagged? ? "Inaccurate" : scouting_entry.status&.capitalize %>
+        </span>
+      <% end %>
     </div>
     <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition-colors duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

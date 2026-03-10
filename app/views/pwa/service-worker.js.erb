@@ -74,6 +74,41 @@ self.addEventListener("message", (event) => {
   }
 })
 
+self.addEventListener("push", (event) => {
+  if (!event.data) return
+
+  const payload = event.data.json()
+  const title = payload.title || "Lighthouse"
+  const options = {
+    body: payload.body || "You have an upcoming scouting assignment.",
+    icon: payload.icon || "/icon.png",
+    badge: "/icon.png",
+    tag: payload.tag || "scouting-reminder",
+    data: {
+      url: payload.url || "/scouting_assignments"
+    }
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options))
+})
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close()
+
+  const url = event.notification.data?.url || "/scouting_assignments"
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((client) => client.url.includes(self.location.origin))
+      if (existing) {
+        existing.navigate(url)
+        return existing.focus()
+      }
+
+      return self.clients.openWindow(url)
+    })
+  )
+})
+
 // --- Fetch: strategy varies by request type ---
 
 self.addEventListener("fetch", (event) => {

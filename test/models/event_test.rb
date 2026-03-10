@@ -48,7 +48,7 @@ class EventTest < ActiveSupport::TestCase
   test "has many scouting_entries" do
     event = events(:championship)
     assert_respond_to event, :scouting_entries
-    assert_equal 4, event.scouting_entries.count
+    assert_equal 9, event.scouting_entries.count
   end
 
   test "has many pit_scouting_entries" do
@@ -61,12 +61,6 @@ class EventTest < ActiveSupport::TestCase
     event = events(:championship)
     assert_respond_to event, :predictions
     assert_includes event.predictions, predictions(:prediction_qm1)
-  end
-
-  test "has many reports" do
-    event = events(:championship)
-    assert_respond_to event, :reports
-    assert_includes event.reports, reports(:team_summary_report)
   end
 
   test "has many simulation_results" do
@@ -100,6 +94,34 @@ class EventTest < ActiveSupport::TestCase
   test "active excludes events not happening today" do
     travel_to Date.new(2026, 5, 1) do
       assert_not_includes Event.active, events(:championship)
+    end
+  end
+
+  # --- Qualification schedule scaffolding ---
+
+  test "ensure_qualification_matches! creates qm1 through qm80" do
+    event = Event.create!(name: "No Sync Event", year: 2026)
+
+    assert_difference("event.matches.where(comp_level: 'qm').count", 80) do
+      event.ensure_qualification_matches!
+    end
+
+    assert_equal(
+      (1..Event::QUALIFICATION_MATCH_COUNT).to_a,
+      event.matches.where(comp_level: "qm").order(:match_number).pluck(:match_number)
+    )
+  end
+
+  test "ensure_qualification_matches! does not duplicate existing qualification matches" do
+    event = Event.create!(name: "Partial Event", year: 2026)
+    event.matches.create!(comp_level: "qm", set_number: 1, match_number: 1)
+
+    assert_difference("event.matches.where(comp_level: 'qm').count", Event::QUALIFICATION_MATCH_COUNT - 1) do
+      event.ensure_qualification_matches!
+    end
+
+    assert_no_difference("event.matches.where(comp_level: 'qm').count") do
+      event.ensure_qualification_matches!
     end
   end
 

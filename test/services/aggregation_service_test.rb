@@ -52,20 +52,19 @@ class AggregationServiceTest < ActiveSupport::TestCase
   test "aggregate_team returns correct values for team_1678" do
     agg = @service.aggregate_team(frc_teams(:team_1678))
 
-    # Entry 1 (qm1_1678): fuel_made = 3+10+0 = 13, auton_climb=false (0), L2 (20) => 13 + 0 + 20 = 33
-    # Entry 2 (qm2_1678): fuel_made = 4+11+0 = 15, auton_climb=true (15), L2 (20) => 15 + 15 + 20 = 50
-    assert_equal 2, agg[:matches_scouted]
-    assert_in_delta 41.5, agg[:avg_total_points], 0.01 # (33+50)/2
+    # Entry 1 (qm1_1678, lead_user): fuel_made = 3+10+0 = 13, auton_climb=false (0), L2 (20) => 13 + 0 + 20 = 33
+    # Entry 2 (qm2_1678, admin_user): fuel_made = 4+11+0 = 15, auton_climb=true (15), L2 (20) => 15 + 15 + 20 = 50
+    # Entry 3 (qm1_1678_owner, owner_user): fuel_made = 3+10+0 = 13, auton_climb=false (0), L2 (20) => 13 + 0 + 20 = 33
+    assert_equal 3, agg[:matches_scouted]
+    assert_in_delta 38.67, agg[:avg_total_points], 0.01 # (33+50+33)/3
   end
 
-  test "aggregate_team returns empty aggregation for unscouted team" do
+  test "aggregate_team returns correct values for team_4414" do
     agg = @service.aggregate_team(frc_teams(:team_4414))
 
-    assert_equal 0, agg[:matches_scouted]
-    assert_equal 0.0, agg[:avg_total_points]
-    assert_equal 0.0, agg[:avg_fuel_made]
-    assert_equal 0.0, agg[:stddev_total_points]
-    assert_equal "low", agg[:confidence]
+    # Entry 1 (qm1_4414): fuel_made = 4+8+0 = 12, auton_climb=false (0), L2 (20) => 12 + 0 + 20 = 32
+    assert_equal 1, agg[:matches_scouted]
+    assert_in_delta 32.0, agg[:avg_total_points], 0.01
   end
 
   test "aggregate_team confidence is low for fewer than 3 entries" do
@@ -80,13 +79,14 @@ class AggregationServiceTest < ActiveSupport::TestCase
 
     team_numbers = results.map { |agg| agg[:frc_team].team_number }
 
-    # Only teams 254 and 1678 have scouting entries
+    # All five teams with scouting entries should appear
     assert_includes team_numbers, 254
     assert_includes team_numbers, 1678
-    refute_includes team_numbers, 4414
-    refute_includes team_numbers, 118
+    assert_includes team_numbers, 4414
+    assert_includes team_numbers, 118
+    assert_includes team_numbers, 971
 
-    # 254 has higher avg (58.5) than 1678 (39.0), so should be first
+    # 254 has highest avg total points, so should be first
     assert_equal 254, results.first[:frc_team].team_number
   end
 

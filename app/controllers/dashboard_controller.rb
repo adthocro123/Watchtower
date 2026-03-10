@@ -17,13 +17,13 @@ class DashboardController < ApplicationController
     @total_teams_at_event = FrcTeam.at_event(@event).count
     @pit_scouted_count = PitScoutingEntry.where(event: @event).distinct.count(:frc_team_id)
 
-    # Scout activity (last 7 days)
-    @scout_activity = ScoutingEntry.where(event: @event)
-                                   .where("created_at >= ?", 7.days.ago)
-                                   .group(:user_id)
-                                   .count
-    @top_scouts = User.where(id: @scout_activity.keys)
-                      .index_by(&:id)
+    # Flagged (inaccurate) entries grouped by match
+    @flagged_entries = ScoutingEntry.where(event: @event, status: :flagged)
+                                    .includes(:frc_team, :match, :user)
+                                    .order(created_at: :desc)
+
+    # Scout accuracy leaderboard
+    @scout_accuracy = ScoutAccuracyService.new(@event).call
 
     # Scoring distribution for histogram (total points per entry)
     @scoring_data = @team_summaries.pluck(:avg_total_points).map { |v| v.to_f.round(0) }
