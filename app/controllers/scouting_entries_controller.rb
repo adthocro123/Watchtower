@@ -32,7 +32,7 @@ class ScoutingEntriesController < ApplicationController
   end
 
   def replay
-    authorize @scouting_entry
+    authorize :scouting_entry, :replay?
   end
 
   def create

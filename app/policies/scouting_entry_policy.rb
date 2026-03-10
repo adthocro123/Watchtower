@@ -11,6 +11,10 @@ class ScoutingEntryPolicy < ApplicationPolicy
     true
   end
 
+  def replay?
+    true
+  end
+
   def update?
     owner? || analyst?
   end

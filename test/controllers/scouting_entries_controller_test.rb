@@ -68,6 +68,16 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Q1"
   end
 
+  test "scout can get replay page" do
+    sign_out :user
+    sign_in_as(users(:scout_user))
+    select_event(@event)
+
+    get replay_scouting_entries_path(match_id: matches(:qm4).id)
+
+    assert_response :success
+  end
+
   test "replay page route does not require a scouting entry id" do
     assert_routing "/scouting_entries/replay", controller: "scouting_entries", action: "replay"
   end
