@@ -69,6 +69,17 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Replay Match Picker"
     assert_select "select[name='match_id']"
     assert_select "select[name='frc_team_id']"
+    assert_select "[data-replay-team-grid]"
+    assert_select "button[data-replay-team-card='blue-1']"
+    assert_select "button[data-replay-team-card='red-1']"
+  end
+
+  test "replay page team cards can drive selected team" do
+    get replay_scouting_entries_path(match_id: matches(:qm4).id, frc_team_id: frc_teams(:team_254).id)
+
+    assert_response :success
+    assert_select "option[value='#{frc_teams(:team_254).id}'][selected='selected']"
+    assert_select "button[data-replay-team-card][data-replay-team-selected='true']", count: 1
   end
 
   test "scout can get replay page" do
@@ -79,6 +90,25 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     get replay_scouting_entries_path(match_id: matches(:qm4).id)
 
     assert_response :success
+  end
+
+  test "replay page explains when TBA is not configured" do
+    event = Event.create!(name: "Manual Event", tba_key: "2026manual", year: 2026)
+    event.matches.create!(comp_level: "qm", set_number: 1, match_number: 1)
+    select_event(event)
+
+    original_api_key = ENV["TBA_API_KEY"]
+    ENV.delete("TBA_API_KEY")
+
+    begin
+      get replay_scouting_entries_path
+    ensure
+      ENV["TBA_API_KEY"] = original_api_key
+    end
+
+    assert_response :success
+    assert_includes response.body, "Replay scouting needs a TBA API key"
+    assert_includes response.body, "TBA_API_KEY"
   end
 
   test "replay page route does not require a scouting entry id" do

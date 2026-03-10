@@ -217,6 +217,7 @@ class ScoutingEntriesController < ApplicationController
 
     @game_config = GameConfig.current
     @replay_matches = replay_match_scope
+    @replay_empty_state = replay_empty_state
     @coverage_map = MatchCoverageService.new(current_event).coverage_for(@replay_matches)
     @selected_match = selected_match
     @selected_video = selected_video_for(@selected_match)
@@ -230,11 +231,30 @@ class ScoutingEntriesController < ApplicationController
     @replay_match_scope ||= ScoutableMatchesQuery.new(current_event).replay.select(&:replay_available?)
   end
 
+  def replay_empty_state
+    return :tba_unconfigured if current_event.tba_key.present? && !TbaClient.configured?
+
+    qualification_matches = current_event.matches.where(comp_level: "qm").to_a
+    return :no_matches if qualification_matches.empty?
+
+    return :placeholder_schedule if qualification_matches.none?(&:best_known_time) && qualification_matches.none?(&:replay_available?)
+
+    replay_candidates = ScoutableMatchesQuery.new(current_event).replay
+    return :missing_videos if replay_candidates.any? && replay_candidates.none?(&:replay_available?)
+
+    :default
+  end
+
   def replay_teams_for(match)
     return [] if match.blank?
 
     coverage = @coverage_map[match] || { teams: [] }
-    coverage[:teams].sort_by { |team| [ team[:covered] ? 1 : 0, team[:alliance_color], team[:station] ] }
+    coverage[:teams].sort_by do |team|
+      [
+        team[:station],
+        team[:alliance_color] == "blue" ? 0 : 1
+      ]
+    end
   end
 
   def selected_video_for(match)

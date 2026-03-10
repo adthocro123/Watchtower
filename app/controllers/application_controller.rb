@@ -72,6 +72,7 @@ class ApplicationController < ActionController::Base
   def auto_sync_event
     cache_key = "auto_sync:#{current_event.id}"
     return if Rails.cache.exist?(cache_key)
+    return unless TbaClient.configured?
 
     Rails.cache.write(cache_key, true, expires_in: AutoSyncEventJob::COOLDOWN)
 

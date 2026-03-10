@@ -132,6 +132,21 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :redirect
   end
 
+  test "sync shows helpful error when TBA is not configured" do
+    original_api_key = ENV["TBA_API_KEY"]
+    ENV.delete("TBA_API_KEY")
+
+    begin
+      post sync_event_path(@event)
+    ensure
+      ENV["TBA_API_KEY"] = original_api_key
+    end
+
+    assert_redirected_to event_path(@event)
+    follow_redirect!
+    assert_includes response.body, "TBA sync is unavailable"
+  end
+
   # --- Destroy ---
 
   test "admin should destroy event" do
