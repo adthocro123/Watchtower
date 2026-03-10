@@ -53,3 +53,33 @@ qm4:
       key: "pastmatchtwo"
   red_score: 165
   blue_score: 170
+
+sf1:
+  event: championship
+  comp_level: "sf"
+  match_number: 1
+  set_number: 1
+  tba_key: "2026cmp_sf1m1"
+  scheduled_time: "2026-04-15 12:00:00"
+  actual_time: "2026-04-15 12:01:00"
+  post_result_time: "2026-04-15 12:09:00"
+  videos:
+    - type: "youtube"
+      key: "semifinalvideo"
+  red_score: 180
+  blue_score: 175
+
+f1:
+  event: championship
+  comp_level: "f"
+  match_number: 1
+  set_number: 1
+  tba_key: "2026cmp_f1m1"
+  scheduled_time: "2026-04-15 12:20:00"
+  actual_time: "2026-04-15 12:21:00"
+  post_result_time: "2026-04-15 12:29:00"
+  videos:
+    - type: "youtube"
+      key: "finalvideo"
+  red_score: 190
+  blue_score: 188

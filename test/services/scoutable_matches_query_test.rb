@@ -20,20 +20,11 @@ class ScoutableMatchesQueryTest < ActiveSupport::TestCase
   end
 
   test "only qualification matches are scoutable" do
-    event = events(:championship)
-    playoff_match = event.matches.create!(
-      comp_level: "qf",
-      set_number: 1,
-      match_number: 1,
-      scheduled_time: Time.zone.parse("2026-04-15 12:00:00"),
-      actual_time: Time.zone.parse("2026-04-15 12:05:00"),
-      post_result_time: Time.zone.parse("2026-04-15 12:10:00"),
-      videos: [ { "type" => "youtube", "key" => "playoffvideo" } ]
-    )
+    query = ScoutableMatchesQuery.new(events(:championship), reference_time: Time.zone.parse("2026-04-15 12:30:00"))
 
-    query = ScoutableMatchesQuery.new(event, reference_time: Time.zone.parse("2026-04-15 12:30:00"))
-
-    assert_not_includes query.live, playoff_match
-    assert_not_includes query.replay, playoff_match
+    assert_not_includes query.live, matches(:sf1)
+    assert_not_includes query.live, matches(:f1)
+    assert_not_includes query.replay, matches(:sf1)
+    assert_not_includes query.replay, matches(:f1)
   end
 end

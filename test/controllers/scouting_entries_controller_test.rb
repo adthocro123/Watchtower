@@ -66,6 +66,9 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Replay Scout"
     assert_includes response.body, "Q4"
     assert_includes response.body, "Q1"
+    assert_includes response.body, "Replay Match Picker"
+    assert_select "select[name='match_id']"
+    assert_select "select[name='frc_team_id']"
   end
 
   test "scout can get replay page" do
