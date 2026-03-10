@@ -358,8 +358,20 @@
             <svg class="w-12 h-12 text-gray-700 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M4 6h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z" />
             </svg>
-            <p class="text-lg font-semibold text-white">No replay-ready matches selected</p>
-            <p class="text-sm text-gray-400 mt-2">Pick a qualification match from the dropdown above to start replay scouting.</p>
+            <% case @replay_empty_state %>
+            <% when :tba_unconfigured %>
+              <p class="text-lg font-semibold text-white">Replay scouting needs a TBA API key</p>
+              <p class="text-sm text-gray-400 mt-2">`TBA_API_KEY` is not configured, so Lighthouse cannot import played match times or replay video links.</p>
+            <% when :placeholder_schedule %>
+              <p class="text-lg font-semibold text-white">This event only has placeholder matches</p>
+              <p class="text-sm text-gray-400 mt-2">Sync the event from TBA to import real match times and replay videos before using replay scout.</p>
+            <% when :missing_videos %>
+              <p class="text-lg font-semibold text-white">No replay videos are available yet</p>
+              <p class="text-sm text-gray-400 mt-2">Played qualification matches exist, but TBA has not provided YouTube replay links for them yet.</p>
+            <% else %>
+              <p class="text-lg font-semibold text-white">No replay-ready matches selected</p>
+              <p class="text-sm text-gray-400 mt-2">Pick a qualification match from the dropdown above to start replay scouting.</p>
+            <% end %>
           </div>
         <% end %>
     </div>

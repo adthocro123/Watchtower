@@ -4,6 +4,10 @@ class TbaClient
   BASE_URL = "https://www.thebluealliance.com/api/v3"
   CACHE_TTL = 5.minutes
 
+  def self.configured?
+    ENV["TBA_API_KEY"].present?
+  end
+
   def initialize(api_key: ENV["TBA_API_KEY"])
     @api_key = api_key
     @conn = build_connection
@@ -48,6 +52,11 @@ class TbaClient
   end
 
   def cached_get(cache_key, path)
+    unless self.class.configured?
+      Rails.logger.warn("[TbaClient] Missing TBA_API_KEY; skipping #{path}")
+      return nil
+    end
+
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
       response = @conn.get("#{BASE_URL}#{path}")
 

@@ -22,12 +22,13 @@ class EventsController < ApplicationController
     year = params[:event][:year].to_i
     event_code = params[:event][:event_code].to_s.strip.downcase
     tba_key = "#{year}#{event_code}"
+    tba_configured = TbaClient.configured?
 
     @event = Event.new(tba_key: tba_key, year: year)
     authorize @event
 
     # Fetch details from TBA to auto-populate fields
-    tba_data = TbaClient.new.event(tba_key)
+    tba_data = tba_configured ? TbaClient.new.event(tba_key) : nil
     if tba_data
       @event.assign_attributes(
         name: tba_data["name"],
@@ -45,10 +46,12 @@ class EventsController < ApplicationController
 
     if @event.save
       # Auto-sync teams and matches from TBA (synchronous so data is ready immediately)
-      begin
-        TbaSyncService.new(tba_key).sync_all!
-      rescue StandardError => e
-        Rails.logger.warn("[EventsController] TBA sync failed for new event #{tba_key}: #{e.message}")
+      if tba_configured
+        begin
+          TbaSyncService.new(tba_key).sync_all!
+        rescue StandardError => e
+          Rails.logger.warn("[EventsController] TBA sync failed for new event #{tba_key}: #{e.message}")
+        end
       end
 
       # Enqueue background jobs for Statbotics data, summaries, and predictions
@@ -56,7 +59,7 @@ class EventsController < ApplicationController
       SyncStatboticsJob.perform_later(@event.id)
       RefreshPredictionsJob.perform_later(@event.id)
 
-      redirect_to @event, notice: "Event created and syncing data from TBA."
+      redirect_to @event, notice: create_notice_for(tba_configured)
     else
       render :new, status: :unprocessable_entity
     end
@@ -145,6 +148,11 @@ class EventsController < ApplicationController
   def sync
     authorize @event, :sync?
 
+    unless TbaClient.configured?
+      redirect_to @event, alert: "TBA sync is unavailable because `TBA_API_KEY` is not configured."
+      return
+    end
+
     TbaSyncService.new(@event.tba_key).sync_all!
 
     # Refresh materialized views, warm Statbotics cache, and regenerate predictions
@@ -165,5 +173,11 @@ class EventsController < ApplicationController
 
   def update_event_params
     params.require(:event).permit(:name, :start_date, :end_date, :city, :state_prov, :country, :event_type)
+  end
+
+  def create_notice_for(tba_configured)
+    return "Event created. Add `TBA_API_KEY` to enable TBA sync." unless tba_configured
+
+    "Event created and syncing data from TBA."
   end
 end

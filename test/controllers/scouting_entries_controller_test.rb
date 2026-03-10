@@ -81,6 +81,25 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "replay page explains when TBA is not configured" do
+    event = Event.create!(name: "Manual Event", tba_key: "2026manual", year: 2026)
+    event.matches.create!(comp_level: "qm", set_number: 1, match_number: 1)
+    select_event(event)
+
+    original_api_key = ENV["TBA_API_KEY"]
+    ENV.delete("TBA_API_KEY")
+
+    begin
+      get replay_scouting_entries_path
+    ensure
+      ENV["TBA_API_KEY"] = original_api_key
+    end
+
+    assert_response :success
+    assert_includes response.body, "Replay scouting needs a TBA API key"
+    assert_includes response.body, "TBA_API_KEY"
+  end
+
   test "replay page route does not require a scouting entry id" do
     assert_routing "/scouting_entries/replay", controller: "scouting_entries", action: "replay"
   end

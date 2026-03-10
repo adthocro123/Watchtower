@@ -19,7 +19,7 @@ class NextScoutMatchService
   def match_sorts_after?(candidate, current)
     current_values = sort_values(current)
     candidate_values = sort_values(candidate)
-    candidate_values > current_values
+    (candidate_values <=> current_values) == 1
   end
 
   def sort_values(match)
