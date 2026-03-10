@@ -17,43 +17,64 @@
 
   <%# --- Admin Bulk Panel (consolidated single form) --- %>
   <% if @is_admin %>
-    <div class="scout-card p-4">
-      <h2 class="text-sm font-semibold text-white mb-3">Bulk Assignment Manager</h2>
-      <p class="text-xs text-gray-500 mb-3">Select scouts and a match range, then assign or clear. You can also click individual cells in the grid below.</p>
-
-      <%= form_with url: bulk_create_scouting_assignments_path, method: :post, class: "grid grid-cols-1 lg:grid-cols-12 gap-3 items-end" do %>
-        <div class="lg:col-span-3">
-          <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Scouts</label>
-          <%= select_tag "user_ids[]",
-              options_from_collection_for_select(@users, :id, :full_name),
-              multiple: true,
-              class: "input-field h-24" %>
+    <details class="scout-card group" open>
+      <summary class="flex items-center gap-2 p-4 cursor-pointer select-none list-none">
+        <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <div>
+          <h2 class="text-sm font-semibold text-white">Bulk Assignment Manager</h2>
+          <p class="text-xs text-gray-500 mt-0.5">Pick scouts from the checklist, then assign or clear a match range.</p>
         </div>
+        <svg class="w-4 h-4 text-gray-500 ml-auto transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
 
-        <div class="lg:col-span-2">
-          <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Start Match</label>
-          <%= number_field_tag :start_match_number, nil, min: 1, class: "input-field", required: true, placeholder: "1" %>
-        </div>
+      <div class="px-4 pb-4">
+        <%= form_with url: bulk_create_scouting_assignments_path, method: :post, class: "space-y-4" do %>
+          <div>
+            <label class="block text-xs text-gray-400 uppercase tracking-wider mb-2">Scout Checklist</label>
+            <div class="max-h-48 overflow-y-auto rounded-xl border border-gray-800 bg-gray-950/40 p-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                <% @users.each do |user| %>
+                  <label class="flex items-center gap-2 rounded-lg border border-gray-800 bg-gray-900/70 px-3 py-2 text-sm text-gray-300 cursor-pointer transition hover:border-gray-700 has-[:checked]:border-orange-500/40 has-[:checked]:bg-orange-500/10 has-[:checked]:text-orange-200">
+                    <%= check_box_tag "user_ids[]", user.id, false, class: "h-4 w-4 rounded border-gray-600 bg-gray-900 text-orange-500 focus:ring-orange-500" %>
+                    <span class="font-medium"><%= user.full_name %></span>
+                    <span class="ml-auto text-[10px] uppercase tracking-wide text-gray-500"><%= user.role.humanize %></span>
+                  </label>
+                <% end %>
+              </div>
+            </div>
+          </div>
 
-        <div class="lg:col-span-2">
-          <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">End Match</label>
-          <%= number_field_tag :end_match_number, nil, min: 1, class: "input-field", placeholder: "10" %>
-        </div>
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+            <div class="lg:col-span-3">
+              <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Start Match</label>
+              <%= number_field_tag :start_match_number, nil, min: 1, class: "input-field", required: true, placeholder: "1" %>
+            </div>
 
-        <div class="lg:col-span-2">
-          <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Notes</label>
-          <%= text_field_tag :notes, nil, class: "input-field", placeholder: "Optional" %>
-        </div>
+            <div class="lg:col-span-3">
+              <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">End Match</label>
+              <%= number_field_tag :end_match_number, nil, min: 1, class: "input-field", placeholder: "10" %>
+            </div>
 
-        <div class="lg:col-span-3 flex gap-2">
-          <%= submit_tag "Assign Range", class: "btn-primary flex-1 text-sm" %>
-          <%= submit_tag "Clear Range",
-              formaction: bulk_destroy_scouting_assignments_path,
-              class: "btn-danger flex-1 text-sm",
-              data: { turbo_confirm: "Clear all assignments in this range?" } %>
-        </div>
-      <% end %>
-    </div>
+            <div class="lg:col-span-3">
+              <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Notes</label>
+              <%= text_field_tag :notes, nil, class: "input-field", placeholder: "Optional" %>
+            </div>
+
+            <div class="lg:col-span-3 flex gap-2">
+              <%= submit_tag "Assign Range", class: "btn-primary flex-1 text-sm" %>
+              <%= submit_tag "Clear Range",
+                  formaction: bulk_destroy_scouting_assignments_path,
+                  class: "btn-danger flex-1 text-sm",
+                  data: { turbo_confirm: "Clear all assignments in this range?" } %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </details>
   <% end %>
 
   <%# --- Schedule Grid --- %>
