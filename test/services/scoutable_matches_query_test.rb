@@ -7,6 +7,18 @@ class ScoutableMatchesQueryTest < ActiveSupport::TestCase
     assert_equal [ matches(:qm2), matches(:qm3) ], matches
   end
 
+  test "normal returns all qualification matches including ones already played" do
+    matches = ScoutableMatchesQuery.new(events(:championship), reference_time: Time.zone.parse("2026-04-15 10:30:00")).normal
+
+    assert_equal [ matches(:qm1), matches(:qm2), matches(:qm3), matches(:qm4) ], matches
+  end
+
+  test "normal still returns qualification matches after the event has ended" do
+    matches = ScoutableMatchesQuery.new(events(:championship), reference_time: Time.zone.parse("2026-04-20 12:00:00")).normal
+
+    assert_equal [ matches(:qm1), matches(:qm2), matches(:qm3), matches(:qm4) ], matches
+  end
+
   test "live returns no matches after the event has ended" do
     matches = ScoutableMatchesQuery.new(events(:championship), reference_time: Time.zone.parse("2026-04-20 12:00:00")).live
 
@@ -22,8 +34,11 @@ class ScoutableMatchesQueryTest < ActiveSupport::TestCase
   test "only qualification matches are scoutable" do
     query = ScoutableMatchesQuery.new(events(:championship), reference_time: Time.zone.parse("2026-04-15 12:30:00"))
 
+    assert_includes query.normal, matches(:qm1)
     assert_not_includes query.live, matches(:sf1)
     assert_not_includes query.live, matches(:f1)
+    assert_not_includes query.normal, matches(:sf1)
+    assert_not_includes query.normal, matches(:f1)
     assert_not_includes query.replay, matches(:sf1)
     assert_not_includes query.replay, matches(:f1)
   end

@@ -12,6 +12,10 @@ class ScoutableMatchesQuery
     loaded_matches.select { |match| match.upcoming?(@reference_time) }
   end
 
+  def normal
+    loaded_matches
+  end
+
   def replay
     loaded_matches.select { |match| match.occurred?(@reference_time) }
                   .sort_by { |match| [ match.best_known_time || Time.at(0), match.id ] }
