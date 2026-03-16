@@ -1,4 +1,13 @@
 class PickListsController < ApplicationController
+  PickListTeamSummary = Struct.new(
+    :frc_team_id,
+    :avg_total_points,
+    :fuel_accuracy_pct,
+    :avg_defense_rating,
+    :matches_scouted,
+    keyword_init: true
+  )
+
   before_action :require_event!
   before_action :set_pick_list, only: %i[show edit update destroy]
   before_action :prepare_show_data, only: :show
@@ -73,8 +82,7 @@ class PickListsController < ApplicationController
   def prepare_show_data
     @ordered_team_ids = safe_ordered_team_ids(@pick_list)
     @teams_by_id = FrcTeam.where(id: @ordered_team_ids).index_by(&:id)
-    @team_summaries = safe_team_summaries(TeamEventSummary.where(event: current_event, frc_team_id: @ordered_team_ids))
-    @latest_entries_by_team = latest_entries_for(@ordered_team_ids)
+    @team_summaries, @latest_entries_by_team = build_team_metrics(@ordered_team_ids)
   rescue StandardError => e
     Rails.logger.warn("[PickListsController] Failed to prepare pick list #{@pick_list&.id} for display: #{e.class}: #{e.message}")
     @ordered_team_ids = []
@@ -87,10 +95,9 @@ class PickListsController < ApplicationController
   def load_team_options
     @pick_list ||= current_user.pick_lists.build(event: current_event)
 
-    summaries = safe_team_summaries(TeamEventSummary.where(event: current_event))
     selected_ids = safe_ordered_team_ids(@pick_list)
     teams = FrcTeam.at_event(current_event).order(:team_number).to_a
-    latest_entries_by_team = latest_entries_for(teams.map(&:id))
+    summaries, latest_entries_by_team = build_team_metrics(teams.map(&:id))
     event_rank_by_id = summaries.values.sort_by do |summary|
       [ -summary.avg_total_points.to_f, -summary.matches_scouted.to_i, summary.frc_team_id ]
     end.each_with_index(1).to_h { |summary, index| [ summary.frc_team_id, index ] }
@@ -122,14 +129,6 @@ class PickListsController < ApplicationController
     @team_options = fallback_team_options
   end
 
-  def safe_team_summaries(scope)
-    scope.index_by(&:frc_team_id)
-  rescue StandardError => e
-    @team_summary_warning = true
-    Rails.logger.warn("[PickListsController] Failed to load team summaries for event #{current_event&.id}: #{e.class}: #{e.message}")
-    {}
-  end
-
   def safe_ordered_team_ids(pick_list)
     pick_list.ordered_team_ids
   rescue StandardError => e
@@ -152,16 +151,38 @@ class PickListsController < ApplicationController
     end
   end
 
-  def latest_entries_for(team_ids)
-    return {} if team_ids.blank?
+  def build_team_metrics(team_ids)
+    return [ {}, {} ] if team_ids.blank?
 
-    current_event.scouting_entries
-                 .counted
-                 .where(frc_team_id: team_ids)
-                 .includes(:match)
-                 .order(created_at: :desc)
-                 .to_a
-                 .group_by(&:frc_team_id)
-                 .transform_values(&:first)
+    entries_by_team = current_event.scouting_entries
+                                 .counted
+                                 .where(frc_team_id: team_ids)
+                                 .includes(:match)
+                                 .order(created_at: :desc)
+                                 .to_a
+                                 .group_by(&:frc_team_id)
+
+    summaries = entries_by_team.transform_values { |entries| build_pick_list_summary(entries) }
+    latest_entries = entries_by_team.transform_values(&:first)
+
+    [ summaries, latest_entries ]
+  end
+
+  def build_pick_list_summary(entries)
+    defense_ratings = entries.map(&:defense_rating).select(&:positive?)
+
+    PickListTeamSummary.new(
+      frc_team_id: entries.first.frc_team_id,
+      avg_total_points: average(entries.map(&:total_points)),
+      fuel_accuracy_pct: average(entries.map(&:fuel_accuracy)),
+      avg_defense_rating: defense_ratings.any? ? average(defense_ratings) : nil,
+      matches_scouted: entries.size
+    )
+  end
+
+  def average(values)
+    return 0.0 if values.blank?
+
+    values.sum.to_f / values.size
   end
 end
