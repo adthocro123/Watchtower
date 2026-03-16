@@ -91,9 +91,9 @@
                 <% avg_accuracy = summary.try(:fuel_accuracy_pct).to_f.round(1) %>
                 <% avg_defense = summary.try(:avg_defense_rating) %>
                 <% matches_scouted = summary.try(:matches_scouted).to_i %>
-                <% recent_points = recent_entry&.total_points.to_i %>
-                <% recent_accuracy = recent_entry&.fuel_accuracy.to_f.round(1) %>
-                <% recent_match = recent_entry&.match&.display_name %>
+                <% recent_points = recent_entry&.points.to_f.round(1) %>
+                <% recent_accuracy = recent_entry&.accuracy.to_f.round(1) %>
+                <% recent_match = recent_entry&.match_label %>
                 <div class="flex items-start gap-3 px-4 py-3 transition-colors duration-150 <%= selected ? 'bg-orange-500/10 hover:bg-orange-500/15' : 'hover:bg-gray-800/40' %>"
                      data-search-target="item"
                      data-pick-list-selection-target="row"

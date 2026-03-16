@@ -8,6 +8,13 @@ class PickListsController < ApplicationController
     keyword_init: true
   )
 
+  PickListRecentEntry = Struct.new(
+    :match_label,
+    :points,
+    :accuracy,
+    keyword_init: true
+  )
+
   before_action :require_event!
   before_action :set_pick_list, only: %i[show edit update destroy]
   before_action :prepare_show_data, only: :show
@@ -162,21 +169,42 @@ class PickListsController < ApplicationController
                                  .to_a
                                  .group_by(&:frc_team_id)
 
-    summaries = entries_by_team.transform_values { |entries| build_pick_list_summary(entries) }
-    latest_entries = entries_by_team.transform_values(&:first)
+    summaries = {}
+    latest_entries = {}
+
+    entries_by_team.each do |team_id, entries|
+      summaries[team_id] = build_pick_list_summary(entries)
+      latest_entries[team_id] = build_pick_list_recent_entry(entries.first)
+    rescue StandardError => e
+      Rails.logger.warn("[PickListsController] Failed to compute pick list metrics for team #{team_id}: #{e.class}: #{e.message}")
+    end
 
     [ summaries, latest_entries ]
   end
 
   def build_pick_list_summary(entries)
-    defense_ratings = entries.map(&:defense_rating).select(&:positive?)
+    metrics = entries.filter_map { |entry| safe_entry_metrics(entry) }
+    defense_ratings = metrics.map { |metric| metric[:defense_rating] }.compact.select(&:positive?)
 
     PickListTeamSummary.new(
       frc_team_id: entries.first.frc_team_id,
-      avg_total_points: average(entries.map(&:total_points)),
-      fuel_accuracy_pct: average(entries.map(&:fuel_accuracy)),
+      avg_total_points: average(metrics.map { |metric| metric[:points] }),
+      fuel_accuracy_pct: average(metrics.map { |metric| metric[:accuracy] }),
       avg_defense_rating: defense_ratings.any? ? average(defense_ratings) : nil,
       matches_scouted: entries.size
+    )
+  end
+
+  def build_pick_list_recent_entry(entry)
+    return if entry.blank?
+
+    metrics = safe_entry_metrics(entry)
+    return if metrics.blank?
+
+    PickListRecentEntry.new(
+      match_label: entry.match&.display_name,
+      points: metrics[:points],
+      accuracy: metrics[:accuracy]
     )
   end
 
@@ -184,5 +212,16 @@ class PickListsController < ApplicationController
     return 0.0 if values.blank?
 
     values.sum.to_f / values.size
+  end
+
+  def safe_entry_metrics(entry)
+    {
+      points: entry.total_points,
+      accuracy: entry.fuel_accuracy,
+      defense_rating: entry.defense_rating
+    }
+  rescue StandardError => e
+    Rails.logger.warn("[PickListsController] Failed to read scouting entry #{entry.id} for pick list metrics: #{e.class}: #{e.message}")
+    nil
   end
 end
