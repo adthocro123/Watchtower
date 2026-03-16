@@ -45,9 +45,10 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
   test "should get new" do
     get new_scouting_entry_path
     assert_response :success
+    assert_select "option", text: "Q1"
     assert_select "option", text: "Q2"
     assert_select "option", text: "Q3"
-    assert_select "option", text: "Q1", count: 0
+    assert_select "option", text: "Q4"
   end
 
   test "scout can get new" do

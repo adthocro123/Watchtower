@@ -196,7 +196,7 @@ class ScoutingEntriesController < ApplicationController
 
   def setup_live_form(include_match: nil)
     @game_config = GameConfig.current
-    @matches = ScoutableMatchesQuery.new(current_event).live
+    @matches = ScoutableMatchesQuery.new(current_event).normal
     @matches = (@matches + [ include_match ]).compact.uniq if include_match.present?
     @matches = @matches.sort_by do |match|
       [ Match::COMP_LEVEL_ORDER.fetch(match.comp_level, 99), match.set_number.to_i, match.match_number.to_i ]

@@ -1,0 +1,134 @@
+<div class="scout-card overflow-hidden">
+  <div class="px-5 py-4 border-b border-gray-800">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/20">
+        <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-sm font-semibold text-white">My Shifts</h2>
+        <p class="text-xs text-gray-500"><%= pluralize(@shift_blocks.size, "shift block") %> assigned</p>
+      </div>
+    </div>
+  </div>
+
+  <% if @shift_blocks.any? %>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-800">
+            <th class="text-left px-5 py-3 text-xs text-gray-400 uppercase tracking-wider font-medium">Shift</th>
+            <th class="text-left px-5 py-3 text-xs text-gray-400 uppercase tracking-wider font-medium">Matches</th>
+            <th class="text-center px-5 py-3 text-xs text-gray-400 uppercase tracking-wider font-medium">Count</th>
+            <th class="text-left px-5 py-3 text-xs text-gray-400 uppercase tracking-wider font-medium">Scheduled</th>
+            <th class="text-left px-5 py-3 text-xs text-gray-400 uppercase tracking-wider font-medium">Notes</th>
+            <th class="text-center px-5 py-3 text-xs text-gray-400 uppercase tracking-wider font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800/60">
+          <% @shift_blocks.each_with_index do |block, i| %>
+            <tr class="transition-colors hover:bg-gray-800/30">
+              <%# Shift number %>
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-orange-500/15 text-orange-400 text-xs font-bold"><%= i + 1 %></span>
+                  <div>
+                    <span class="text-white font-medium">
+                      <% if block[:start_match] == block[:end_match] %>
+                        <%= block[:start_match].display_name %>
+                      <% else %>
+                        <%= block[:start_match].display_name %> &ndash; <%= block[:end_match].display_name %>
+                      <% end %>
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <%# Match range pill %>
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="inline-flex items-center rounded-md bg-gray-800 px-2 py-0.5 text-xs font-medium text-gray-300 ring-1 ring-inset ring-gray-700">
+                    <%= block[:start_match].display_name %>
+                  </span>
+                  <% if block[:start_match] != block[:end_match] %>
+                    <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                    <span class="inline-flex items-center rounded-md bg-gray-800 px-2 py-0.5 text-xs font-medium text-gray-300 ring-1 ring-inset ring-gray-700">
+                      <%= block[:end_match].display_name %>
+                    </span>
+                  <% end %>
+                </div>
+              </td>
+
+              <%# Match count %>
+              <td class="px-5 py-4 text-center">
+                <span class="inline-flex items-center justify-center min-w-6 rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-semibold text-orange-300">
+                  <%= block[:match_count] %>
+                </span>
+              </td>
+
+              <%# Scheduled time %>
+              <td class="px-5 py-4">
+                <% time = block[:start_match].best_known_time %>
+                <% if time %>
+                  <span class="text-gray-300 text-xs"><%= time.strftime("%a %l:%M %p") %></span>
+                <% else %>
+                  <span class="text-gray-600 text-xs">TBD</span>
+                <% end %>
+              </td>
+
+              <%# Notes %>
+              <td class="px-5 py-4">
+                <% if block[:notes].present? %>
+                  <span class="text-gray-400 text-xs" title="<%= block[:notes] %>"><%= truncate(block[:notes], length: 40) %></span>
+                <% else %>
+                  <span class="text-gray-600 text-xs">&mdash;</span>
+                <% end %>
+              </td>
+
+              <%# Status badge %>
+              <td class="px-5 py-4 text-center">
+                <% case block[:status] %>
+                <% when :completed %>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Done
+                  </span>
+                <% when :active %>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 ring-1 ring-inset ring-amber-500/20">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                    </span>
+                    Active
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-gray-500/10 px-2.5 py-0.5 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-500/20">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Upcoming
+                  </span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="px-5 py-12 text-center">
+      <div class="flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 mx-auto mb-3">
+        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <p class="text-gray-300 font-medium">No shifts assigned yet</p>
+      <p class="text-sm text-gray-500 mt-1">Your team lead or admin will assign you scouting shifts.</p>
+    </div>
+  <% end %>
+</div>
