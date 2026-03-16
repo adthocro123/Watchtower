@@ -47,6 +47,10 @@
           <% team = @teams_by_id[team_id.to_i] %>
           <% next unless team %>
           <% summary = @team_summaries[team.id] %>
+          <% avg_points = summary.try(:avg_total_points).to_f.round(1) %>
+          <% avg_accuracy = summary.try(:fuel_accuracy_pct).to_f.round(0) %>
+          <% avg_defense = summary.try(:avg_defense_rating) %>
+          <% matches_scouted = summary.try(:matches_scouted).to_i %>
           <% tier_color = case idx
                           when 0..7 then "amber"
                           when 8..15 then "orange"
@@ -84,22 +88,22 @@
               </div>
               <% if summary %>
                 <div class="flex items-center gap-3 mt-0.5">
-                  <span class="text-xs text-gray-500"><%= summary.avg_total_points.to_f.round(1) %> avg pts</span>
+                  <span class="text-xs text-gray-500"><%= avg_points %> avg pts</span>
                   <span class="text-xs text-gray-600">&middot;</span>
-                  <span class="text-xs text-gray-500"><%= summary.fuel_accuracy_pct.to_f.round(0) %>% acc</span>
+                  <span class="text-xs text-gray-500"><%= avg_accuracy %>% acc</span>
                   <span class="text-xs text-gray-600">&middot;</span>
-                  <% if summary.avg_defense_rating.present? %>
-                    <span class="text-xs text-blue-400"><%= summary.avg_defense_rating.to_f.round(1) %>/5 def</span>
+                  <% if avg_defense.present? %>
+                    <span class="text-xs text-blue-400"><%= avg_defense.to_f.round(1) %>/5 def</span>
                     <span class="text-xs text-gray-600">&middot;</span>
                   <% end %>
-                  <span class="text-xs text-gray-500"><%= summary.matches_scouted %> matches</span>
+                  <span class="text-xs text-gray-500"><%= matches_scouted %> matches</span>
                 </div>
               <% end %>
             </div>
             <%# Avg Points Badge %>
             <% if summary %>
               <div class="text-right shrink-0 hidden sm:block">
-                <p class="text-sm font-mono font-bold text-white"><%= summary.avg_total_points.to_f.round(1) %></p>
+                <p class="text-sm font-mono font-bold text-white"><%= avg_points %></p>
                 <p class="text-[10px] text-gray-600">avg pts</p>
               </div>
             <% end %>

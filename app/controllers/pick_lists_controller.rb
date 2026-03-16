@@ -71,16 +71,22 @@ class PickListsController < ApplicationController
   end
 
   def prepare_show_data
-    @ordered_team_ids = @pick_list.ordered_team_ids
+    @ordered_team_ids = safe_ordered_team_ids(@pick_list)
     @teams_by_id = FrcTeam.where(id: @ordered_team_ids).index_by(&:id)
     @team_summaries = safe_team_summaries(TeamEventSummary.where(event: current_event, frc_team_id: @ordered_team_ids))
+  rescue StandardError => e
+    Rails.logger.warn("[PickListsController] Failed to prepare pick list #{@pick_list&.id} for display: #{e.class}: #{e.message}")
+    @ordered_team_ids = []
+    @teams_by_id = {}
+    @team_summaries = {}
+    @team_summary_warning = true
   end
 
   def load_team_options
     @pick_list ||= current_user.pick_lists.build(event: current_event)
 
     summaries = safe_team_summaries(TeamEventSummary.where(event: current_event))
-    selected_ids = @pick_list.ordered_team_ids
+    selected_ids = safe_ordered_team_ids(@pick_list)
     event_rank_by_id = summaries.values.sort_by do |summary|
       [ -summary.avg_total_points.to_f, -summary.matches_scouted.to_i, summary.frc_team_id ]
     end.each_with_index(1).to_h { |summary, index| [ summary.frc_team_id, index ] }
@@ -106,6 +112,10 @@ class PickListsController < ApplicationController
         event_rank: event_rank_by_id[team.id]
       }
     end
+  rescue StandardError => e
+    @team_summary_warning = true
+    Rails.logger.warn("[PickListsController] Falling back to basic pick list options for event #{current_event&.id}: #{e.class}: #{e.message}")
+    @team_options = fallback_team_options
   end
 
   def safe_team_summaries(scope)
@@ -114,5 +124,26 @@ class PickListsController < ApplicationController
     @team_summary_warning = true
     Rails.logger.warn("[PickListsController] Failed to load team summaries for event #{current_event&.id}: #{e.class}: #{e.message}")
     {}
+  end
+
+  def safe_ordered_team_ids(pick_list)
+    pick_list.ordered_team_ids
+  rescue StandardError => e
+    Rails.logger.warn("[PickListsController] Failed to normalize pick list #{pick_list&.id || 'new'} entries: #{e.class}: #{e.message}")
+    []
+  end
+
+  def fallback_team_options
+    selected_ids = safe_ordered_team_ids(@pick_list)
+
+    FrcTeam.at_event(current_event).order(:team_number).map do |team|
+      {
+        team: team,
+        summary: nil,
+        selected: selected_ids.include?(team.id),
+        selected_rank: selected_ids.index(team.id)&.+(1),
+        event_rank: nil
+      }
+    end
   end
 end

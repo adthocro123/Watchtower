@@ -69,12 +69,15 @@
                 <% team = option[:team] %>
                 <% summary = option[:summary] %>
                 <% selected = option[:selected] %>
+                <% avg_points = summary.try(:avg_total_points).to_f.round(1) %>
+                <% avg_defense = summary.try(:avg_defense_rating) %>
+                <% matches_scouted = summary.try(:matches_scouted).to_i %>
                 <div class="flex items-start gap-3 px-4 py-3 transition-colors duration-150 <%= selected ? 'bg-orange-500/10 hover:bg-orange-500/15' : 'hover:bg-gray-800/40' %>"
                      data-search-target="item"
                      data-pick-list-selection-target="row"
                      data-team-id="<%= team.id %>"
                      data-team-label="<%= team.team_number %> <%= team.nickname.presence || 'Unknown Team' %>"
-                     data-search="<%= [team.team_number, team.nickname, option[:event_rank], summary&.avg_total_points.to_f.round(1), summary&.avg_defense_rating.to_f.round(1)].compact.join(' ').downcase %>">
+                     data-search="<%= [team.team_number, team.nickname, option[:event_rank], avg_points, avg_defense.to_f.round(1)].compact.join(' ').downcase %>">
                   <%= check_box_tag "pick_list[entries][]",
                                     team.id,
                                     selected,
@@ -93,12 +96,12 @@
                     </div>
 
                     <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                      <span><%= summary ? "#{summary.avg_total_points.to_f.round(1)} avg pts" : "No scouting summary" %></span>
-                      <% if summary&.matches_scouted.to_i.positive? %>
-                        <span><%= summary.matches_scouted %> matches</span>
+                      <span><%= summary ? "#{avg_points} avg pts" : "No scouting summary" %></span>
+                      <% if matches_scouted.positive? %>
+                        <span><%= matches_scouted %> matches</span>
                       <% end %>
-                      <% if summary&.avg_defense_rating.present? %>
-                        <span class="text-blue-400"><%= summary.avg_defense_rating.to_f.round(1) %>/5 defense</span>
+                      <% if avg_defense.present? %>
+                        <span class="text-blue-400"><%= avg_defense.to_f.round(1) %>/5 defense</span>
                       <% end %>
                     </div>
                   </div>
