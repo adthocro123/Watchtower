@@ -143,6 +143,32 @@ export default class extends Controller {
     })
   }
 
+  moveUp(event) {
+    event.preventDefault()
+    const item = event.currentTarget.closest("[data-sortable-target='item']")
+    if (!item) return
+
+    const previousItem = item.previousElementSibling
+    if (!previousItem) return
+
+    previousItem.before(item)
+    this.#updateRankNumbers()
+    this.#saveOrder()
+  }
+
+  moveDown(event) {
+    event.preventDefault()
+    const item = event.currentTarget.closest("[data-sortable-target='item']")
+    if (!item) return
+
+    const nextItem = item.nextElementSibling
+    if (!nextItem) return
+
+    nextItem.after(item)
+    this.#updateRankNumbers()
+    this.#saveOrder()
+  }
+
   #updateRankNumbers() {
     const list = this.hasListTarget ? this.listTarget : this.element
     const items = [...list.querySelectorAll("[data-sortable-target='item']")]

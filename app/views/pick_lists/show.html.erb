@@ -1,6 +1,6 @@
 <% content_for(:title) { "#{@pick_list.name} - Lighthouse" } %>
 
-<div class="max-w-2xl mx-auto">
+<div class="max-w-5xl mx-auto">
   <div class="flex items-center gap-2 mb-6">
     <%= link_to pick_lists_path, class: "back-link", "aria-label": "Back to pick lists" do %>
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,26 +17,36 @@
   <p class="text-sm text-gray-500 mb-4">By <%= @pick_list.user.full_name %> &middot; <%= @pick_list.team_count %> teams &middot; Updated <%= time_ago_in_words(@pick_list.updated_at) %> ago</p>
 
   <%# Tier Legend %>
-  <div class="flex items-center gap-4 mb-4 text-xs text-gray-500">
+  <div class="flex flex-wrap items-center gap-4 mb-4 text-xs text-gray-500">
     <span class="flex items-center gap-1"><span class="w-2 h-2 bg-amber-400 rounded-full"></span> Tier 1 (Top 8)</span>
     <span class="flex items-center gap-1"><span class="w-2 h-2 bg-orange-400 rounded-full"></span> Tier 2 (9-16)</span>
     <span class="flex items-center gap-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span> Tier 3 (17-24)</span>
     <span class="flex items-center gap-1"><span class="w-2 h-2 bg-gray-500 rounded-full"></span> Tier 4 (25+)</span>
   </div>
 
-  <%# Drag-and-drop sortable list %>
-  <div class="scout-card overflow-hidden"
-       data-controller="sortable"
+  <div data-controller="sortable pick-list-board"
+       data-pick-list-board-storage-key-value="pick-list:<%= @pick_list.id %>:picked"
        data-sortable-save-url="<%= pick_list_path(@pick_list) %>">
+    <div class="mb-4 rounded-xl border border-gray-800 bg-gray-950/50 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-sm font-semibold text-white">Draft Board Tools</h2>
+      <p class="text-xs text-gray-500 mt-1">Drag rows or use the arrow buttons to reorder. Mark teams as picked to gray them out locally.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="badge-gray text-xs" data-pick-list-board-target="pickedCount">0 picked</span>
+      <button type="button" class="btn-secondary text-sm" data-pick-list-board-target="hidePickedLabel" data-action="click->pick-list-board#toggleHidePicked">Hide picked</button>
+    </div>
+    </div>
+
+    <%# Drag-and-drop sortable list %>
+    <div class="scout-card overflow-hidden">
     <div data-sortable-target="list" class="divide-y divide-gray-800/50">
-      <% entries = @pick_list.ordered_team_ids %>
+      <% entries = @ordered_team_ids %>
       <% if entries.any? %>
-        <% teams = FrcTeam.where(id: entries).index_by(&:id) %>
-        <% summaries = TeamEventSummary.where(event: current_event, frc_team_id: entries).index_by(&:frc_team_id) %>
         <% entries.each_with_index do |team_id, idx| %>
-          <% team = teams[team_id.to_i] %>
+          <% team = @teams_by_id[team_id.to_i] %>
           <% next unless team %>
-          <% summary = summaries[team.id] %>
+          <% summary = @team_summaries[team.id] %>
           <% tier_color = case idx
                           when 0..7 then "amber"
                           when 8..15 then "orange"
@@ -44,10 +54,11 @@
                           else "gray"
                           end %>
           <div class="flex items-center gap-3 px-4 py-3 hover:bg-gray-800/30 transition-all duration-150 cursor-grab active:cursor-grabbing select-none"
-               data-sortable-target="item"
-               data-sortable-id="<%= team.id %>"
-               role="listitem"
-               aria-label="Rank <%= idx + 1 %>: Team <%= team.team_number %> - <%= team.nickname %>">
+                data-sortable-target="item"
+                data-pick-list-board-target="item"
+                data-sortable-id="<%= team.id %>"
+                role="listitem"
+                aria-label="Rank <%= idx + 1 %>: Team <%= team.team_number %> - <%= team.nickname %>">
             <%# Drag handle %>
             <div class="text-gray-600 shrink-0 touch-none" aria-label="Drag to reorder" data-sortable-handle>
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,6 +103,25 @@
                 <p class="text-[10px] text-gray-600">avg pts</p>
               </div>
             <% end %>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" class="rounded-lg p-2 text-gray-400 hover:text-orange-300 hover:bg-gray-800 transition-colors duration-150" data-action="click->sortable#moveUp" aria-label="Move team up">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+              <button type="button" class="rounded-lg p-2 text-gray-400 hover:text-orange-300 hover:bg-gray-800 transition-colors duration-150" data-action="click->sortable#moveDown" aria-label="Move team down">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <button type="button"
+                      class="rounded-lg px-3 py-1.5 text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-700 hover:border-emerald-500/30 hover:text-emerald-300 transition-colors duration-150"
+                      data-pick-list-board-target="toggle"
+                      data-team-id="<%= team.id %>"
+                      data-action="click->pick-list-board#toggle">
+                Mark picked
+              </button>
+            </div>
             <%# View link %>
             <%= link_to team_path(team), class: "text-gray-600 hover:text-gray-400 transition-colors duration-150 shrink-0 p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500", "aria-label": "View team #{team.team_number}" do %>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,5 +140,6 @@
         </div>
       <% end %>
     </div>
+  </div>
   </div>
 </div>

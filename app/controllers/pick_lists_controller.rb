@@ -1,6 +1,7 @@
 class PickListsController < ApplicationController
   before_action :require_event!
   before_action :set_pick_list, only: %i[show edit update destroy]
+  before_action :prepare_show_data, only: :show
   before_action :load_team_options, only: %i[new create edit update]
 
   def index
@@ -69,16 +70,20 @@ class PickListsController < ApplicationController
     permitted
   end
 
+  def prepare_show_data
+    @ordered_team_ids = @pick_list.ordered_team_ids
+    @teams_by_id = FrcTeam.where(id: @ordered_team_ids).index_by(&:id)
+    @team_summaries = safe_team_summaries(TeamEventSummary.where(event: current_event, frc_team_id: @ordered_team_ids))
+  end
+
   def load_team_options
     @pick_list ||= current_user.pick_lists.build(event: current_event)
 
-    summaries = TeamEventSummary.where(event: current_event).index_by(&:frc_team_id)
+    summaries = safe_team_summaries(TeamEventSummary.where(event: current_event))
     selected_ids = @pick_list.ordered_team_ids
-    event_rank_by_id = TeamEventSummary.where(event: current_event)
-                                  .order(avg_total_points: :desc, matches_scouted: :desc, frc_team_id: :asc)
-                                  .pluck(:frc_team_id)
-                                  .each_with_index(1)
-                                  .to_h
+    event_rank_by_id = summaries.values.sort_by do |summary|
+      [ -summary.avg_total_points.to_f, -summary.matches_scouted.to_i, summary.frc_team_id ]
+    end.each_with_index(1).to_h { |summary, index| [ summary.frc_team_id, index ] }
 
     teams = FrcTeam.at_event(current_event).order(:team_number).to_a
     sorted_teams = teams.sort_by do |team|
@@ -101,5 +106,13 @@ class PickListsController < ApplicationController
         event_rank: event_rank_by_id[team.id]
       }
     end
+  end
+
+  def safe_team_summaries(scope)
+    scope.index_by(&:frc_team_id)
+  rescue StandardError => e
+    @team_summary_warning = true
+    Rails.logger.warn("[PickListsController] Failed to load team summaries for event #{current_event&.id}: #{e.class}: #{e.message}")
+    {}
   end
 end

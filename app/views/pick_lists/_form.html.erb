@@ -17,13 +17,35 @@
         <%= f.text_field :name, class: "input-field", placeholder: "e.g., Alliance Selection Priority" %>
       </div>
 
-      <div data-controller="search">
+      <div data-controller="search pick-list-selection">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-3">
           <div>
             <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Teams</h2>
-            <p class="text-sm text-gray-500 mt-1">Add teams here, then fine-tune the order with drag-and-drop after saving.</p>
+            <p class="text-sm text-gray-500 mt-1">Use the add buttons to build the board, then fine-tune order after saving.</p>
           </div>
-          <span class="badge-orange text-xs self-start sm:self-auto"><%= pick_list.team_count %> selected</span>
+          <span class="badge-orange text-xs self-start sm:self-auto" data-pick-list-selection-target="count"><%= pick_list.team_count %> selected</span>
+        </div>
+
+        <% if @team_summary_warning %>
+          <div class="mb-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            Team summaries are temporarily unavailable, so the picker is showing team numbers only. You can still build and save the pick list.
+          </div>
+        <% end %>
+
+        <div class="mb-4 rounded-xl border border-gray-800 bg-gray-950/50 p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-semibold text-white">Selected Teams</h3>
+              <p class="text-xs text-gray-500 mt-1">Tap a chip to remove it quickly.</p>
+            </div>
+            <button type="button" class="text-xs text-gray-400 hover:text-orange-300 transition-colors duration-150" data-action="click->pick-list-selection#clearSelection">
+              Clear all
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-2" data-pick-list-selection-target="selectedList">
+            <p class="text-sm text-gray-500">No teams selected yet.</p>
+          </div>
         </div>
 
         <div class="relative mb-3">
@@ -47,13 +69,17 @@
                 <% team = option[:team] %>
                 <% summary = option[:summary] %>
                 <% selected = option[:selected] %>
-                <label class="flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 <%= selected ? 'bg-orange-500/10 hover:bg-orange-500/15' : 'hover:bg-gray-800/40' %>"
-                       data-search-target="item"
-                       data-search="<%= [team.team_number, team.nickname, option[:event_rank], summary&.avg_total_points.to_f.round(1), summary&.avg_defense_rating.to_f.round(1)].compact.join(' ').downcase %>">
+                <div class="flex items-start gap-3 px-4 py-3 transition-colors duration-150 <%= selected ? 'bg-orange-500/10 hover:bg-orange-500/15' : 'hover:bg-gray-800/40' %>"
+                     data-search-target="item"
+                     data-pick-list-selection-target="row"
+                     data-team-id="<%= team.id %>"
+                     data-team-label="<%= team.team_number %> <%= team.nickname.presence || 'Unknown Team' %>"
+                     data-search="<%= [team.team_number, team.nickname, option[:event_rank], summary&.avg_total_points.to_f.round(1), summary&.avg_defense_rating.to_f.round(1)].compact.join(' ').downcase %>">
                   <%= check_box_tag "pick_list[entries][]",
                                     team.id,
                                     selected,
-                                    class: "mt-1 rounded border-gray-600 bg-gray-900 text-orange-500 focus:ring-orange-500 focus:ring-offset-gray-950" %>
+                                    class: "mt-1 rounded border-gray-600 bg-gray-900 text-orange-500 focus:ring-orange-500 focus:ring-offset-gray-950",
+                                    data: { pick_list_selection_target: "checkbox", action: "change->pick-list-selection#refresh" } %>
 
                   <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2">
@@ -76,7 +102,15 @@
                       <% end %>
                     </div>
                   </div>
-                </label>
+
+                  <button type="button"
+                          class="rounded-lg px-3 py-1.5 text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-700 hover:border-orange-500/30 hover:text-orange-300 transition-colors duration-150"
+                          data-team-id="<%= team.id %>"
+                          data-pick-list-selection-target="toggle"
+                          data-action="click->pick-list-selection#toggleTeam">
+                    <%= selected ? "Added" : "Add" %>
+                  </button>
+                </div>
               <% end %>
             </div>
           <% else %>
