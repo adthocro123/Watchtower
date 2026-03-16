@@ -3,6 +3,21 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["item", "list", "rank"]
 
+  static tierClassNames = [
+    "bg-amber-500/20",
+    "border-amber-500/30",
+    "text-amber-400",
+    "bg-orange-500/20",
+    "border-orange-500/30",
+    "text-orange-400",
+    "bg-blue-500/20",
+    "border-blue-500/30",
+    "text-blue-400",
+    "bg-gray-500/20",
+    "border-gray-500/30",
+    "text-gray-400"
+  ]
+
   connect() {
     this.draggedItem = null
     this.placeholder = null
@@ -135,6 +150,8 @@ export default class extends Controller {
       const rankEl = item.querySelector("[data-sortable-target='rank']")
       if (rankEl) {
         rankEl.textContent = index + 1
+        rankEl.classList.remove(...this.constructor.tierClassNames)
+        rankEl.classList.add(...this.#tierClassesForIndex(index))
         // Brief highlight animation
         rankEl.classList.add("animate-bounce-number")
         rankEl.addEventListener("animationend", () => {
@@ -142,6 +159,22 @@ export default class extends Controller {
         }, { once: true })
       }
     })
+  }
+
+  #tierClassesForIndex(index) {
+    if (index <= 7) {
+      return ["bg-amber-500/20", "border-amber-500/30", "text-amber-400"]
+    }
+
+    if (index <= 15) {
+      return ["bg-orange-500/20", "border-orange-500/30", "text-orange-400"]
+    }
+
+    if (index <= 23) {
+      return ["bg-blue-500/20", "border-blue-500/30", "text-blue-400"]
+    }
+
+    return ["bg-gray-500/20", "border-gray-500/30", "text-gray-400"]
   }
 
   async #saveOrder() {

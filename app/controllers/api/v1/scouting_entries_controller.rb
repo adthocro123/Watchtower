@@ -55,12 +55,15 @@ module Api
       private
 
       def entry_params
-        params.require(:scouting_entry).permit(
+        permitted = params.require(:scouting_entry).permit(
           :match_id, :frc_team_id, :event_id,
           :notes, :photo_url, :client_uuid, :status,
           :scouting_mode, :video_key, :video_type,
           data: {}
         )
+
+        permitted[:status] = ScoutingEntry.sync_status(permitted[:status])
+        permitted
       end
     end
   end

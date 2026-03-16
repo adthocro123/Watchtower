@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <p class="text-sm text-gray-500 mb-4">By <%= @pick_list.user.full_name %> &middot; Updated <%= time_ago_in_words(@pick_list.updated_at) %> ago</p>
+  <p class="text-sm text-gray-500 mb-4">By <%= @pick_list.user.full_name %> &middot; <%= @pick_list.team_count %> teams &middot; Updated <%= time_ago_in_words(@pick_list.updated_at) %> ago</p>
 
   <%# Tier Legend %>
   <div class="flex items-center gap-4 mb-4 text-xs text-gray-500">
@@ -29,7 +29,7 @@
        data-controller="sortable"
        data-sortable-save-url="<%= pick_list_path(@pick_list) %>">
     <div data-sortable-target="list" class="divide-y divide-gray-800/50">
-      <% entries = @pick_list.entries || [] %>
+      <% entries = @pick_list.ordered_team_ids %>
       <% if entries.any? %>
         <% teams = FrcTeam.where(id: entries).index_by(&:id) %>
         <% summaries = TeamEventSummary.where(event: current_event, frc_team_id: entries).index_by(&:frc_team_id) %>
@@ -77,6 +77,10 @@
                   <span class="text-xs text-gray-600">&middot;</span>
                   <span class="text-xs text-gray-500"><%= summary.fuel_accuracy_pct.to_f.round(0) %>% acc</span>
                   <span class="text-xs text-gray-600">&middot;</span>
+                  <% if summary.avg_defense_rating.present? %>
+                    <span class="text-xs text-blue-400"><%= summary.avg_defense_rating.to_f.round(1) %>/5 def</span>
+                    <span class="text-xs text-gray-600">&middot;</span>
+                  <% end %>
                   <span class="text-xs text-gray-500"><%= summary.matches_scouted %> matches</span>
                 </div>
               <% end %>

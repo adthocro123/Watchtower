@@ -57,7 +57,7 @@ class QrImportsController < ApplicationController
         existing.update!(
           data:   entry_params[:data] || {},
           notes:  entry_params[:notes],
-          status: entry_params[:status] || :submitted,
+          status: existing.approved? ? :approved : ScoutingEntry.sync_status(entry_params[:status]),
           scouting_mode: entry_params[:scouting_mode] || existing.scouting_mode,
           video_key: entry_params[:video_key],
           video_type: entry_params[:video_type]
@@ -89,7 +89,7 @@ class QrImportsController < ApplicationController
           data:        entry_params[:data] || {},
           notes:       entry_params[:notes],
           client_uuid: entry_params[:client_uuid],
-          status:      entry_params[:status] || :submitted,
+          status:      ScoutingEntry.sync_status(entry_params[:status]),
           scouting_mode: entry_params[:scouting_mode] || :live,
           video_key:   entry_params[:video_key],
           video_type:  entry_params[:video_type]

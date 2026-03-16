@@ -6,7 +6,7 @@ class ScoutingEntriesController < ApplicationController
   before_action :require_event!, except: :sync
   skip_forgery_protection only: :sync
   before_action :verify_sync_origin, only: :sync
-  before_action :set_scouting_entry, only: %i[show edit update destroy]
+  before_action :set_scouting_entry, only: %i[show edit update destroy approve]
   before_action :set_replay_form, only: :replay
 
   def index
@@ -105,6 +105,20 @@ class ScoutingEntriesController < ApplicationController
     redirect_to scouting_entries_path, notice: "Scouting entry was successfully deleted.", status: :see_other
   end
 
+  def approve
+    authorize @scouting_entry, :approve?
+
+    unless @scouting_entry.flagged?
+      redirect_to @scouting_entry, alert: "Only flagged entries can be admin approved."
+      return
+    end
+
+    @scouting_entry.update!(status: :approved)
+    RefreshSummariesJob.perform_now(@scouting_entry.event_id)
+
+    redirect_to @scouting_entry, notice: "Entry was marked as admin approved and now counts toward scouting coverage."
+  end
+
   # POST /scouting_entries/sync — offline sync endpoint
   def sync
     authorize :scouting_entry, :sync?
@@ -125,7 +139,7 @@ class ScoutingEntriesController < ApplicationController
           existing.update!(
             data:   entry_data[:data].is_a?(ActionController::Parameters) ? entry_data[:data].to_unsafe_h : (entry_data[:data] || {}),
             notes:  entry_data[:notes],
-            status: entry_data[:status] || :submitted,
+            status: existing.approved? ? :approved : ScoutingEntry.sync_status(entry_data[:status]),
             scouting_mode: entry_data[:scouting_mode] || existing.scouting_mode,
             video_key: entry_data[:video_key],
             video_type: entry_data[:video_type]
@@ -181,6 +195,10 @@ class ScoutingEntriesController < ApplicationController
     # Parse it and replace the raw data hash so the JSONB column gets real values.
     if permitted[:data].is_a?(ActionController::Parameters) && permitted[:data][:_json].present?
       permitted[:data] = JSON.parse(permitted[:data][:_json])
+    end
+
+    if permitted[:status].present?
+      permitted[:status] = @scouting_entry&.approved? ? :approved : ScoutingEntry.sync_status(permitted[:status])
     end
 
     if replay_entry_locked?
@@ -309,9 +327,8 @@ class ScoutingEntriesController < ApplicationController
     alliance_team_ids = match.match_alliances.where(alliance_color: color).pluck(:frc_team_id)
     return if alliance_team_ids.size < 3
 
-    # Find scouting entries for all 3 alliance teams in this match
-    # Include both submitted and flagged entries (exclude only rejected)
-    entries = match.scouting_entries.where.not(status: :rejected).where(frc_team_id: alliance_team_ids)
+    # Find counted scouting entries for all 3 alliance teams in this match
+    entries = match.scouting_entries.counted.where(frc_team_id: alliance_team_ids)
     entries_by_team = entries.group_by(&:frc_team_id)
 
     @alliance_complete = alliance_team_ids.all? { |tid| entries_by_team.key?(tid) }

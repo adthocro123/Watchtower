@@ -720,7 +720,7 @@ CREATE MATERIALIZED VIEW public.team_event_summaries AS
     avg(NULLIF(COALESCE(((data ->> 'defense_rating'::text))::numeric, (0)::numeric), (0)::numeric)) AS avg_defense_rating,
     max(updated_at) AS last_updated
    FROM public.scouting_entries
-  WHERE (status = 0)
+   WHERE (status = ANY (ARRAY[0, 3]))
   GROUP BY event_id, frc_team_id
   WITH NO DATA;
 
@@ -1772,6 +1772,7 @@ ALTER TABLE ONLY public.predictions
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260315103000'),
 ('20260310120000'),
 ('20260306100100'),
 ('20260306100000'),
@@ -1805,4 +1806,3 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20260302004449'),
 ('20260302004444'),
 ('20260302004440');
-

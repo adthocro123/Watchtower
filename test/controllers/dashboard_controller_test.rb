@@ -62,6 +62,16 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_match(/pts off/, response.body)
   end
 
+  test "dashboard recent entries shows admin approved status" do
+    scouting_entries(:entry_qm1_254).update!(status: :approved)
+    select_event(@event)
+
+    get root_path
+
+    assert_response :success
+    assert_includes response.body, "Admin Approved"
+  end
+
   test "dashboard shows active shift status for the current user" do
     Match.where(event: @event, comp_level: "qm").update_all(red_score: nil, blue_score: nil)
     select_event(@event)

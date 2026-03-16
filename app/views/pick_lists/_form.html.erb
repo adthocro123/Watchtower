@@ -10,9 +10,92 @@
     </div>
   <% end %>
 
-  <div>
-    <%= f.label :name, class: "block text-sm font-medium text-gray-300 mb-1" %>
-    <%= f.text_field :name, class: "input-field", placeholder: "e.g., Alliance Selection Priority" %>
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_20rem] gap-6">
+    <div class="space-y-6">
+      <div>
+        <%= f.label :name, class: "block text-sm font-medium text-gray-300 mb-1" %>
+        <%= f.text_field :name, class: "input-field", placeholder: "e.g., Alliance Selection Priority" %>
+      </div>
+
+      <div data-controller="search">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-3">
+          <div>
+            <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Teams</h2>
+            <p class="text-sm text-gray-500 mt-1">Add teams here, then fine-tune the order with drag-and-drop after saving.</p>
+          </div>
+          <span class="badge-orange text-xs self-start sm:self-auto"><%= pick_list.team_count %> selected</span>
+        </div>
+
+        <div class="relative mb-3">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text"
+                 placeholder="Search teams by number or name"
+                 aria-label="Search teams"
+                 class="input-field pl-10"
+                 data-action="input->search#filter"
+                 data-search-target="input">
+        </div>
+
+        <%= hidden_field_tag "pick_list[entries][]", "" %>
+
+        <div class="border border-gray-800 rounded-xl overflow-hidden bg-gray-950/40">
+          <% if @team_options.any? %>
+            <div class="divide-y divide-gray-800/70 max-h-[32rem] overflow-y-auto">
+              <% @team_options.each do |option| %>
+                <% team = option[:team] %>
+                <% summary = option[:summary] %>
+                <% selected = option[:selected] %>
+                <label class="flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 <%= selected ? 'bg-orange-500/10 hover:bg-orange-500/15' : 'hover:bg-gray-800/40' %>"
+                       data-search-target="item"
+                       data-search="<%= [team.team_number, team.nickname, option[:event_rank], summary&.avg_total_points.to_f.round(1), summary&.avg_defense_rating.to_f.round(1)].compact.join(' ').downcase %>">
+                  <%= check_box_tag "pick_list[entries][]",
+                                    team.id,
+                                    selected,
+                                    class: "mt-1 rounded border-gray-600 bg-gray-900 text-orange-500 focus:ring-orange-500 focus:ring-offset-gray-950" %>
+
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-mono font-bold text-orange-400"><%= team.team_number %></span>
+                      <span class="font-medium text-white truncate"><%= team.nickname %></span>
+                      <% if option[:selected_rank] %>
+                        <span class="badge-orange text-[10px]">Pick <%= option[:selected_rank] %></span>
+                      <% elsif option[:event_rank] %>
+                        <span class="badge-gray text-[10px]">Rank <%= option[:event_rank] %></span>
+                      <% end %>
+                    </div>
+
+                    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                      <span><%= summary ? "#{summary.avg_total_points.to_f.round(1)} avg pts" : "No scouting summary" %></span>
+                      <% if summary&.matches_scouted.to_i.positive? %>
+                        <span><%= summary.matches_scouted %> matches</span>
+                      <% end %>
+                      <% if summary&.avg_defense_rating.present? %>
+                        <span class="text-blue-400"><%= summary.avg_defense_rating.to_f.round(1) %>/5 defense</span>
+                      <% end %>
+                    </div>
+                  </div>
+                </label>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="px-4 py-8 text-center">
+              <p class="text-sm text-gray-500">No teams are available for the current event yet.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <aside class="bg-gray-950/50 border border-gray-800 rounded-xl p-4 h-fit">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider mb-3">How It Works</h2>
+      <div class="space-y-3 text-sm text-gray-400">
+        <p>1. Pick the teams you want on the list.</p>
+        <p>2. Selected teams save in the order shown here.</p>
+        <p>3. After saving, drag teams on the pick list page to fine-tune your draft board.</p>
+      </div>
+    </aside>
   </div>
 
   <div class="flex items-center gap-3 pt-2">

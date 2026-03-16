@@ -53,7 +53,7 @@
 
   <%# Summary Stats %>
   <% if @summary %>
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
       <div class="stat-card group text-center">
         <p class="text-3xl font-bold text-orange-400 font-mono"><%= @summary.avg_total_points.to_f.round(1) %></p>
         <p class="text-xs text-gray-400 mt-1 font-medium">Avg Points (Scouted)</p>
@@ -70,10 +70,19 @@
         <p class="text-3xl font-bold text-white font-mono"><%= @summary.matches_scouted %></p>
         <p class="text-xs text-gray-400 mt-1 font-medium">Matches Scouted</p>
       </div>
+      <div class="stat-card group text-center col-span-2 sm:col-span-1">
+        <% if @summary.avg_defense_rating.present? %>
+          <p class="text-3xl font-bold text-sky-400 font-mono"><%= @summary.avg_defense_rating.to_f.round(1) %></p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Avg Defense Rating</p>
+        <% else %>
+          <p class="text-3xl font-bold text-gray-500 font-mono">---</p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Avg Defense Rating</p>
+        <% end %>
+      </div>
     </div>
 
     <%# Accuracy Donut + Breakdown %>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
       <div class="scout-card p-4">
         <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-medium">Fuel Accuracy</h3>
         <% accuracy = @summary.fuel_accuracy_pct.to_f.round(1)
@@ -126,6 +135,37 @@
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-400">Consistency (Std Dev)</span>
               <span class="font-mono text-gray-400"><%= @summary.stddev_total_points.to_f.round(1) %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scout-card p-4">
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-medium">Defense Profile</h3>
+        <% defense_avg = @summary.avg_defense_rating.to_f %>
+        <% defense_entries = @entries.select { |entry| entry.defense_rating.positive? } %>
+        <% defense_peak = defense_entries.map(&:defense_rating).max.to_i %>
+        <div class="space-y-4">
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="text-gray-400">Average Rating</span>
+              <span class="font-mono text-sky-400 font-semibold"><%= @summary.avg_defense_rating.present? ? @summary.avg_defense_rating.to_f.round(1) : "---" %><%= "/5" if @summary.avg_defense_rating.present? %></span>
+            </div>
+            <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden" role="progressbar" aria-label="Average defense rating: <%= defense_avg.round(1) %> out of 5">
+              <div class="h-full bg-sky-500 rounded-full transition-all duration-500" style="width: <%= (defense_avg / 5 * 100).round(0) %>%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="text-gray-400">Highest Rating Seen</span>
+              <span class="font-mono text-white font-semibold"><%= defense_peak.positive? ? "#{defense_peak}/5" : "---" %></span>
+            </div>
+            <p class="text-xs text-gray-500"><%= defense_entries.size %> rated scouting <%= defense_entries.size == 1 ? "entry" : "entries" %></p>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="text-gray-400">Latest Rated Match</span>
+              <% latest_defense = defense_entries.first %>
+              <span class="font-mono text-gray-300"><%= latest_defense ? "#{latest_defense.match&.display_name || 'Entry'} #{latest_defense.defense_rating}/5" : "---" %></span>
             </div>
           </div>
         </div>
@@ -276,6 +316,7 @@
               <th scope="col" class="text-left">Scout</th>
               <th scope="col" class="text-right">Made</th>
               <th scope="col" class="text-right">Missed</th>
+              <th scope="col" class="text-right hidden sm:table-cell">Defense</th>
               <th scope="col" class="text-right hidden sm:table-cell">Climb</th>
               <th scope="col" class="text-right">Total</th>
             </tr>
@@ -291,6 +332,7 @@
                 <td class="text-gray-400"><%= entry.user.full_name %></td>
                 <td class="text-right font-mono text-emerald-400"><%= entry.total_fuel_made %></td>
                 <td class="text-right font-mono text-red-400"><%= entry.total_fuel_missed %></td>
+                <td class="text-right font-mono text-sky-400 hidden sm:table-cell"><%= entry.defense_rating.positive? ? "#{entry.defense_rating}/5" : "---" %></td>
                 <td class="text-right font-mono text-gray-300 hidden sm:table-cell"><%= entry.data&.dig("endgame_climb") || "None" %></td>
                 <td class="text-right font-mono font-bold text-white"><%= entry.total_points %></td>
               </tr>

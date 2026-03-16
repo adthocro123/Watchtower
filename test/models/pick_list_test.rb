@@ -30,7 +30,7 @@ class PickListTest < ActiveSupport::TestCase
     assert_equal "Championship Pick List", pick_lists(:championship_picks).name
   end
 
-  test "championship_picks entries contain team data" do
+  test "normalizes hash entries into ordered team ids" do
     pick_list = PickList.create!(
       name: "Test Picks",
       entries: [
@@ -40,10 +40,30 @@ class PickListTest < ActiveSupport::TestCase
       event: events(:championship),
       user: users(:admin_user)
     )
-    entries = pick_list.reload.entries
-    assert_kind_of Array, entries
-    assert_equal 2, entries.length
-    assert_equal 1, entries.first["rank"]
-    assert_equal 254, entries.first["team_number"]
+
+    assert_equal [ frc_teams(:team_254).id, frc_teams(:team_1678).id ], pick_list.reload.entries
+  end
+
+  test "preserves fixture-style team numbers as event team ids" do
+    pick_list = pick_lists(:championship_picks)
+
+    assert_equal [
+      frc_teams(:team_254).id,
+      frc_teams(:team_1678).id,
+      frc_teams(:team_118).id,
+      frc_teams(:team_4414).id
+    ], pick_list.ordered_team_ids
+  end
+
+  test "rejects teams that are not at the event" do
+    pick_list = PickList.new(
+      name: "Invalid Picks",
+      entries: [ frc_teams(:team_6328).id ],
+      event: events(:championship),
+      user: users(:admin_user)
+    )
+
+    assert_not pick_list.valid?
+    assert_includes pick_list.errors[:entries], "contain teams that are not part of the selected event"
   end
 end

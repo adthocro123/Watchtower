@@ -13,12 +13,15 @@ class DataConflictsController < ApplicationController
     @data_conflict = DataConflict.find(params[:id])
     authorize @data_conflict
 
-    @data_conflict.update!(
-      resolved: true,
-      resolved_by: current_user,
-      resolution_value: params[:resolution]
-    )
+    DataConflictResolutionService.new(
+      @data_conflict,
+      resolution_value: params[:resolution],
+      approved_entry_id: params[:approved_entry_id],
+      resolved_by: current_user
+    ).resolve!
 
-    redirect_to data_conflicts_path, notice: "Conflict resolved."
+    redirect_to data_conflicts_path, notice: "Conflict resolved and scouting data updated."
+  rescue ArgumentError, ActiveRecord::RecordInvalid => e
+    redirect_to data_conflicts_path, alert: e.message
   end
 end

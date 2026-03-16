@@ -68,9 +68,9 @@ class ScoutAccuracyService
         team_ids = alliance_teams.map(&:frc_team_id)
         next if team_ids.size < 3
 
-        # Find submitted scouting entries for all 3 teams in this match
+        # Find counted scouting entries for all 3 teams in this match
         entries = match.scouting_entries.select do |e|
-          e.submitted? && team_ids.include?(e.frc_team_id)
+          e.counted? && team_ids.include?(e.frc_team_id)
         end
 
         # Group by team to get one entry per team (take the first if multiple)
@@ -98,8 +98,8 @@ class ScoutAccuracyService
     results
   end
 
-  # Returns { user_id => count } for all submitted entries at this event
+  # Returns { user_id => count } for all counted entries at this event
   def total_entry_counts
-    ScoutingEntry.where(event: @event).submitted.group(:user_id).count
+    ScoutingEntry.where(event: @event).counted.group(:user_id).count
   end
 end

@@ -277,6 +277,39 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Scout Next Match"
   end
 
+  test "admin can approve flagged entry" do
+    @entry.update!(status: :flagged)
+
+    post approve_scouting_entry_path(@entry)
+
+    assert_redirected_to scouting_entry_path(@entry)
+    @entry.reload
+    assert @entry.approved?
+  end
+
+  test "admin cannot approve submitted entry" do
+    @entry.update!(status: :submitted)
+
+    post approve_scouting_entry_path(@entry)
+
+    assert_redirected_to scouting_entry_path(@entry)
+    @entry.reload
+    assert @entry.submitted?
+  end
+
+  test "scout cannot approve flagged entry" do
+    @entry.update!(status: :flagged)
+    sign_out :user
+    sign_in_as(users(:scout_user))
+    select_event(@event)
+
+    post approve_scouting_entry_path(@entry)
+
+    assert_response :redirect
+    @entry.reload
+    assert @entry.flagged?
+  end
+
   # --- Sync with LWW ---
 
   test "sync creates new entry" do
@@ -367,6 +400,35 @@ class ScoutingEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 77, existing.data["auton_fuel_made"]
     assert_equal 33, existing.data["teleop_fuel_made"]
     assert_equal "Updated via LWW sync", existing.notes
+  end
+
+  test "sync keeps admin approved status when incoming payload updates entry" do
+    existing = scouting_entries(:entry_qm1_254)
+    existing.update!(status: :approved)
+    future_time = (existing.updated_at + 1.hour).iso8601
+
+    post sync_scouting_entries_path,
+      params: {
+        entries: [
+          {
+            client_uuid: existing.client_uuid,
+            match_id: existing.match_id,
+            frc_team_id: existing.frc_team_id,
+            event_id: existing.event_id,
+            notes: "Approved entry updated",
+            updated_at: future_time,
+            status: :flagged,
+            data: { auton_fuel_made: 70 }
+          }
+        ]
+      },
+      headers: { "Origin" => "http://www.example.com" },
+      as: :json
+
+    assert_response :success
+    existing.reload
+    assert existing.approved?
+    assert_equal 70, existing.data["auton_fuel_made"]
   end
 
   test "sync skips update when server copy is newer" do

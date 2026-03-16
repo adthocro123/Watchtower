@@ -19,7 +19,7 @@ class MatchCoverageService
 
   def team_counts
     @team_counts ||= @event.scouting_entries
-                          .submitted
+                          .counted
                           .where.not(match_id: nil)
                           .group(:match_id, :frc_team_id)
                           .count

@@ -27,6 +27,10 @@ Rails.application.routes.draw do
   get "scouting_entries/replay", to: "scouting_entries#replay", as: :replay_scouting_entries
 
   resources :scouting_entries do
+    member do
+      post :approve
+    end
+
     collection do
       post :sync
     end

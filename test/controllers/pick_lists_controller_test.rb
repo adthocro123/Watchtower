@@ -92,11 +92,21 @@ class PickListsControllerTest < ActionDispatch::IntegrationTest
       post pick_lists_path, params: {
         pick_list: {
           name: "Test Pick List",
-          entries: []
+          entries: [ frc_teams(:team_254).id, frc_teams(:team_118).id ]
         }
       }
     end
+
+    assert_equal [ frc_teams(:team_254).id, frc_teams(:team_118).id ], PickList.last.entries
     assert_redirected_to pick_list_path(PickList.last)
+  end
+
+  test "update accepts json reorder payload" do
+    patch pick_list_path(@pick_list), params: { entries: [ frc_teams(:team_118).id, frc_teams(:team_254).id ] }, as: :json
+
+    assert_response :success
+    @pick_list.reload
+    assert_equal [ frc_teams(:team_118).id, frc_teams(:team_254).id ], @pick_list.entries
   end
 
   # --- Authentication ---
