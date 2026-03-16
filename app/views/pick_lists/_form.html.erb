@@ -49,34 +49,62 @@
         </div>
 
         <div class="relative mb-3">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input type="text"
-                 placeholder="Search teams by number or name"
-                 aria-label="Search teams"
-                 class="input-field pl-10"
-                 data-action="input->search#filter"
-                 data-search-target="input">
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_15rem] gap-3">
+            <div class="relative">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text"
+                     placeholder="Search teams by number or name"
+                     aria-label="Search teams"
+                     class="input-field pl-10"
+                     data-action="input->search#filter"
+                     data-search-target="input">
+            </div>
+
+            <div>
+              <select class="input-field"
+                      aria-label="Sort teams"
+                      data-action="change->pick-list-selection#sortRows">
+                <option value="avgPoints">Sort by avg points</option>
+                <option value="avgAccuracy">Sort by avg accuracy</option>
+                <option value="recentPoints">Sort by recent points</option>
+                <option value="recentAccuracy">Sort by recent accuracy</option>
+                <option value="defense">Sort by defense</option>
+                <option value="team_number">Sort by team number</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <%= hidden_field_tag "pick_list[entries][]", "" %>
 
         <div class="border border-gray-800 rounded-xl overflow-hidden bg-gray-950/40">
           <% if @team_options.any? %>
-            <div class="divide-y divide-gray-800/70 max-h-[32rem] overflow-y-auto">
+            <div class="divide-y divide-gray-800/70 max-h-[32rem] overflow-y-auto" data-pick-list-selection-target="list">
               <% @team_options.each do |option| %>
                 <% team = option[:team] %>
                 <% summary = option[:summary] %>
+                <% recent_entry = option[:recent_entry] %>
                 <% selected = option[:selected] %>
                 <% avg_points = summary.try(:avg_total_points).to_f.round(1) %>
+                <% avg_accuracy = summary.try(:fuel_accuracy_pct).to_f.round(1) %>
                 <% avg_defense = summary.try(:avg_defense_rating) %>
                 <% matches_scouted = summary.try(:matches_scouted).to_i %>
+                <% recent_points = recent_entry&.total_points.to_i %>
+                <% recent_accuracy = recent_entry&.fuel_accuracy.to_f.round(1) %>
+                <% recent_match = recent_entry&.match&.display_name %>
                 <div class="flex items-start gap-3 px-4 py-3 transition-colors duration-150 <%= selected ? 'bg-orange-500/10 hover:bg-orange-500/15' : 'hover:bg-gray-800/40' %>"
                      data-search-target="item"
                      data-pick-list-selection-target="row"
                      data-team-id="<%= team.id %>"
                      data-team-label="<%= team.team_number %> <%= team.nickname.presence || 'Unknown Team' %>"
+                     data-team-number="<%= team.team_number %>"
+                     data-avg-points="<%= avg_points %>"
+                     data-avg-accuracy="<%= avg_accuracy %>"
+                     data-recent-points="<%= recent_points %>"
+                     data-recent-accuracy="<%= recent_accuracy %>"
+                     data-defense="<%= avg_defense.to_f.round(1) %>"
                      data-search="<%= [team.team_number, team.nickname, option[:event_rank], avg_points, avg_defense.to_f.round(1)].compact.join(' ').downcase %>">
                   <%= check_box_tag "pick_list[entries][]",
                                     team.id,
@@ -100,8 +128,21 @@
                       <% if matches_scouted.positive? %>
                         <span><%= matches_scouted %> matches</span>
                       <% end %>
+                      <% if summary %>
+                        <span><%= avg_accuracy %>% avg acc</span>
+                      <% end %>
                       <% if avg_defense.present? %>
                         <span class="text-blue-400"><%= avg_defense.to_f.round(1) %>/5 defense</span>
+                      <% end %>
+                    </div>
+
+                    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+                      <% if recent_entry %>
+                        <span>Latest <%= recent_match || "entry" %></span>
+                        <span><%= recent_points %> pts</span>
+                        <span><%= recent_accuracy %>% acc</span>
+                      <% else %>
+                        <span>No recent entry yet</span>
                       <% end %>
                     </div>
                   </div>

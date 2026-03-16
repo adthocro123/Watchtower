@@ -28,29 +28,43 @@
        data-pick-list-board-storage-key-value="pick-list:<%= @pick_list.id %>:picked"
        data-sortable-save-url="<%= pick_list_path(@pick_list) %>">
     <div class="mb-4 rounded-xl border border-gray-800 bg-gray-950/50 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-    <div>
-      <h2 class="text-sm font-semibold text-white">Draft Board Tools</h2>
-      <p class="text-xs text-gray-500 mt-1">Drag rows or use the arrow buttons to reorder. Mark teams as picked to gray them out locally.</p>
-    </div>
-    <div class="flex items-center gap-2">
-      <span class="badge-gray text-xs" data-pick-list-board-target="pickedCount">0 picked</span>
-      <button type="button" class="btn-secondary text-sm" data-pick-list-board-target="hidePickedLabel" data-action="click->pick-list-board#toggleHidePicked">Hide picked</button>
-    </div>
+      <div>
+        <h2 class="text-sm font-semibold text-white">Draft Board Tools</h2>
+        <p class="text-xs text-gray-500 mt-1">Drag rows, use the arrow buttons, or sort by stats. Mark teams as picked to gray them out locally.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <select class="input-field text-sm min-w-48"
+                aria-label="Sort pick list"
+                data-action="change->sortable#sortBy">
+          <option value="avgPoints">Sort by avg points</option>
+          <option value="avgAccuracy">Sort by avg accuracy</option>
+          <option value="recentPoints">Sort by recent points</option>
+          <option value="recentAccuracy">Sort by recent accuracy</option>
+          <option value="defense">Sort by defense</option>
+          <option value="teamNumber">Sort by team number</option>
+        </select>
+        <span class="badge-gray text-xs" data-pick-list-board-target="pickedCount">0 picked</span>
+        <button type="button" class="btn-secondary text-sm" data-pick-list-board-target="hidePickedLabel" data-action="click->pick-list-board#toggleHidePicked">Hide picked</button>
+      </div>
     </div>
 
     <%# Drag-and-drop sortable list %>
     <div class="scout-card overflow-hidden">
-    <div data-sortable-target="list" class="divide-y divide-gray-800/50">
+    <div data-sortable-target="list" data-action="dragover->sortable#dragover drop->sortable#drop" class="divide-y divide-gray-800/50">
       <% entries = @ordered_team_ids %>
       <% if entries.any? %>
         <% entries.each_with_index do |team_id, idx| %>
           <% team = @teams_by_id[team_id.to_i] %>
           <% next unless team %>
           <% summary = @team_summaries[team.id] %>
+          <% recent_entry = @latest_entries_by_team[team.id] %>
           <% avg_points = summary.try(:avg_total_points).to_f.round(1) %>
-          <% avg_accuracy = summary.try(:fuel_accuracy_pct).to_f.round(0) %>
+          <% avg_accuracy = summary.try(:fuel_accuracy_pct).to_f.round(1) %>
           <% avg_defense = summary.try(:avg_defense_rating) %>
           <% matches_scouted = summary.try(:matches_scouted).to_i %>
+          <% recent_points = recent_entry&.total_points.to_i %>
+          <% recent_accuracy = recent_entry&.fuel_accuracy.to_f.round(1) %>
+          <% recent_match = recent_entry&.match&.display_name %>
           <% tier_color = case idx
                           when 0..7 then "amber"
                           when 8..15 then "orange"
@@ -58,9 +72,16 @@
                           else "gray"
                           end %>
           <div class="flex items-center gap-3 px-4 py-3 hover:bg-gray-800/30 transition-all duration-150 cursor-grab active:cursor-grabbing select-none"
+                data-action="dragstart->sortable#dragstart dragover->sortable#dragover drop->sortable#drop dragend->sortable#dragend"
                 data-sortable-target="item"
                 data-pick-list-board-target="item"
                 data-sortable-id="<%= team.id %>"
+                data-team-number="<%= team.team_number %>"
+                data-avg-points="<%= avg_points %>"
+                data-avg-accuracy="<%= avg_accuracy %>"
+                data-recent-points="<%= recent_points %>"
+                data-recent-accuracy="<%= recent_accuracy %>"
+                data-defense="<%= avg_defense.to_f.round(1) %>"
                 role="listitem"
                 aria-label="Rank <%= idx + 1 %>: Team <%= team.team_number %> - <%= team.nickname %>">
             <%# Drag handle %>
@@ -99,6 +120,16 @@
                   <span class="text-xs text-gray-500"><%= matches_scouted %> matches</span>
                 </div>
               <% end %>
+
+              <div class="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-600">
+                <% if recent_entry %>
+                  <span>Latest <%= recent_match || "entry" %></span>
+                  <span><%= recent_points %> pts</span>
+                  <span><%= recent_accuracy %>% acc</span>
+                <% else %>
+                  <span>No recent entry yet</span>
+                <% end %>
+              </div>
             </div>
             <%# Avg Points Badge %>
             <% if summary %>

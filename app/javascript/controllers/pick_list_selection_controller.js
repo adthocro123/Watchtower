@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["checkbox", "count", "row", "selectedList", "toggle"]
+  static targets = ["checkbox", "count", "list", "row", "selectedList", "toggle"]
 
   connect() {
     this.refresh()
@@ -65,6 +65,14 @@ export default class extends Controller {
     this.refresh()
   }
 
+  sortRows(event) {
+    const metric = event.currentTarget.value
+    const rows = [...this.rowTargets]
+
+    rows.sort((left, right) => this.#compareRows(left, right, metric))
+    this.listTarget.replaceChildren(...rows)
+  }
+
   #selectedIds() {
     return this.checkboxTargets.filter(checkbox => checkbox.checked).map(checkbox => checkbox.value)
   }
@@ -75,6 +83,21 @@ export default class extends Controller {
 
   #toggleFor(teamId) {
     return this.toggleTargets.find(button => button.dataset.teamId === String(teamId))
+  }
+
+  #compareRows(left, right, metric) {
+    if (metric === "team_number") {
+      return Number(left.dataset.teamNumber || 0) - Number(right.dataset.teamNumber || 0)
+    }
+
+    const leftValue = Number(left.dataset[metric] || -1)
+    const rightValue = Number(right.dataset[metric] || -1)
+
+    if (leftValue === rightValue) {
+      return Number(left.dataset.teamNumber || 0) - Number(right.dataset.teamNumber || 0)
+    }
+
+    return rightValue - leftValue
   }
 
   #emptyState() {

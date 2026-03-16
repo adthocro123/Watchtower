@@ -74,11 +74,13 @@ class PickListsController < ApplicationController
     @ordered_team_ids = safe_ordered_team_ids(@pick_list)
     @teams_by_id = FrcTeam.where(id: @ordered_team_ids).index_by(&:id)
     @team_summaries = safe_team_summaries(TeamEventSummary.where(event: current_event, frc_team_id: @ordered_team_ids))
+    @latest_entries_by_team = latest_entries_for(@ordered_team_ids)
   rescue StandardError => e
     Rails.logger.warn("[PickListsController] Failed to prepare pick list #{@pick_list&.id} for display: #{e.class}: #{e.message}")
     @ordered_team_ids = []
     @teams_by_id = {}
     @team_summaries = {}
+    @latest_entries_by_team = {}
     @team_summary_warning = true
   end
 
@@ -87,11 +89,12 @@ class PickListsController < ApplicationController
 
     summaries = safe_team_summaries(TeamEventSummary.where(event: current_event))
     selected_ids = safe_ordered_team_ids(@pick_list)
+    teams = FrcTeam.at_event(current_event).order(:team_number).to_a
+    latest_entries_by_team = latest_entries_for(teams.map(&:id))
     event_rank_by_id = summaries.values.sort_by do |summary|
       [ -summary.avg_total_points.to_f, -summary.matches_scouted.to_i, summary.frc_team_id ]
     end.each_with_index(1).to_h { |summary, index| [ summary.frc_team_id, index ] }
 
-    teams = FrcTeam.at_event(current_event).order(:team_number).to_a
     sorted_teams = teams.sort_by do |team|
       selected_index = selected_ids.index(team.id)
 
@@ -107,6 +110,7 @@ class PickListsController < ApplicationController
       {
         team: team,
         summary: summaries[team.id],
+        recent_entry: latest_entries_by_team[team.id],
         selected: selected_ids.include?(team.id),
         selected_rank: selected_ids.index(team.id)&.+(1),
         event_rank: event_rank_by_id[team.id]
@@ -140,10 +144,24 @@ class PickListsController < ApplicationController
       {
         team: team,
         summary: nil,
+        recent_entry: nil,
         selected: selected_ids.include?(team.id),
         selected_rank: selected_ids.index(team.id)&.+(1),
         event_rank: nil
       }
     end
+  end
+
+  def latest_entries_for(team_ids)
+    return {} if team_ids.blank?
+
+    current_event.scouting_entries
+                 .counted
+                 .where(frc_team_id: team_ids)
+                 .includes(:match)
+                 .order(created_at: :desc)
+                 .to_a
+                 .group_by(&:frc_team_id)
+                 .transform_values(&:first)
   end
 end

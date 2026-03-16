@@ -40,7 +40,13 @@ export default class extends Controller {
     event.dataTransfer.dropEffect = "move"
 
     const target = event.target.closest("[data-sortable-target='item']")
-    if (!target || target === this.draggedItem || target === this.placeholder) return
+    if (!target) {
+      const list = this.hasListTarget ? this.listTarget : this.element
+      list.appendChild(this.placeholder)
+      return
+    }
+
+    if (target === this.draggedItem || target === this.placeholder) return
 
     this.#positionPlaceholder(target, event.clientY)
   }
@@ -169,6 +175,19 @@ export default class extends Controller {
     this.#saveOrder()
   }
 
+  sortBy(event) {
+    const metric = event.currentTarget.value
+    if (!metric) return
+
+    const list = this.hasListTarget ? this.listTarget : this.element
+    const items = [...list.querySelectorAll("[data-sortable-target='item']")]
+
+    items.sort((left, right) => this.#compareItems(left, right, metric))
+    list.append(...items)
+    this.#updateRankNumbers()
+    this.#saveOrder()
+  }
+
   #updateRankNumbers() {
     const list = this.hasListTarget ? this.listTarget : this.element
     const items = [...list.querySelectorAll("[data-sortable-target='item']")]
@@ -201,6 +220,21 @@ export default class extends Controller {
     }
 
     return ["bg-gray-500/20", "border-gray-500/30", "text-gray-400"]
+  }
+
+  #compareItems(left, right, metric) {
+    if (metric === "teamNumber") {
+      return Number(left.dataset.teamNumber || 0) - Number(right.dataset.teamNumber || 0)
+    }
+
+    const leftValue = Number(left.dataset[metric] || -1)
+    const rightValue = Number(right.dataset[metric] || -1)
+
+    if (leftValue === rightValue) {
+      return Number(left.dataset.teamNumber || 0) - Number(right.dataset.teamNumber || 0)
+    }
+
+    return rightValue - leftValue
   }
 
   async #saveOrder() {

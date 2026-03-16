@@ -49,6 +49,7 @@ class PickListsControllerTest < ActionDispatch::IntegrationTest
     get pick_list_path(@pick_list)
     assert_response :success
     assert_includes response.body, "Mark picked"
+    assert_includes response.body, "Sort by avg points"
   end
 
   test "lead can get show" do
@@ -77,6 +78,7 @@ class PickListsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Selected Teams"
     assert_includes response.body, "Add"
+    assert_includes response.body, "Sort by recent points"
   end
 
   test "scout cannot get new" do
