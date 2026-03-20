@@ -1,6 +1,8 @@
 require "test_helper"
 
 class DashboardControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
     @user = users(:admin_user)
     @event = events(:championship)
@@ -85,5 +87,18 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_match "Current: Q2", response.body
     assert_match "Starts in 2 matches", response.body
     assert_match "Q4", response.body
+  end
+
+  test "dashboard enqueues async auto-sync when TBA is configured" do
+    select_event(@event)
+    ENV["TBA_API_KEY"] = "test-key"
+    clear_enqueued_jobs
+
+    assert_enqueued_with(job: AutoSyncEventJob, args: [ @event.id ]) do
+      get root_path
+    end
+  ensure
+    clear_enqueued_jobs
+    ENV.delete("TBA_API_KEY")
   end
 end

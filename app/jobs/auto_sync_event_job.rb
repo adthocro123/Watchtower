@@ -4,13 +4,12 @@ class AutoSyncEventJob < ApplicationJob
   queue_as :default
   retry_on StandardError, wait: :polynomially_longer, attempts: 2
 
-  COOLDOWN = 5.minutes
-
-  # Runs the heavier downstream sync jobs (Statbotics EPA, materialized
-  # views, predictions) after the inline TBA sync in the controller.
+  # Runs TBA sync and downstream jobs asynchronously after dashboard load.
   def perform(event_id)
     event = Event.find_by(id: event_id)
     return unless event
+
+    TbaSyncService.new(event.tba_key).sync_matches! if event.tba_key.present? && TbaClient.configured?
 
     RefreshSummariesJob.perform_later(event.id)
     SyncStatboticsJob.perform_later(event.id)

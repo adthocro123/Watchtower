@@ -59,30 +59,23 @@ class ApplicationController < ActionController::Base
     devise_parameter_sanitizer.permit(:account_update, keys: [ :first_name, :last_name ])
   end
 
-  # Runs a debounced TBA sync inline (fast, ~1-2s with caching) so pages
-  # always render with fresh data. Heavier jobs (Statbotics, predictions)
-  # are enqueued in the background.
+  # Debounced auto-sync runs only on dashboard loads and executes in a
+  # background job so page rendering is never blocked by external API calls.
   def should_auto_sync?
     request.get? &&
       request.format.html? &&
       current_user.present? &&
-      current_event.present?
+      current_event.present? &&
+      controller_name == "dashboard" &&
+      action_name == "index"
   end
 
   def auto_sync_event
-    cache_key = "auto_sync:#{current_event.id}"
-    return if Rails.cache.exist?(cache_key)
     return unless TbaClient.configured?
 
-    Rails.cache.write(cache_key, true, expires_in: AutoSyncEventJob::COOLDOWN)
-
-    # Inline TBA sync — fast because TbaClient caches API responses for 5 min
-    TbaSyncService.new(current_event.tba_key).sync_all! if current_event.tba_key.present?
-
-    # Heavier work stays async
+    # Everything stays async to keep dashboard loads fast.
     AutoSyncEventJob.perform_later(current_event.id)
   rescue StandardError => e
-    Rails.cache.delete(cache_key)
     Rails.logger.warn("[ApplicationController] Auto-sync failed: #{e.message}")
   end
 end

@@ -111,7 +111,7 @@ class UserShiftStatusService
   def current_match
     @current_match ||= begin
       latest_completed_index = qualification_matches.rindex do |match|
-        match.red_score.present? && match.blue_score.present?
+        scored_match?(match)
       end
 
       if latest_completed_index.nil?
@@ -120,6 +120,11 @@ class UserShiftStatusService
         qualification_matches[latest_completed_index + 1]
       end
     end
+  end
+
+  def scored_match?(match)
+    match.red_score.present? && match.blue_score.present? &&
+      match.red_score >= 0 && match.blue_score >= 0
   end
 
   def current_match_index
