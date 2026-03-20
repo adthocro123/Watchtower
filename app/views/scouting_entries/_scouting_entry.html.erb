@@ -25,12 +25,8 @@
     <div class="text-right">
       <p class="text-sm font-bold text-white font-mono"><%= scouting_entry.total_points %> pts</p>
       <% unless scouting_entry.submitted? %>
-        <span class="<%= case scouting_entry.status
-            when 'flagged' then 'badge-amber'
-            when 'rejected' then 'badge-red'
-            else 'badge-gray'
-            end %> text-[10px]">
-          <%= scouting_entry.flagged? ? "Inaccurate" : scouting_entry.status&.capitalize %>
+        <span class="<%= scouting_entry.status_badge_class %> text-[10px]">
+          <%= scouting_entry.status_label %>
         </span>
       <% end %>
     </div>

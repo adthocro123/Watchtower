@@ -1,6 +1,9 @@
 class ScoutingEntry < ApplicationRecord
   include Scoring
 
+  COUNTED_STATUSES = %w[submitted approved].freeze
+  REVIEWABLE_SYNC_STATUSES = %w[submitted flagged rejected].freeze
+
   # Associations
   belongs_to :user
   belongs_to :match, optional: true
@@ -8,8 +11,11 @@ class ScoutingEntry < ApplicationRecord
   belongs_to :event
 
   # Enums
-  enum :status, { submitted: 0, flagged: 1, rejected: 2 }
+  enum :status, { submitted: 0, flagged: 1, rejected: 2, approved: 3 }
   enum :scouting_mode, { live: 0, replay: 1 }
+
+  # Scopes
+  scope :counted, -> { where(status: counted_status_values) }
 
   # Validations
   validates :client_uuid, uniqueness: true, allow_nil: true
@@ -93,15 +99,52 @@ class ScoutingEntry < ApplicationRecord
       notes: params[:notes],
       photo_url: params[:photo_url],
       client_uuid: params[:client_uuid],
-      status: params[:status] || :submitted,
+      status: sync_status(params[:status]),
       scouting_mode: params[:scouting_mode] || :live,
       video_key: params[:video_key],
       video_type: params[:video_type]
     )
   end
 
+  def self.counted_status_values
+    statuses.values_at(*COUNTED_STATUSES)
+  end
+
+  def self.sync_status(value)
+    normalized = value.to_s.presence || "submitted"
+    return :submitted unless REVIEWABLE_SYNC_STATUSES.include?(normalized)
+
+    normalized
+  end
+
   def mode_label
     replay? ? "Replay" : "Live"
+  end
+
+  def counted?
+    submitted? || approved?
+  end
+
+  def status_badge_class
+    case status
+    when "submitted"
+      "badge-orange"
+    when "flagged"
+      "badge-amber"
+    when "approved"
+      "badge-emerald"
+    when "rejected"
+      "badge-red"
+    else
+      "badge-gray"
+    end
+  end
+
+  def status_label
+    return "Inaccurate" if flagged?
+    return "Admin Approved" if approved?
+
+    status&.capitalize || "Draft"
   end
 
   private

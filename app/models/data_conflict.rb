@@ -8,4 +8,12 @@ class DataConflict < ApplicationRecord
   # Scopes
   scope :unresolved, -> { where(resolved: false) }
   scope :resolved, -> { where(resolved: true) }
+
+  def conflicting_entries
+    event.scouting_entries
+         .where(match: match, frc_team: frc_team)
+         .where.not(status: :rejected)
+         .includes(:user)
+         .order(:created_at)
+  end
 end

@@ -86,7 +86,7 @@ class ScoutingEntryTest < ActiveSupport::TestCase
   # --- Enums ---
 
   test "status enum values" do
-    assert_equal({ "submitted" => 0, "flagged" => 1, "rejected" => 2 }, ScoutingEntry.statuses)
+    assert_equal({ "submitted" => 0, "flagged" => 1, "rejected" => 2, "approved" => 3 }, ScoutingEntry.statuses)
   end
 
   test "scouting_mode enum values" do
@@ -100,6 +100,20 @@ class ScoutingEntryTest < ActiveSupport::TestCase
   test "mode_label returns replay or live" do
     assert_equal "Live", scouting_entries(:entry_qm1_254).mode_label
     assert_equal "Replay", ScoutingEntry.new(scouting_mode: :replay).mode_label
+  end
+
+  test "counted? returns true for approved entries" do
+    entry = scouting_entries(:entry_qm1_254)
+    entry.status = :approved
+
+    assert entry.counted?
+  end
+
+  test "status_label returns admin approved for approved entries" do
+    entry = scouting_entries(:entry_qm1_254)
+    entry.status = :approved
+
+    assert_equal "Admin Approved", entry.status_label
   end
 
   # --- Scoring concern constants ---
@@ -337,5 +351,9 @@ class ScoutingEntryTest < ActiveSupport::TestCase
     entry = ScoutingEntry.from_offline_data(params)
     assert_equal({}, entry.data)
     assert entry.live?
+  end
+
+  test "sync_status ignores approved status from clients" do
+    assert_equal :submitted, ScoutingEntry.sync_status(:approved)
   end
 end

@@ -13,6 +13,7 @@ entry_qm1_254:
     endgame_fuel_missed: 0
     endgame_climb: "L3"
     auton_climb: true
+    defense_rating: 4
   notes: "Strong autonomous routine, consistent scoring."
   status: 0
   client_uuid: "scout-entry-uuid-0001"
@@ -31,6 +32,7 @@ entry_qm1_1678:
     endgame_fuel_missed: 0
     endgame_climb: "L2"
     auton_climb: false
+    defense_rating: 2
   notes: "Good teleop, needs work on endgame."
   status: 0
   client_uuid: "scout-entry-uuid-0002"
@@ -49,6 +51,7 @@ entry_qm1_4414:
     endgame_fuel_missed: 0
     endgame_climb: "L2"
     auton_climb: false
+    defense_rating: 3
   notes: "Solid mid-range scorer."
   status: 0
   client_uuid: "scout-entry-uuid-0005"
@@ -67,6 +70,7 @@ entry_qm1_118:
     endgame_fuel_missed: 0
     endgame_climb: "L1"
     auton_climb: true
+    defense_rating: 2
   notes: "Consistent but lower scorer."
   status: 0
   client_uuid: "scout-entry-uuid-0006"
@@ -85,6 +89,7 @@ entry_qm2_254:
     endgame_fuel_missed: 0
     endgame_climb: "L3"
     auton_climb: true
+    defense_rating: 5
   notes: "Best match of the day."
   status: 0
   client_uuid: "scout-entry-uuid-0003"
@@ -103,6 +108,7 @@ entry_qm2_1678:
     endgame_fuel_missed: 0
     endgame_climb: "L2"
     auton_climb: true
+    defense_rating: 4
   notes: "Improved from qm1."
   status: 0
   client_uuid: "scout-entry-uuid-0004"
@@ -121,6 +127,7 @@ entry_qm2_971:
     endgame_fuel_missed: 0
     endgame_climb: "L2"
     auton_climb: true
+    defense_rating: 4
   notes: "Better auton this match."
   status: 0
   client_uuid: "scout-entry-uuid-0007"
@@ -139,6 +146,7 @@ entry_qm2_118:
     endgame_fuel_missed: 0
     endgame_climb: "L1"
     auton_climb: false
+    defense_rating: 1
   notes: "Struggled this match."
   status: 0
   client_uuid: "scout-entry-uuid-0008"
@@ -158,6 +166,7 @@ entry_qm4_254_live:
     endgame_fuel_missed: 1
     endgame_climb: "L2"
     auton_climb: true
+    defense_rating: 5
   notes: "Live coverage for replayable match."
   status: 0
   client_uuid: "scout-entry-uuid-0010"
@@ -177,6 +186,7 @@ entry_qm1_1678_owner:
     endgame_fuel_missed: 0
     endgame_climb: "L2"
     auton_climb: false
+    defense_rating: 3
   notes: "Secondary entry for same team-match."
   status: 0
   client_uuid: "scout-entry-uuid-0009"

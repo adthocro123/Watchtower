@@ -14,7 +14,7 @@ class AggregationService
   # Returns a hash with averages, accuracy, stddev, confidence, and raw reports.
   def aggregate_team(frc_team)
     entries = @event.scouting_entries
-                    .where(frc_team: frc_team, status: 0)
+                    .where(frc_team: frc_team, status: ScoutingEntry.counted_status_values)
                     .includes(:user, :match)
                     .order(:created_at)
 
@@ -43,7 +43,7 @@ class AggregationService
 
   # Aggregates all teams at this event, sorted by avg_total_points descending.
   def aggregate_all_teams
-    team_ids = @event.scouting_entries.where(status: 0).select(:frc_team_id).distinct
+    team_ids = @event.scouting_entries.where(status: ScoutingEntry.counted_status_values).select(:frc_team_id).distinct
     teams = FrcTeam.where(id: team_ids)
 
     teams.map { |team| aggregate_team(team) }
@@ -62,7 +62,7 @@ class AggregationService
 
     # Group scouting entries by (frc_team, match) pairs
     grouped = @event.scouting_entries
-                    .where(status: 0)
+                    .where(status: ScoutingEntry.counted_status_values)
                     .where.not(match_id: nil)
                     .includes(:user)
                     .group_by { |e| [ e.frc_team_id, e.match_id ] }

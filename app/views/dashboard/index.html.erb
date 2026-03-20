@@ -392,13 +392,8 @@
             <div class="text-right flex items-center gap-3">
               <div>
                 <p class="text-sm font-bold text-white font-mono"><%= entry.total_points %> pts</p>
-                <span class="<%= case entry.status
-                    when 'submitted' then 'badge-orange'
-                    when 'flagged' then 'badge-amber'
-                    when 'rejected' then 'badge-red'
-                    else 'badge-gray'
-                    end %> text-[10px]">
-                  <%= entry.status&.capitalize || 'Draft' %>
+                <span class="<%= entry.status_badge_class %> text-[10px]">
+                  <%= entry.status_label %>
                 </span>
               </div>
               <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition-colors duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">

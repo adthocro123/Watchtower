@@ -10,9 +10,170 @@
     </div>
   <% end %>
 
-  <div>
-    <%= f.label :name, class: "block text-sm font-medium text-gray-300 mb-1" %>
-    <%= f.text_field :name, class: "input-field", placeholder: "e.g., Alliance Selection Priority" %>
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_20rem] gap-6">
+    <div class="space-y-6">
+      <div>
+        <%= f.label :name, class: "block text-sm font-medium text-gray-300 mb-1" %>
+        <%= f.text_field :name, class: "input-field", placeholder: "e.g., Alliance Selection Priority" %>
+      </div>
+
+      <div data-controller="search pick-list-selection">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-3">
+          <div>
+            <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Teams</h2>
+            <p class="text-sm text-gray-500 mt-1">Use the add buttons to build the board, then fine-tune order after saving.</p>
+          </div>
+          <span class="badge-orange text-xs self-start sm:self-auto" data-pick-list-selection-target="count"><%= pick_list.team_count %> selected</span>
+        </div>
+
+        <% if @team_summary_warning %>
+          <div class="mb-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            Team summaries are temporarily unavailable, so the picker is showing team numbers only. You can still build and save the pick list.
+          </div>
+        <% end %>
+
+        <div class="mb-4 rounded-xl border border-gray-800 bg-gray-950/50 p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-semibold text-white">Selected Teams</h3>
+              <p class="text-xs text-gray-500 mt-1">Tap a chip to remove it quickly.</p>
+            </div>
+            <button type="button" class="text-xs text-gray-400 hover:text-orange-300 transition-colors duration-150" data-action="click->pick-list-selection#clearSelection">
+              Clear all
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-2" data-pick-list-selection-target="selectedList">
+            <p class="text-sm text-gray-500">No teams selected yet.</p>
+          </div>
+        </div>
+
+        <div class="relative mb-3">
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_15rem] gap-3">
+            <div class="relative">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text"
+                     placeholder="Search teams by number or name"
+                     aria-label="Search teams"
+                     class="input-field pl-10"
+                     data-action="input->search#filter"
+                     data-search-target="input">
+            </div>
+
+            <div>
+              <select class="input-field"
+                      aria-label="Sort teams"
+                      data-action="change->pick-list-selection#sortRows">
+                <option value="avgPoints">Sort by avg points</option>
+                <option value="avgAccuracy">Sort by avg accuracy</option>
+                <option value="recentPoints">Sort by recent points</option>
+                <option value="recentAccuracy">Sort by recent accuracy</option>
+                <option value="defense">Sort by defense</option>
+                <option value="team_number">Sort by team number</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <%= hidden_field_tag "pick_list[entries][]", "" %>
+
+        <div class="border border-gray-800 rounded-xl overflow-hidden bg-gray-950/40">
+          <% if @team_options.any? %>
+            <div class="divide-y divide-gray-800/70 max-h-[32rem] overflow-y-auto" data-pick-list-selection-target="list">
+              <% @team_options.each do |option| %>
+                <% team = option[:team] %>
+                <% summary = option[:summary] %>
+                <% recent_entry = option[:recent_entry] %>
+                <% selected = option[:selected] %>
+                <% avg_points = summary.try(:avg_total_points).to_f.round(1) %>
+                <% avg_accuracy = summary.try(:fuel_accuracy_pct).to_f.round(1) %>
+                <% avg_defense = summary.try(:avg_defense_rating) %>
+                <% matches_scouted = summary.try(:matches_scouted).to_i %>
+                <% recent_points = recent_entry&.points.to_f.round(1) %>
+                <% recent_accuracy = recent_entry&.accuracy.to_f.round(1) %>
+                <% recent_match = recent_entry&.match_label %>
+                <div class="flex items-start gap-3 px-4 py-3 transition-colors duration-150 <%= selected ? 'bg-orange-500/10 hover:bg-orange-500/15' : 'hover:bg-gray-800/40' %>"
+                     data-search-target="item"
+                     data-pick-list-selection-target="row"
+                     data-team-id="<%= team.id %>"
+                     data-team-label="<%= team.team_number %> <%= team.nickname.presence || 'Unknown Team' %>"
+                     data-team-number="<%= team.team_number %>"
+                     data-avg-points="<%= avg_points %>"
+                     data-avg-accuracy="<%= avg_accuracy %>"
+                     data-recent-points="<%= recent_points %>"
+                     data-recent-accuracy="<%= recent_accuracy %>"
+                     data-defense="<%= avg_defense.to_f.round(1) %>"
+                     data-search="<%= [team.team_number, team.nickname, option[:event_rank], avg_points, avg_defense.to_f.round(1)].compact.join(' ').downcase %>">
+                  <%= check_box_tag "pick_list[entries][]",
+                                    team.id,
+                                    selected,
+                                    class: "mt-1 rounded border-gray-600 bg-gray-900 text-orange-500 focus:ring-orange-500 focus:ring-offset-gray-950",
+                                    data: { pick_list_selection_target: "checkbox", action: "change->pick-list-selection#refresh" } %>
+
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-mono font-bold text-orange-400"><%= team.team_number %></span>
+                      <span class="font-medium text-white truncate"><%= team.nickname %></span>
+                      <% if option[:selected_rank] %>
+                        <span class="badge-orange text-[10px]">Pick <%= option[:selected_rank] %></span>
+                      <% elsif option[:event_rank] %>
+                        <span class="badge-gray text-[10px]">Rank <%= option[:event_rank] %></span>
+                      <% end %>
+                    </div>
+
+                    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                      <span><%= summary ? "#{avg_points} avg pts" : "No scouting summary" %></span>
+                      <% if matches_scouted.positive? %>
+                        <span><%= matches_scouted %> matches</span>
+                      <% end %>
+                      <% if summary %>
+                        <span><%= avg_accuracy %>% avg acc</span>
+                      <% end %>
+                      <% if avg_defense.present? %>
+                        <span class="text-blue-400"><%= avg_defense.to_f.round(1) %>/5 defense</span>
+                      <% end %>
+                    </div>
+
+                    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+                      <% if recent_entry %>
+                        <span>Latest <%= recent_match || "entry" %></span>
+                        <span><%= recent_points %> pts</span>
+                        <span><%= recent_accuracy %>% acc</span>
+                      <% else %>
+                        <span>No recent entry yet</span>
+                      <% end %>
+                    </div>
+                  </div>
+
+                  <button type="button"
+                          class="rounded-lg px-3 py-1.5 text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-700 hover:border-orange-500/30 hover:text-orange-300 transition-colors duration-150"
+                          data-team-id="<%= team.id %>"
+                          data-pick-list-selection-target="toggle"
+                          data-action="click->pick-list-selection#toggleTeam">
+                    <%= selected ? "Added" : "Add" %>
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="px-4 py-8 text-center">
+              <p class="text-sm text-gray-500">No teams are available for the current event yet.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <aside class="bg-gray-950/50 border border-gray-800 rounded-xl p-4 h-fit">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider mb-3">How It Works</h2>
+      <div class="space-y-3 text-sm text-gray-400">
+        <p>1. Pick the teams you want on the list.</p>
+        <p>2. Selected teams save in the order shown here.</p>
+        <p>3. After saving, drag teams on the pick list page to fine-tune your draft board.</p>
+      </div>
+    </aside>
   </div>
 
   <div class="flex items-center gap-3 pt-2">

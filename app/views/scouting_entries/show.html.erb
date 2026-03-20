@@ -11,14 +11,14 @@
       Scouting Entry
       <span class="text-orange-400">#<%= @scouting_entry.frc_team.team_number %></span>
     </h1>
-    <span class="ml-auto <%= case @scouting_entry.status
-        when 'submitted' then 'badge-orange'
-        when 'flagged' then 'badge-amber'
-        when 'rejected' then 'badge-red'
-        else 'badge-gray'
-        end %>">
-      <%= @scouting_entry.flagged? ? "Inaccurate" : (@scouting_entry.status&.capitalize || 'Draft') %>
-    </span>
+    <div class="ml-auto flex items-center gap-2">
+      <% if @scouting_entry.flagged? && current_user.admin? %>
+        <%= button_to "Admin Approve", approve_scouting_entry_path(@scouting_entry), method: :post, class: "btn-secondary text-sm", form: { data: { controller: "offline-guard", action: "submit->offline-guard#check" } } %>
+      <% end %>
+      <span class="<%= @scouting_entry.status_badge_class %>">
+        <%= @scouting_entry.status_label %>
+      </span>
+    </div>
   </div>
 
   <%# Header Info %>
@@ -76,6 +76,9 @@
         </div>
         <div class="flex items-center gap-3 text-xs text-gray-500">
           <span>This entry contributed <span class="text-white font-mono font-medium"><%= @this_entry_points %></span> of the <span class="text-white font-mono font-medium"><%= @scouted_total %></span> scouted points</span>
+          <% if @scouting_entry.approved? %>
+            <span class="badge-emerald text-[10px]">Counts as approved coverage</span>
+          <% end %>
         </div>
       <% else %>
         <div class="grid grid-cols-2 gap-4 text-center mb-3">
@@ -88,7 +91,7 @@
             <p class="text-xs text-gray-400">Actual Score</p>
           </div>
         </div>
-        <p class="text-xs text-gray-500">Full alliance comparison unavailable — not all 3 teams on this alliance were scouted in this match.</p>
+        <p class="text-xs text-gray-500">Full alliance comparison unavailable — not all 3 teams on this alliance were counted for this match.</p>
       <% end %>
     </div>
   <% end %>

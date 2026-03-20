@@ -170,4 +170,16 @@ class ScoutAccuracyServiceTest < ActiveSupport::TestCase
     assert_nil scout_result[:average_error]
     assert_equal 0, scout_result[:scored_match_count]
   end
+
+  test "approved entries still count toward scout accuracy" do
+    scouting_entries(:entry_qm2_254).update!(status: :approved)
+    scouting_entries(:entry_qm2_118).update!(status: :approved)
+
+    results = @service.call
+    scout_result = results.find { |r| r[:user_id] == users(:scout_user).id }
+
+    assert_not_nil scout_result
+    assert_equal 2, scout_result[:total_entry_count]
+    assert_equal 1, scout_result[:scored_match_count]
+  end
 end

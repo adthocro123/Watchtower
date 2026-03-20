@@ -1,6 +1,6 @@
 <% content_for(:title) { "#{@pick_list.name} - Lighthouse" } %>
 
-<div class="max-w-2xl mx-auto">
+<div class="max-w-5xl mx-auto">
   <div class="flex items-center gap-2 mb-6">
     <%= link_to pick_lists_path, class: "back-link", "aria-label": "Back to pick lists" do %>
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,29 +14,57 @@
     </div>
   </div>
 
-  <p class="text-sm text-gray-500 mb-4">By <%= @pick_list.user.full_name %> &middot; Updated <%= time_ago_in_words(@pick_list.updated_at) %> ago</p>
+  <p class="text-sm text-gray-500 mb-4">By <%= @pick_list.user.full_name %> &middot; <%= @pick_list.team_count %> teams &middot; Updated <%= time_ago_in_words(@pick_list.updated_at) %> ago</p>
 
   <%# Tier Legend %>
-  <div class="flex items-center gap-4 mb-4 text-xs text-gray-500">
+  <div class="flex flex-wrap items-center gap-4 mb-4 text-xs text-gray-500">
     <span class="flex items-center gap-1"><span class="w-2 h-2 bg-amber-400 rounded-full"></span> Tier 1 (Top 8)</span>
     <span class="flex items-center gap-1"><span class="w-2 h-2 bg-orange-400 rounded-full"></span> Tier 2 (9-16)</span>
     <span class="flex items-center gap-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span> Tier 3 (17-24)</span>
     <span class="flex items-center gap-1"><span class="w-2 h-2 bg-gray-500 rounded-full"></span> Tier 4 (25+)</span>
   </div>
 
-  <%# Drag-and-drop sortable list %>
-  <div class="scout-card overflow-hidden"
-       data-controller="sortable"
+  <div data-controller="sortable pick-list-board"
+       data-pick-list-board-storage-key-value="pick-list:<%= @pick_list.id %>:picked"
        data-sortable-save-url="<%= pick_list_path(@pick_list) %>">
-    <div data-sortable-target="list" class="divide-y divide-gray-800/50">
-      <% entries = @pick_list.entries || [] %>
+    <div class="mb-4 rounded-xl border border-gray-800 bg-gray-950/50 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-sm font-semibold text-white">Draft Board Tools</h2>
+        <p class="text-xs text-gray-500 mt-1">Drag rows, use the arrow buttons, or sort by stats. Mark teams as picked to gray them out locally.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <select class="input-field text-sm min-w-48"
+                aria-label="Sort pick list"
+                data-action="change->sortable#sortBy">
+          <option value="avgPoints">Sort by avg points</option>
+          <option value="avgAccuracy">Sort by avg accuracy</option>
+          <option value="recentPoints">Sort by recent points</option>
+          <option value="recentAccuracy">Sort by recent accuracy</option>
+          <option value="defense">Sort by defense</option>
+          <option value="teamNumber">Sort by team number</option>
+        </select>
+        <span class="badge-gray text-xs" data-pick-list-board-target="pickedCount">0 picked</span>
+        <button type="button" class="btn-secondary text-sm" data-pick-list-board-target="hidePickedLabel" data-action="click->pick-list-board#toggleHidePicked">Hide picked</button>
+      </div>
+    </div>
+
+    <%# Drag-and-drop sortable list %>
+    <div class="scout-card overflow-hidden">
+    <div data-sortable-target="list" data-action="dragover->sortable#dragover drop->sortable#drop" class="divide-y divide-gray-800/50">
+      <% entries = @ordered_team_ids %>
       <% if entries.any? %>
-        <% teams = FrcTeam.where(id: entries).index_by(&:id) %>
-        <% summaries = TeamEventSummary.where(event: current_event, frc_team_id: entries).index_by(&:frc_team_id) %>
         <% entries.each_with_index do |team_id, idx| %>
-          <% team = teams[team_id.to_i] %>
+          <% team = @teams_by_id[team_id.to_i] %>
           <% next unless team %>
-          <% summary = summaries[team.id] %>
+          <% summary = @team_summaries[team.id] %>
+          <% recent_entry = @latest_entries_by_team[team.id] %>
+          <% avg_points = summary.try(:avg_total_points).to_f.round(1) %>
+          <% avg_accuracy = summary.try(:fuel_accuracy_pct).to_f.round(1) %>
+          <% avg_defense = summary.try(:avg_defense_rating) %>
+          <% matches_scouted = summary.try(:matches_scouted).to_i %>
+          <% recent_points = recent_entry&.points.to_f.round(1) %>
+          <% recent_accuracy = recent_entry&.accuracy.to_f.round(1) %>
+          <% recent_match = recent_entry&.match_label %>
           <% tier_color = case idx
                           when 0..7 then "amber"
                           when 8..15 then "orange"
@@ -44,10 +72,18 @@
                           else "gray"
                           end %>
           <div class="flex items-center gap-3 px-4 py-3 hover:bg-gray-800/30 transition-all duration-150 cursor-grab active:cursor-grabbing select-none"
-               data-sortable-target="item"
-               data-sortable-id="<%= team.id %>"
-               role="listitem"
-               aria-label="Rank <%= idx + 1 %>: Team <%= team.team_number %> - <%= team.nickname %>">
+                data-action="dragstart->sortable#dragstart dragover->sortable#dragover drop->sortable#drop dragend->sortable#dragend"
+                data-sortable-target="item"
+                data-pick-list-board-target="item"
+                data-sortable-id="<%= team.id %>"
+                data-team-number="<%= team.team_number %>"
+                data-avg-points="<%= avg_points %>"
+                data-avg-accuracy="<%= avg_accuracy %>"
+                data-recent-points="<%= recent_points %>"
+                data-recent-accuracy="<%= recent_accuracy %>"
+                data-defense="<%= avg_defense.to_f.round(1) %>"
+                role="listitem"
+                aria-label="Rank <%= idx + 1 %>: Team <%= team.team_number %> - <%= team.nickname %>">
             <%# Drag handle %>
             <div class="text-gray-600 shrink-0 touch-none" aria-label="Drag to reorder" data-sortable-handle>
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,21 +109,54 @@
               </div>
               <% if summary %>
                 <div class="flex items-center gap-3 mt-0.5">
-                  <span class="text-xs text-gray-500"><%= summary.avg_total_points.to_f.round(1) %> avg pts</span>
+                  <span class="text-xs text-gray-500"><%= avg_points %> avg pts</span>
                   <span class="text-xs text-gray-600">&middot;</span>
-                  <span class="text-xs text-gray-500"><%= summary.fuel_accuracy_pct.to_f.round(0) %>% acc</span>
+                  <span class="text-xs text-gray-500"><%= avg_accuracy %>% acc</span>
                   <span class="text-xs text-gray-600">&middot;</span>
-                  <span class="text-xs text-gray-500"><%= summary.matches_scouted %> matches</span>
+                  <% if avg_defense.present? %>
+                    <span class="text-xs text-blue-400"><%= avg_defense.to_f.round(1) %>/5 def</span>
+                    <span class="text-xs text-gray-600">&middot;</span>
+                  <% end %>
+                  <span class="text-xs text-gray-500"><%= matches_scouted %> matches</span>
                 </div>
               <% end %>
+
+              <div class="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-600">
+                <% if recent_entry %>
+                  <span>Latest <%= recent_match || "entry" %></span>
+                  <span><%= recent_points %> pts</span>
+                  <span><%= recent_accuracy %>% acc</span>
+                <% else %>
+                  <span>No recent entry yet</span>
+                <% end %>
+              </div>
             </div>
             <%# Avg Points Badge %>
             <% if summary %>
               <div class="text-right shrink-0 hidden sm:block">
-                <p class="text-sm font-mono font-bold text-white"><%= summary.avg_total_points.to_f.round(1) %></p>
+                <p class="text-sm font-mono font-bold text-white"><%= avg_points %></p>
                 <p class="text-[10px] text-gray-600">avg pts</p>
               </div>
             <% end %>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" class="rounded-lg p-2 text-gray-400 hover:text-orange-300 hover:bg-gray-800 transition-colors duration-150" data-action="click->sortable#moveUp" aria-label="Move team up">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+              <button type="button" class="rounded-lg p-2 text-gray-400 hover:text-orange-300 hover:bg-gray-800 transition-colors duration-150" data-action="click->sortable#moveDown" aria-label="Move team down">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <button type="button"
+                      class="rounded-lg px-3 py-1.5 text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-700 hover:border-emerald-500/30 hover:text-emerald-300 transition-colors duration-150"
+                      data-pick-list-board-target="toggle"
+                      data-team-id="<%= team.id %>"
+                      data-action="click->pick-list-board#toggle">
+                Mark picked
+              </button>
+            </div>
             <%# View link %>
             <%= link_to team_path(team), class: "text-gray-600 hover:text-gray-400 transition-colors duration-150 shrink-0 p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500", "aria-label": "View team #{team.team_number}" do %>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,5 +175,6 @@
         </div>
       <% end %>
     </div>
+  </div>
   </div>
 </div>

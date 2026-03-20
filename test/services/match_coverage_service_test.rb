@@ -27,4 +27,21 @@ class MatchCoverageServiceTest < ActiveSupport::TestCase
     assert_equal 0, coverage[:covered_team_count]
     assert_equal 6, coverage[:uncovered_team_count]
   end
+
+  test "coverage counts admin approved entries" do
+    ScoutingEntry.create!(
+      user: users(:lead_user),
+      match: matches(:qm4),
+      frc_team: frc_teams(:team_6328),
+      event: events(:championship),
+      status: :approved,
+      data: { "defense_rating" => 4 },
+      client_uuid: "coverage-approved-#{SecureRandom.hex(8)}"
+    )
+
+    coverage = MatchCoverageService.new(events(:championship)).coverage_for_match(matches(:qm4))
+
+    assert_equal 2, coverage[:covered_team_count]
+    assert_equal 4, coverage[:uncovered_team_count]
+  end
 end

@@ -35,30 +35,62 @@
         <%# Conflicting Values %>
         <div class="px-4 sm:px-6 py-4">
           <p class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-medium">Conflicting Values from Scouts</p>
+          <% entries_by_user = conflict.conflicting_entries.index_by(&:user_id) %>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
             <% (conflict.values || {}).each do |scout_id, value| %>
               <% scout = User.find_by(id: scout_id) %>
+              <% entry = entries_by_user[scout_id.to_i] %>
               <div class="bg-gray-800 rounded-lg p-3 border border-gray-700 hover:border-gray-600 transition-colors duration-150 group">
-                <p class="text-xs text-gray-500 mb-1"><%= scout&.full_name || "Scout ##{scout_id}" %></p>
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <p class="text-xs text-gray-500"><%= scout&.full_name || "Scout ##{scout_id}" %></p>
+                  <% if entry %>
+                    <span class="<%= entry.status_badge_class %> text-[10px]"><%= entry.status_label %></span>
+                  <% end %>
+                </div>
                 <p class="text-lg font-bold text-white font-mono"><%= value %></p>
+                <% if entry %>
+                  <p class="mt-1 text-xs text-gray-500"><%= entry.total_points %> pts &middot; <%= link_to "View entry", scouting_entry_path(entry), class: "text-orange-400 hover:text-orange-300" %></p>
+                <% end %>
                 <%# Quick-select button %>
-                <button type="button"
-                        class="mt-2 w-full text-xs py-1.5 px-2 rounded-md bg-gray-700 hover:bg-orange-500/20 text-gray-400 hover:text-orange-400 transition-all duration-150 font-medium opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        onclick="this.closest('.scout-card').querySelector('input[name=resolution]').value = '<%= value %>'">
-                  Use this value
-                </button>
+                <div class="mt-2 grid grid-cols-1 gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                  <button type="button"
+                          class="w-full text-xs py-1.5 px-2 rounded-md bg-gray-700 hover:bg-orange-500/20 text-gray-400 hover:text-orange-400 transition-all duration-150 font-medium"
+                          onclick="this.closest('.scout-card').querySelector('input[name=resolution]').value = '<%= j(value.to_s) %>'; this.closest('.scout-card').querySelector('select[name=approved_entry_id]').value = ''">
+                    Use this value
+                  </button>
+                  <% if entry&.flagged? %>
+                    <button type="button"
+                            class="w-full text-xs py-1.5 px-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-all duration-150 font-medium"
+                            onclick="this.closest('.scout-card').querySelector('input[name=resolution]').value = '<%= j(value.to_s) %>'; this.closest('.scout-card').querySelector('select[name=approved_entry_id]').value = '<%= entry.id %>'">
+                      Use and approve this scout
+                    </button>
+                  <% end %>
+                </div>
               </div>
             <% end %>
           </div>
 
           <%# Resolve Form %>
-          <%= form_with url: resolve_data_conflict_path(conflict), method: :post, class: "flex flex-col sm:flex-row items-stretch sm:items-end gap-3", data: { controller: "offline-guard", action: "submit->offline-guard#check" } do |f| %>
-            <div class="flex-1">
+          <%= form_with url: resolve_data_conflict_path(conflict), method: :post, class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem_auto] gap-3 items-end", data: { controller: "offline-guard", action: "submit->offline-guard#check" } do %>
+            <div>
               <label for="resolution_<%= conflict.id %>" class="block text-xs text-gray-400 mb-1 font-medium">Resolved Value</label>
               <input type="text" name="resolution" id="resolution_<%= conflict.id %>" required
                      class="input-field text-sm font-mono"
                      placeholder="Enter the correct value...">
+              <p class="mt-1 text-xs text-gray-600">This value is written back into the conflicting scouting entries for this team and match.</p>
             </div>
+
+            <div>
+              <label for="approved_entry_<%= conflict.id %>" class="block text-xs text-gray-400 mb-1 font-medium">Optional Admin Approval</label>
+              <select name="approved_entry_id" id="approved_entry_<%= conflict.id %>" class="input-field text-sm">
+                <option value="">Do not approve a scout entry</option>
+                <% entries_by_user.each_value.select(&:flagged?).each do |entry| %>
+                  <option value="<%= entry.id %>"><%= entry.user.full_name %> &middot; Team <%= entry.frc_team.team_number %></option>
+                <% end %>
+              </select>
+              <p class="mt-1 text-xs text-gray-600">Use this when a flagged entry should still count as valid scouting coverage.</p>
+            </div>
+
             <button type="submit" class="btn-primary whitespace-nowrap">
               Resolve Conflict
             </button>

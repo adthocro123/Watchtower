@@ -3,6 +3,21 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["item", "list", "rank"]
 
+  static tierClassNames = [
+    "bg-amber-500/20",
+    "border-amber-500/30",
+    "text-amber-400",
+    "bg-orange-500/20",
+    "border-orange-500/30",
+    "text-orange-400",
+    "bg-blue-500/20",
+    "border-blue-500/30",
+    "text-blue-400",
+    "bg-gray-500/20",
+    "border-gray-500/30",
+    "text-gray-400"
+  ]
+
   connect() {
     this.draggedItem = null
     this.placeholder = null
@@ -25,7 +40,13 @@ export default class extends Controller {
     event.dataTransfer.dropEffect = "move"
 
     const target = event.target.closest("[data-sortable-target='item']")
-    if (!target || target === this.draggedItem || target === this.placeholder) return
+    if (!target) {
+      const list = this.hasListTarget ? this.listTarget : this.element
+      list.appendChild(this.placeholder)
+      return
+    }
+
+    if (target === this.draggedItem || target === this.placeholder) return
 
     this.#positionPlaceholder(target, event.clientY)
   }
@@ -128,6 +149,45 @@ export default class extends Controller {
     })
   }
 
+  moveUp(event) {
+    event.preventDefault()
+    const item = event.currentTarget.closest("[data-sortable-target='item']")
+    if (!item) return
+
+    const previousItem = item.previousElementSibling
+    if (!previousItem) return
+
+    previousItem.before(item)
+    this.#updateRankNumbers()
+    this.#saveOrder()
+  }
+
+  moveDown(event) {
+    event.preventDefault()
+    const item = event.currentTarget.closest("[data-sortable-target='item']")
+    if (!item) return
+
+    const nextItem = item.nextElementSibling
+    if (!nextItem) return
+
+    nextItem.after(item)
+    this.#updateRankNumbers()
+    this.#saveOrder()
+  }
+
+  sortBy(event) {
+    const metric = event.currentTarget.value
+    if (!metric) return
+
+    const list = this.hasListTarget ? this.listTarget : this.element
+    const items = [...list.querySelectorAll("[data-sortable-target='item']")]
+
+    items.sort((left, right) => this.#compareItems(left, right, metric))
+    list.append(...items)
+    this.#updateRankNumbers()
+    this.#saveOrder()
+  }
+
   #updateRankNumbers() {
     const list = this.hasListTarget ? this.listTarget : this.element
     const items = [...list.querySelectorAll("[data-sortable-target='item']")]
@@ -135,6 +195,8 @@ export default class extends Controller {
       const rankEl = item.querySelector("[data-sortable-target='rank']")
       if (rankEl) {
         rankEl.textContent = index + 1
+        rankEl.classList.remove(...this.constructor.tierClassNames)
+        rankEl.classList.add(...this.#tierClassesForIndex(index))
         // Brief highlight animation
         rankEl.classList.add("animate-bounce-number")
         rankEl.addEventListener("animationend", () => {
@@ -142,6 +204,37 @@ export default class extends Controller {
         }, { once: true })
       }
     })
+  }
+
+  #tierClassesForIndex(index) {
+    if (index <= 7) {
+      return ["bg-amber-500/20", "border-amber-500/30", "text-amber-400"]
+    }
+
+    if (index <= 15) {
+      return ["bg-orange-500/20", "border-orange-500/30", "text-orange-400"]
+    }
+
+    if (index <= 23) {
+      return ["bg-blue-500/20", "border-blue-500/30", "text-blue-400"]
+    }
+
+    return ["bg-gray-500/20", "border-gray-500/30", "text-gray-400"]
+  }
+
+  #compareItems(left, right, metric) {
+    if (metric === "teamNumber") {
+      return Number(left.dataset.teamNumber || 0) - Number(right.dataset.teamNumber || 0)
+    }
+
+    const leftValue = Number(left.dataset[metric] || -1)
+    const rightValue = Number(right.dataset[metric] || -1)
+
+    if (leftValue === rightValue) {
+      return Number(left.dataset.teamNumber || 0) - Number(right.dataset.teamNumber || 0)
+    }
+
+    return rightValue - leftValue
   }
 
   async #saveOrder() {

@@ -48,12 +48,22 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "dashboard displays scout accuracy leaderboard" do
+  test "dashboard displays scout accuracy leaderboard for admins" do
     select_event(@event)
 
     get root_path
     assert_response :success
     assert_select "h2", text: "Scout Accuracy Leaderboard"
+  end
+
+  test "dashboard does not display scout accuracy leaderboard for non-admins" do
+    sign_out :user
+    sign_in_as(users(:lead_user))
+    select_event(@event)
+
+    get root_path
+    assert_response :success
+    assert_select "h2", text: "Scout Accuracy Leaderboard", count: 0
   end
 
   test "dashboard shows accuracy data for scouts with scored matches" do
@@ -62,6 +72,16 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_response :success
     assert_match(/pts off/, response.body)
+  end
+
+  test "dashboard recent entries shows admin approved status" do
+    scouting_entries(:entry_qm1_254).update!(status: :approved)
+    select_event(@event)
+
+    get root_path
+
+    assert_response :success
+    assert_includes response.body, "Admin Approved"
   end
 
   test "dashboard shows active shift status for the current user" do

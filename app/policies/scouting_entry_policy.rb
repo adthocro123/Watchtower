@@ -27,6 +27,10 @@ class ScoutingEntryPolicy < ApplicationPolicy
     scout?
   end
 
+  def approve?
+    admin?
+  end
+
   private
 
   def owner?
