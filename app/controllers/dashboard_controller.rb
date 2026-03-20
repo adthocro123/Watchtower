@@ -24,7 +24,7 @@ class DashboardController < ApplicationController
                                     .order(created_at: :desc)
 
     # Scout accuracy leaderboard
-    @scout_accuracy = ScoutAccuracyService.new(@event).call
+    @scout_accuracy = current_user.admin? ? ScoutAccuracyService.new(@event).call : []
 
     # Scoring distribution for histogram (total points per entry)
     @scoring_data = @team_summaries.pluck(:avg_total_points).map { |v| v.to_f.round(0) }
