@@ -56,7 +56,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
   test "dashboard does not display scout accuracy leaderboard for non-admins" do
     sign_out :user
-    sign_in_as(users(:analyst_user))
+    sign_in_as(users(:lead_user))
     select_event(@event)
 
     get root_path
