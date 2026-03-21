@@ -58,6 +58,19 @@ export default class extends Controller {
       })
     })
 
+    allLabels.sort((a, b) => {
+      const aKey = this.#matchLabelSortKey(a)
+      const bKey = this.#matchLabelSortKey(b)
+
+      for (let i = 0; i < Math.max(aKey.length, bKey.length); i += 1) {
+        const aPart = aKey[i] ?? 0
+        const bPart = bKey[i] ?? 0
+        if (aPart !== bPart) return aPart - bPart
+      }
+
+      return a.localeCompare(b)
+    })
+
     const datasets = seriesArray.map((series, i) => ({
       label: series.name,
       data: allLabels.map(label => series.data[label] ?? null),
@@ -100,5 +113,26 @@ export default class extends Controller {
         }
       })
     }
+  }
+
+  #matchLabelSortKey(label) {
+    const normalized = String(label || "").trim().toUpperCase()
+    const qualificationMatch = normalized.match(/^Q(\d+)$/)
+    if (qualificationMatch) {
+      return [0, Number(qualificationMatch[1])]
+    }
+
+    const playoffMatch = normalized.match(/^(EF|QF|SF)(\d+)-(\d+)$/)
+    if (playoffMatch) {
+      const levelOrder = { EF: 1, QF: 2, SF: 3 }
+      return [levelOrder[playoffMatch[1]], Number(playoffMatch[2]), Number(playoffMatch[3])]
+    }
+
+    const finalMatch = normalized.match(/^F(\d+)$/)
+    if (finalMatch) {
+      return [4, Number(finalMatch[1])]
+    }
+
+    return [99]
   }
 }

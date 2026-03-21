@@ -283,7 +283,14 @@
   <% if @entries.any? %>
     <div class="scout-card p-4 sm:p-6 mb-6">
       <h3 class="text-lg font-semibold text-white mb-4">Points Over Matches</h3>
-      <% chart_data = @entries.reverse.each_with_object({}) do |entry, hash|
+      <% chart_data = @entries.sort_by { |entry|
+           match = entry.match
+           if match.present?
+             [Match::COMP_LEVEL_ORDER.fetch(match.comp_level, 99), match.set_number.to_i, match.match_number.to_i, entry.id]
+           else
+             [99, 0, 0, entry.id]
+           end
+         }.each_with_object({}) do |entry, hash|
         label = entry.match&.display_name || "Entry #{entry.id}"
         hash[label] = entry.total_points
       end %>
