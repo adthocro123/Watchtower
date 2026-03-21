@@ -31,4 +31,14 @@ class UserShiftStatusServiceTest < ActiveSupport::TestCase
     assert_equal matches(:qm4), status[:shift_end]
     assert_equal 2, status[:matches_until_start]
   end
+
+  test "ignores placeholder negative scores when determining current match" do
+    Match.where(event: @event, comp_level: "qm").update_all(red_score: nil, blue_score: nil)
+    matches(:qm1).update!(red_score: -1, blue_score: -1)
+
+    status = UserShiftStatusService.new(@event, users(:admin_user)).call
+
+    assert_equal :active, status[:state]
+    assert_equal matches(:qm1), status[:current_match]
+  end
 end

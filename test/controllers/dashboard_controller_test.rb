@@ -1,6 +1,8 @@
 require "test_helper"
 
 class DashboardControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
     @user = users(:admin_user)
     @event = events(:championship)
@@ -46,12 +48,22 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "dashboard displays scout accuracy leaderboard" do
+  test "dashboard displays scout accuracy leaderboard for admins" do
     select_event(@event)
 
     get root_path
     assert_response :success
     assert_select "h2", text: "Scout Accuracy Leaderboard"
+  end
+
+  test "dashboard does not display scout accuracy leaderboard for non-admins" do
+    sign_out :user
+    sign_in_as(users(:lead_user))
+    select_event(@event)
+
+    get root_path
+    assert_response :success
+    assert_select "h2", text: "Scout Accuracy Leaderboard", count: 0
   end
 
   test "dashboard shows accuracy data for scouts with scored matches" do
@@ -95,5 +107,18 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_match "Current: Q2", response.body
     assert_match "Starts in 2 matches", response.body
     assert_match "Q4", response.body
+  end
+
+  test "dashboard enqueues async auto-sync when TBA is configured" do
+    select_event(@event)
+    ENV["TBA_API_KEY"] = "test-key"
+    clear_enqueued_jobs
+
+    assert_enqueued_with(job: AutoSyncEventJob, args: [ @event.id ]) do
+      get root_path
+    end
+  ensure
+    clear_enqueued_jobs
+    ENV.delete("TBA_API_KEY")
   end
 end
