@@ -78,7 +78,7 @@ class ScoutingEntry < ApplicationRecord
     pts
   end
 
-  # Defense rating (1-5, 0 means not rated)
+  # Defence rating (1-5, 0 means not rated)
   def defense_rating
     dig_int("defense_rating")
   end

@@ -13,7 +13,7 @@ const AXES = [
   { key: "avg_auton_points", label: "Auto" },
   { key: "fuel_accuracy_pct", label: "Accuracy" },
   { key: "avg_climb_points", label: "Climb" },
-  { key: "avg_defense_rating", label: "Defense" }
+  { key: "avg_defense_rating", label: "Defence" }
 ]
 
 export default class extends Controller {

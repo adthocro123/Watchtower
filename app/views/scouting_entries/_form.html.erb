@@ -318,10 +318,10 @@
         <% end %>
       </div>
 
-      <%# Defense Rating Selector %>
-      <p class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Defense Rating</p>
-      <div class="grid grid-cols-6 gap-2 mb-4" role="radiogroup" aria-label="Rate defense quality">
-        <% defense_labels = { 0 => "No Defense", 1 => "Weak", 2 => "Below Avg", 3 => "Average", 4 => "Strong", 5 => "Dominant" } %>
+      <%# Defence Rating Selector %>
+      <p class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Defence Rating</p>
+      <div class="grid grid-cols-6 gap-2 mb-4" role="radiogroup" aria-label="Rate defence quality">
+        <% defence_labels = { 0 => "No Defence", 1 => "Weak", 2 => "Below Avg", 3 => "Average", 4 => "Strong", 5 => "Dominant" } %>
         <% current_defense = (scouting_entry.data&.dig("defense_rating") || 0).to_i %>
         <button type="button"
                 class="py-3 rounded-xl border-2 text-center transition-all duration-200 active:scale-95 select-none
@@ -333,7 +333,7 @@
                 aria-checked="<%= current_defense == 0 %>"
                 aria-label="No defense played">
           <p class="text-lg font-bold <%= current_defense == 0 ? 'text-orange-400' : 'text-gray-300' %>">&#x2715;</p>
-          <p class="text-[10px] text-gray-500 leading-tight">No Defense</p>
+          <p class="text-[10px] text-gray-500 leading-tight">No Defence</p>
         </button>
         <% (1..5).each do |rating| %>
           <% is_selected = rating == current_defense %>
@@ -345,9 +345,9 @@
                   data-rating="<%= rating %>"
                   role="radio"
                   aria-checked="<%= is_selected %>"
-                  aria-label="<%= defense_labels[rating] %> defense - <%= rating %> out of 5">
+                   aria-label="<%= defence_labels[rating] %> defence - <%= rating %> out of 5">
             <p class="text-lg font-bold <%= is_selected ? 'text-orange-400' : 'text-gray-300' %>"><%= rating %></p>
-            <p class="text-[10px] text-gray-500 leading-tight"><%= defense_labels[rating] %></p>
+            <p class="text-[10px] text-gray-500 leading-tight"><%= defence_labels[rating] %></p>
           </button>
         <% end %>
       </div>

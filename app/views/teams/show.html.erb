@@ -73,10 +73,10 @@
       <div class="stat-card group text-center col-span-2 sm:col-span-1">
         <% if @summary.avg_defense_rating.present? %>
           <p class="text-3xl font-bold text-sky-400 font-mono"><%= @summary.avg_defense_rating.to_f.round(1) %></p>
-          <p class="text-xs text-gray-400 mt-1 font-medium">Avg Defense Rating</p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Avg Defence Rating</p>
         <% else %>
           <p class="text-3xl font-bold text-gray-500 font-mono">---</p>
-          <p class="text-xs text-gray-400 mt-1 font-medium">Avg Defense Rating</p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Avg Defence Rating</p>
         <% end %>
       </div>
     </div>
@@ -140,7 +140,7 @@
         </div>
       </div>
       <div class="scout-card p-4">
-        <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-medium">Defense Profile</h3>
+        <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-medium">Defence Profile</h3>
         <% defense_avg = @summary.avg_defense_rating.to_f %>
         <% defense_entries = @entries.select { |entry| entry.defense_rating.positive? } %>
         <% defense_peak = defense_entries.map(&:defense_rating).max.to_i %>
@@ -316,7 +316,7 @@
               <th scope="col" class="text-left">Scout</th>
               <th scope="col" class="text-right">Made</th>
               <th scope="col" class="text-right">Missed</th>
-              <th scope="col" class="text-right hidden sm:table-cell">Defense</th>
+              <th scope="col" class="text-right hidden sm:table-cell">Defence</th>
               <th scope="col" class="text-right hidden sm:table-cell">Climb</th>
               <th scope="col" class="text-right">Total</th>
             </tr>

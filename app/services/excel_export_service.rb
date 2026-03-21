@@ -66,7 +66,7 @@ class ExcelExportService
           "ID", "Match", "Team #", "Scout", "Status",
           "Auton Made", "Auton Missed", "Auton Climb",
           "Teleop Made", "Teleop Missed",
-          "Endgame Climb", "Defense Rating",
+          "Endgame Climb", "Defence Rating",
           "Total Points", "Fuel Accuracy %", "Notes", "Created At"
         ], style: header_style
 

@@ -11,7 +11,7 @@ class TeamComparisonsController < ApplicationController
     "auton_points" => { label: "Auton Points", method: :auton_points },
     "accuracy" => { label: "Accuracy %", method: :fuel_accuracy },
     "climb_points" => { label: "Climb Points", method: :climb_points },
-    "defense_rating" => { label: "Defense Rating", method: :defense_rating },
+    "defense_rating" => { label: "Defence Rating", method: :defense_rating },
     "fuel_made" => { label: "Fuel Made", method: :total_fuel_made },
     "fuel_missed" => { label: "Fuel Missed", method: :total_fuel_missed }
   }.freeze
