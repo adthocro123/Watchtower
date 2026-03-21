@@ -279,7 +279,7 @@ match_assignments.each_with_index do |(match_num, red_indices, blue_indices), mi
           "Struggled with intake consistency.",
           "Great driver, very aggressive.",
           "Robot had a brief mechanical issue mid-match.",
-          "Defense played in teleop, limiting scoring.",
+          "Defence played in teleop, limiting scoring.",
           "Excellent autonomous routine.",
           "Consistent scorer, good climb.",
           nil
