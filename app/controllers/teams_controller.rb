@@ -18,7 +18,7 @@ class TeamsController < ApplicationController
                .at_event(current_event)
                .order(:team_number)
 
-    @summaries = build_summaries_by_team(current_event)
+    @summaries = TeamEventSummary.where(event: current_event).index_by(&:frc_team_id)
 
     # Load Statbotics EPA — try bulk sync if cache is empty
     ensure_statbotics_cached!
@@ -69,13 +69,6 @@ class TeamsController < ApplicationController
       avg_fuel_missed: mean(fuel_missed_values),
       stddev_total_points: sample_stddev(total_points_values)
     )
-  end
-
-  def build_summaries_by_team(event)
-    counted_entries = ScoutingEntry.where(event: event, status: ScoutingEntry.counted_status_values)
-    counted_entries.group_by(&:frc_team_id).transform_values do |entries|
-      build_team_summary(entries)
-    end
   end
 
   def mean(values)
