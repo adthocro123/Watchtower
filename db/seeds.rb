@@ -45,7 +45,7 @@ game_config = GameConfig.find_or_create_by!(year: 2026) do |gc|
       endgame: {
         fields: [
           { key: "endgame_climb", type: "select", label: "Climb Level", options: %w[None L1 L2 L3], default: "None" },
-          { key: "defense_rating", type: "rating", label: "Defense Rating", range: [ 0, 5 ], default: 0 },
+          { key: "defense_rating", type: "rating", label: "Defence Rating", range: [ 0, 5 ], default: 0 },
           { key: "notes", type: "textarea", label: "Post-match review" }
         ]
       }

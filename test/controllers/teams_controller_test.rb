@@ -16,7 +16,7 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
 
     get teams_path
     assert_response :success
-    assert_includes response.body, "Defense"
+    assert_includes response.body, "Defence"
   end
 
   test "scout can get index" do
@@ -43,8 +43,8 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
 
     get team_path(@team)
     assert_response :success
-    assert_includes response.body, "Avg Defense Rating"
-    assert_includes response.body, "Defense Profile"
+    assert_includes response.body, "Avg Defence Rating"
+    assert_includes response.body, "Defence Profile"
   end
 
   test "should get show for different team" do

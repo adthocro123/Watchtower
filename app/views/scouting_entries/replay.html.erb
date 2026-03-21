@@ -366,9 +366,9 @@
                     </div>
 
                     <div>
-                      <p class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Defense Rating</p>
-                      <div class="grid grid-cols-6 gap-2" role="radiogroup" aria-label="Rate defense quality">
-                        <% defense_labels = { 0 => 'No Defense', 1 => 'Weak', 2 => 'Below Avg', 3 => 'Average', 4 => 'Strong', 5 => 'Dominant' } %>
+                      <p class="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Defence Rating</p>
+                      <div class="grid grid-cols-6 gap-2" role="radiogroup" aria-label="Rate defence quality">
+                        <% defence_labels = { 0 => 'No Defence', 1 => 'Weak', 2 => 'Below Avg', 3 => 'Average', 4 => 'Strong', 5 => 'Dominant' } %>
                         <% current_defense = (@scouting_entry.data&.dig('defense_rating') || 0).to_i %>
                         <% (0..5).each do |rating| %>
                           <% is_selected = rating == current_defense %>
@@ -378,7 +378,7 @@
                                   data-defense-card
                                   data-rating="<%= rating %>">
                             <p class="text-lg font-bold <%= is_selected ? 'text-orange-400' : 'text-gray-300' %>"><%= rating.zero? ? 'x' : rating %></p>
-                            <p class="text-[10px] text-gray-500 leading-tight"><%= defense_labels[rating] %></p>
+                            <p class="text-[10px] text-gray-500 leading-tight"><%= defence_labels[rating] %></p>
                           </button>
                         <% end %>
                       </div>

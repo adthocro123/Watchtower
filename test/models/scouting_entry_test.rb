@@ -277,7 +277,7 @@ class ScoutingEntryTest < ActiveSupport::TestCase
     assert_equal 0, entry.total_points
   end
 
-  # --- Defense Rating ---
+  # --- Defence Rating ---
 
   test "defense_rating returns 0 when not present" do
     entry = ScoutingEntry.new(data: {}, event: events(:championship), frc_team: frc_teams(:team_254), user: users(:admin_user))
