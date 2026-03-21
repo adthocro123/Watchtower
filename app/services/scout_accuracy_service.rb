@@ -50,6 +50,10 @@ class ScoutAccuracyService
   private
 
   # Returns a hash: { user_id => { total_error:, match_count: } }
+  #
+  # Uses every counted entry on scored matches, including partially scouted
+  # alliances. Each entry is compared against an equal-share expected score for
+  # that alliance (actual alliance score divided by alliance team count).
   def compute_accuracy
     results = {}
 
@@ -66,30 +70,22 @@ class ScoutAccuracyService
         # Get the teams on this alliance
         alliance_teams = match.match_alliances.select { |ma| ma.alliance_color == color }
         team_ids = alliance_teams.map(&:frc_team_id)
-        next if team_ids.size < 3
+        next if team_ids.empty?
 
-        # Find counted scouting entries for all 3 teams in this match
+        expected_points_per_team = actual_score.to_f / team_ids.size
+
+        # Find counted scouting entries for teams on this alliance
         entries = match.scouting_entries.select do |e|
           e.counted? && team_ids.include?(e.frc_team_id)
         end
 
-        # Group by team to get one entry per team (take the first if multiple)
-        entries_by_team = entries.group_by(&:frc_team_id)
-        next unless team_ids.all? { |tid| entries_by_team.key?(tid) }
-
-        # Sum total_points from the 3 entries (one per team)
-        scouted_total = team_ids.sum do |tid|
-          entries_by_team[tid].first.total_points
-        end
-
-        alliance_error = (scouted_total - actual_score).abs
-
-        # Attribute error to all 3 scouts
-        team_ids.each do |tid|
-          entry = entries_by_team[tid].first
+        # Score each counted entry independently so partial alliances count.
+        entries.each do |entry|
           user_id = entry.user_id
+          entry_error = (entry.total_points - expected_points_per_team).abs
+
           results[user_id] ||= { total_error: 0, match_count: 0 }
-          results[user_id][:total_error] += alliance_error
+          results[user_id][:total_error] += entry_error
           results[user_id][:match_count] += 1
         end
       end

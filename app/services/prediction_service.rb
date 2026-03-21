@@ -108,7 +108,7 @@ class PredictionService
   # With full scouting data (>= MIN_ENTRIES_FOR_FULL_WEIGHT per team): 50/50.
   def compute_weights(teams, statbotics_data)
     entry_counts = teams.map do |team|
-      @event.scouting_entries.where(frc_team: team, status: 0).count
+      @event.scouting_entries.where(frc_team: team, status: ScoutingEntry.counted_status_values).count
     end
 
     avg_entries = entry_counts.sum.to_f / [ entry_counts.size, 1 ].max

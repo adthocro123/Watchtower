@@ -26,45 +26,30 @@ class ScoutAccuracyServiceTest < ActiveSupport::TestCase
 
   # --- Accuracy math ---
   #
-  # Fixture setup:
-  #   qm1 red alliance: 254 (admin_user), 4414 (owner_user), 118 (lead_user)
-  #     254 total_points  = 17 fuel + 15 auton_climb + 30 L3 = 62
-  #     4414 total_points = 12 fuel + 0 auton_climb  + 20 L2 = 32
-  #     118 total_points  = 12 fuel + 15 auton_climb + 10 L1 = 37
-  #     scouted_total = 131, actual red_score = 180, error = 49
+  # Accuracy now evaluates each counted entry independently against an
+  # equal-share expectation for that alliance:
+  #   expected_points_per_team = actual_alliance_score / alliance_team_count
   #
-  #   qm2 red alliance: 1678 (admin_user), 971 (lead_user), 118 (scout_user)
-  #     1678 total_points = 15 fuel + 15 auton_climb + 20 L2 = 50
-  #     971 total_points  = 15 fuel + 15 auton_climb + 20 L2 = 50
-  #     118 total_points  = 9 fuel  + 0 auton_climb  + 10 L1 = 19
-  #     scouted_total = 119, actual red_score = 150, error = 31
-  #
-  #   Blue alliances are incomplete (only 1 team each), so they are skipped.
-  #
-  # Per scout:
-  #   admin_user:  (49 + 31) / 2 = 40.0 avg error, 2 scored matches, 2 total entries
-  #   lead_user:   (49 + 31) / 2 = 40.0 avg error, 2 scored matches, 3 total entries
-  #   scout_user:  31 / 1 = 31.0 avg error, 1 scored match, 2 total entries
-  #   owner_user:  49 / 1 = 49.0 avg error, 1 scored match, 2 total entries
+  # This means partially scouted alliances still contribute.
 
   test "computes correct average error for scouts" do
     results = @service.call
     by_user = results.index_by { |r| r[:user_id] }
 
-    assert_equal 40.0, by_user[users(:admin_user).id][:average_error]
-    assert_equal 40.0, by_user[users(:lead_user).id][:average_error]
-    assert_equal 31.0, by_user[users(:scout_user).id][:average_error]
-    assert_equal 49.0, by_user[users(:owner_user).id][:average_error]
+    assert_equal 3.3, by_user[users(:admin_user).id][:average_error]
+    assert_equal 36.7, by_user[users(:lead_user).id][:average_error]
+    assert_equal 16.3, by_user[users(:scout_user).id][:average_error]
+    assert_equal 57.5, by_user[users(:owner_user).id][:average_error]
   end
 
   test "computes correct scored match count" do
     results = @service.call
     by_user = results.index_by { |r| r[:user_id] }
 
-    assert_equal 2, by_user[users(:admin_user).id][:scored_match_count]
-    assert_equal 2, by_user[users(:lead_user).id][:scored_match_count]
-    assert_equal 1, by_user[users(:scout_user).id][:scored_match_count]
-    assert_equal 1, by_user[users(:owner_user).id][:scored_match_count]
+    assert_equal 3, by_user[users(:admin_user).id][:scored_match_count]
+    assert_equal 3, by_user[users(:lead_user).id][:scored_match_count]
+    assert_equal 2, by_user[users(:scout_user).id][:scored_match_count]
+    assert_equal 2, by_user[users(:owner_user).id][:scored_match_count]
   end
 
   test "computes correct total entry count" do
@@ -88,10 +73,10 @@ class ScoutAccuracyServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "scout_user is first with lowest error" do
+  test "admin_user is first with lowest error" do
     results = @service.call
-    assert_equal users(:scout_user).id, results.first[:user_id]
-    assert_equal 31.0, results.first[:average_error]
+    assert_equal users(:admin_user).id, results.first[:user_id]
+    assert_equal 3.3, results.first[:average_error]
   end
 
   test "scouts with accuracy appear before scouts without" do
@@ -135,24 +120,27 @@ class ScoutAccuracyServiceTest < ActiveSupport::TestCase
     match.update!(red_score: nil, blue_score: nil)
 
     results = @service.call
-    scored = results.select { |r| r[:scored_match_count] > 0 }
+    by_user = results.index_by { |r| r[:user_id] }
 
-    # Only qm1 red contributes now — error = 49 for 3 scouts (admin, owner, lead)
-    assert_equal 3, scored.size
-    scored.each do |r|
-      assert_equal 1, r[:scored_match_count]
-      assert_equal 49.0, r[:average_error]
-    end
+    assert_equal 2, by_user[users(:admin_user).id][:scored_match_count]
+    assert_equal 5.0, by_user[users(:admin_user).id][:average_error]
+
+    assert_equal 2, by_user[users(:lead_user).id][:scored_match_count]
+    assert_equal 55.0, by_user[users(:lead_user).id][:average_error]
+
+    assert_equal 2, by_user[users(:owner_user).id][:scored_match_count]
+    assert_equal 57.5, by_user[users(:owner_user).id][:average_error]
+
+    assert_equal 0, by_user[users(:scout_user).id][:scored_match_count]
+    assert_nil by_user[users(:scout_user).id][:average_error]
   end
 
-  test "skips alliances with fewer than 3 scouting entries" do
-    # The blue alliances in fixtures only have 1 team each,
-    # so they should already be skipped. Total scored alliances = 2 (both red).
+  test "includes partially scouted alliances" do
     results = @service.call
     total_scored = results.sum { |r| r[:scored_match_count] }
 
-    # 2 alliances * 3 scouts each = 6 total scored-match attributions
-    assert_equal 6, total_scored
+    # All counted entries on scored matches should contribute.
+    assert_equal 10, total_scored
   end
 
   test "unscored scouts appear at bottom with nil accuracy" do
@@ -180,6 +168,6 @@ class ScoutAccuracyServiceTest < ActiveSupport::TestCase
 
     assert_not_nil scout_result
     assert_equal 2, scout_result[:total_entry_count]
-    assert_equal 1, scout_result[:scored_match_count]
+    assert_equal 2, scout_result[:scored_match_count]
   end
 end
