@@ -31,5 +31,11 @@ class DashboardController < ApplicationController
 
     # Predictions summary
     @predictions_count = Prediction.where(event: @event).count
+
+    # Scout online presence (admin only)
+    @scouts_presence = User.scouts.order(:first_name).map do |u|
+      online = u.last_seen_at.present? && u.last_seen_at >= 5.minutes.ago
+      { user: u, online: online }
+    end
   end
 end

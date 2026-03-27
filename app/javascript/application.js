@@ -44,6 +44,6 @@ if ("serviceWorker" in navigator) {
     })
 
   }).catch((error) => {
-    console.warn("[Lighthouse] Service worker registration failed:", error)
+    console.warn("[Watchtower] Service worker registration failed:", error)
   })
 }

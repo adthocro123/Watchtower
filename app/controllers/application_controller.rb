@@ -11,6 +11,7 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   before_action :configure_permitted_parameters, if: :devise_controller?
+  before_action :track_last_seen
 
   after_action :pundit_verify, unless: :skip_pundit?
   before_action :auto_sync_event, if: :should_auto_sync?
@@ -77,5 +78,13 @@ class ApplicationController < ActionController::Base
     AutoSyncEventJob.perform_later(current_event.id)
   rescue StandardError => e
     Rails.logger.warn("[ApplicationController] Auto-sync failed: #{e.message}")
+  end
+
+  def track_last_seen
+    return unless current_user
+    # Only update once per minute to avoid hammering the DB on every request
+    if current_user.last_seen_at.nil? || current_user.last_seen_at < 1.minute.ago
+      current_user.update_columns(last_seen_at: Time.current)
+    end
   end
 end

@@ -2,9 +2,9 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-14">
       <%# Logo / Brand %>
-      <%= link_to root_path, class: "flex items-center gap-2 shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950", "aria-label": "Lighthouse home" do %>
-        <img src="/icon.svg" alt="Lighthouse" class="w-8 h-8 rounded-lg" />
-        <span class="text-lg font-bold text-white tracking-tight hidden sm:block">Lighthouse</span>
+      <%= link_to root_path, class: "flex items-center gap-2 shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950", "aria-label": "Watchtower home" do %>
+        <%= image_tag "132-1323745_petoskey-paladins-blue-png-petoskey-paladins.png", alt: "Watchtower", class: "w-8 h-8 rounded-lg object-contain" %>
+        <span class="text-lg font-bold text-white tracking-tight hidden sm:block">Watchtower</span>
       <% end %>
 
       <%# Current Event + Org %>
@@ -24,7 +24,7 @@
         <div class="flex items-center gap-3">
           <%# Desktop nav links - fix mutual exclusion for Scout vs Entries %>
           <% if current_event %>
-            <div class="hidden lg:flex items-center gap-1">
+            <div class="hidden md:flex items-center gap-1">
               <%
                 is_new_entry = request.path == new_scouting_entry_path
                 is_edit_entry = request.path.match?(/scouting_entries\/\d+\/edit/)
@@ -42,6 +42,11 @@
               <%= link_to "Teams", teams_path,
                 class: "nav-link #{request.path.include?('teams') ? 'nav-link-active' : 'nav-link-inactive'}",
                 "aria-current": (request.path.include?('teams') ? "page" : nil) %>
+              <% if current_user.admin? %>
+                <%= link_to "Online", online_users_path,
+                  class: "nav-link #{request.path == online_users_path ? 'nav-link-active' : 'nav-link-inactive'}",
+                  "aria-current": (request.path == online_users_path ? "page" : nil) %>
+              <% end %>
               <% if current_user.admin? || current_user.analyst? %>
                 <%= link_to "Compare", team_comparison_path,
                   class: "nav-link #{request.path.include?('comparison') ? 'nav-link-active' : 'nav-link-inactive'}",

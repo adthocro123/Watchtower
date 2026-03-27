@@ -15,7 +15,7 @@ export default class extends Controller {
 
     if (!this.supported) {
       this.setUnavailable(diagnostics.message)
-      console.warn("[Lighthouse] Push unsupported diagnostics:", diagnostics)
+      console.warn("[Watchtower] Push unsupported diagnostics:", diagnostics)
       return
     }
 
@@ -30,7 +30,7 @@ export default class extends Controller {
       this.subscribed = Boolean(this.subscription)
       this.renderState()
     } catch (error) {
-      console.warn("[Lighthouse] Unable to initialize push controller:", error)
+      console.warn("[Watchtower] Unable to initialize push controller:", error)
       this.setUnavailable("Unable to initialize notifications.")
     }
   }
@@ -65,7 +65,7 @@ export default class extends Controller {
 
       this.renderState()
     } catch (error) {
-      console.warn("[Lighthouse] Failed to toggle push subscription:", error)
+      console.warn("[Watchtower] Failed to toggle push subscription:", error)
       this.statusTarget.textContent = "Failed to update notifications. Please try again."
     } finally {
       this.setActionButtonsDisabled(false)
@@ -93,7 +93,7 @@ export default class extends Controller {
 
       this.statusTarget.textContent = "Test notification sent. Check your device notification center."
     } catch (error) {
-      console.warn("[Lighthouse] Failed to send test notification:", error)
+      console.warn("[Watchtower] Failed to send test notification:", error)
       this.statusTarget.textContent = "Unable to send test notification. Please verify subscription and try again."
     } finally {
       this.setActionButtonsDisabled(false)

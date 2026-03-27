@@ -74,7 +74,7 @@ export default class extends Controller {
       await this.#prefetch()
       // Final state is set by #handlePrefetchComplete via SW message
     } catch (error) {
-      console.warn("[Lighthouse] Manual cache failed:", error)
+      console.warn("[Watchtower] Manual cache failed:", error)
       this.#updateStatus("Caching failed")
       this.#resetCacheButton()
     }
@@ -108,7 +108,7 @@ export default class extends Controller {
 
       await this.#prefetch()
     } catch (error) {
-      console.warn("[Lighthouse] Prefetch check failed:", error)
+      console.warn("[Watchtower] Prefetch check failed:", error)
     }
   }
 
@@ -121,7 +121,7 @@ export default class extends Controller {
       })
 
       if (!response.ok) {
-        console.warn("[Lighthouse] Failed to fetch offline manifest:", response.status)
+        console.warn("[Watchtower] Failed to fetch offline manifest:", response.status)
         this.#resetCacheButton()
         return
       }
@@ -154,7 +154,7 @@ export default class extends Controller {
       // Record the prefetch timestamp
       await this.#recordPrefetch()
     } catch (error) {
-      console.warn("[Lighthouse] Prefetch failed:", error)
+      console.warn("[Watchtower] Prefetch failed:", error)
       this.#resetCacheButton()
     }
   }
@@ -228,7 +228,7 @@ export default class extends Controller {
 
       db.close()
     } catch (error) {
-      console.warn("[Lighthouse] Failed to record prefetch:", error)
+      console.warn("[Watchtower] Failed to record prefetch:", error)
     }
   }
 

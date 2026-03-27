@@ -299,7 +299,7 @@ export default class extends Controller {
       this.#showOfflineConfirmation()
       window.dispatchEvent(new CustomEvent("lighthouse:entry-queued"))
     } catch (error) {
-      console.error("[Lighthouse] Failed to save offline entry:", error)
+      console.error("[Watchtower] Failed to save offline entry:", error)
       alert("Failed to save entry offline. Please try again.")
     }
   }
@@ -344,7 +344,7 @@ export default class extends Controller {
       })
       db.close()
     } catch (error) {
-      console.warn("[Lighthouse] Failed to cache reference data:", error)
+      console.warn("[Watchtower] Failed to cache reference data:", error)
     }
   }
 

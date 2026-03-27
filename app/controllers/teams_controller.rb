@@ -27,6 +27,9 @@ class TeamsController < ApplicationController
 
     # Fetch event rankings from TBA (cached 5 min)
     @rankings = fetch_tba_rankings
+
+    # Fetch OPR / DPR / CCWM from TBA (cached 5 min)
+    @oprs = fetch_tba_oprs
   end
 
   def show
@@ -43,6 +46,10 @@ class TeamsController < ApplicationController
 
     # Single DB query — no external API call
     @epa = StatboticsCache.find_by(event: current_event, frc_team: @team)
+
+    # Fetch OPR / DPR / CCWM from TBA
+    oprs_data = fetch_tba_oprs
+    @team_opr = oprs_data[@team.team_number]
   end
 
   private
@@ -109,6 +116,28 @@ class TeamsController < ApplicationController
     end
   rescue StandardError => e
     Rails.logger.warn("[TeamsController] TBA rankings fetch failed: #{e.message}")
+    {}
+  end
+
+  # Returns a hash of team_number => { opr:, dpr:, ccwm: } from TBA, or empty hash on failure.
+  def fetch_tba_oprs
+    return {} unless current_event.tba_key.present?
+
+    data = TbaClient.new.event_oprs(current_event.tba_key)
+    return {} unless data.is_a?(Hash) && data["oprs"].is_a?(Hash)
+
+    result = {}
+    data["oprs"].each do |team_key, opr_val|
+      team_number = team_key.to_s.delete_prefix("frc").to_i
+      result[team_number] = {
+        opr: opr_val&.to_f,
+        dpr: data.dig("dprs", team_key)&.to_f,
+        ccwm: data.dig("ccwms", team_key)&.to_f
+      }
+    end
+    result
+  rescue StandardError => e
+    Rails.logger.warn("[TeamsController] TBA OPRs fetch failed: #{e.message}")
     {}
   end
 end

@@ -1,6 +1,22 @@
 @import "tailwindcss";
 
 /* ============================================================
+   Brand color override: replace all orange-* with #2E3190
+   ============================================================ */
+@theme {
+  --color-orange-50:  #eeeef8;
+  --color-orange-100: #d5d6ef;
+  --color-orange-200: #ababdf;
+  --color-orange-300: #8081cf;
+  --color-orange-400: #5658bf;
+  --color-orange-500: #2E3190;
+  --color-orange-600: #272a7d;
+  --color-orange-700: #20236a;
+  --color-orange-800: #191b57;
+  --color-orange-900: #121444;
+}
+
+/* ============================================================
    Lighthouse Design System
    ============================================================ */
 

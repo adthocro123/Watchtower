@@ -129,7 +129,7 @@ export default class extends Controller {
       result.synced = syncedUuids.length
       result.failed += failedUuids.length
     } catch (error) {
-      console.error(`[Lighthouse] Sync failed for ${storeName}:`, error)
+      console.error(`[Watchtower] Sync failed for ${storeName}:`, error)
     }
 
     return result
@@ -158,7 +158,7 @@ export default class extends Controller {
         if (response.ok) {
           const contentType = response.headers.get("Content-Type") || ""
           if (!contentType.includes("application/json")) {
-            console.warn("[Lighthouse] Sync response is not JSON (possible auth redirect)")
+            console.warn("[Watchtower] Sync response is not JSON (possible auth redirect)")
             this.#showSessionExpiredBanner()
             return null
           }
@@ -167,28 +167,28 @@ export default class extends Controller {
 
         // Session expired — user needs to sign in again
         if (response.status === 401) {
-          console.warn("[Lighthouse] Session expired, please sign in to sync entries")
+          console.warn("[Watchtower] Session expired, please sign in to sync entries")
           this.#showSessionExpiredBanner()
           return null
         }
 
         // CSRF / authorization failure — token may be stale
         if (response.status === 403) {
-          console.warn("[Lighthouse] Sync returned 403 (forbidden) — CSRF token may be stale. Please reload the page.")
+          console.warn("[Watchtower] Sync returned 403 (forbidden) — CSRF token may be stale. Please reload the page.")
           this.#showSessionExpiredBanner()
           return null
         }
 
         // 4xx errors are not retryable (client error)
         if (response.status >= 400 && response.status < 500) {
-          console.error(`[Lighthouse] Sync returned ${response.status}, not retrying`)
+          console.error(`[Watchtower] Sync returned ${response.status}, not retrying`)
           return null
         }
 
         // 5xx errors are retryable
-        console.warn(`[Lighthouse] Sync attempt ${attempt + 1} failed: ${response.status}`)
+        console.warn(`[Watchtower] Sync attempt ${attempt + 1} failed: ${response.status}`)
       } catch (error) {
-        console.warn(`[Lighthouse] Sync attempt ${attempt + 1} network error:`, error)
+        console.warn(`[Watchtower] Sync attempt ${attempt + 1} network error:`, error)
       }
 
       // Wait before retrying (unless this was the last attempt)
@@ -197,7 +197,7 @@ export default class extends Controller {
       }
     }
 
-    console.error("[Lighthouse] All sync retries exhausted")
+    console.error("[Watchtower] All sync retries exhausted")
     return null
   }
 
@@ -244,7 +244,7 @@ export default class extends Controller {
 
       db.close()
     } catch (error) {
-      console.error("[Lighthouse] Failed to mark entries as failed:", error)
+      console.error("[Watchtower] Failed to mark entries as failed:", error)
     }
   }
 

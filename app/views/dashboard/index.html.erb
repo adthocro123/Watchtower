@@ -1,4 +1,4 @@
-<% content_for(:title) { "Dashboard - Lighthouse" } %>
+<% content_for(:title) { "Dashboard - Watchtower" } %>
 
 <%# Event Header %>
   <div class="mb-6">
@@ -151,7 +151,7 @@
         <p class="text-sm text-gray-500 pb-1">/ <%= @total_teams_at_event %> teams</p>
       </div>
       <div class="w-full h-3 bg-gray-800 rounded-full overflow-hidden mb-2">
-        <div class="h-full rounded-full transition-all duration-500 <%= pit_pct == 100 ? 'bg-orange-500' : 'bg-amber-500' %>" style="width: <%= pit_pct %>%"></div>
+        <div class="h-full rounded-full transition-all duration-500 bg-orange-500" style="width: <%= pit_pct %>%"></div>
       </div>
       <p class="text-xs text-gray-500"><%= pit_pct %>% complete &middot; <%= @total_teams_at_event - @pit_scouted_count %> remaining</p>
     </div>
@@ -267,7 +267,7 @@
          @scoring_data.each { |score| bins["#{(score / 10).to_i * 10}-#{(score / 10).to_i * 10 + 9}"] += 1 }
          sorted_bins = bins.sort_by { |range, _| range.split("-").first.to_i }.to_h %>
       <%= column_chart sorted_bins,
-                       colors: ["#f97316"],
+                       colors: ["#818CF8"],
                        xtitle: "Points Range",
                        ytitle: "Teams",
                        library: {
@@ -289,7 +289,7 @@
     <% if top_teams_data.any? %>
       <div aria-label="Bar chart showing top 10 teams by average points scored">
         <%= bar_chart top_teams_data,
-                      colors: ["#f97316"],
+                      colors: ["#818CF8"],
                       library: {
                         scales: {
                           x: { ticks: { color: "#9ca3af" }, grid: { color: "#1f2937" } },

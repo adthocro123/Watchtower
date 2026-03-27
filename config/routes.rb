@@ -7,7 +7,11 @@ Rails.application.routes.draw do
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  resources :users, except: [ :show ]
+  resources :users, except: [ :show ] do
+    collection do
+      get :online
+    end
+  end
 
   resources :web_push_subscriptions, only: [ :create ] do
     collection do

@@ -1,4 +1,4 @@
-<% content_for(:title) { "Replay Scout - Lighthouse" } %>
+<% content_for(:title) { "Replay Scout - Watchtower" } %>
 
 <div class="max-w-7xl mx-auto">
   <div class="flex items-center gap-2 mb-6">
@@ -406,7 +406,7 @@
             <% case @replay_empty_state %>
             <% when :tba_unconfigured %>
               <p class="text-lg font-semibold text-white">Replay scouting needs a TBA API key</p>
-              <p class="text-sm text-gray-400 mt-2">`TBA_API_KEY` is not configured, so Lighthouse cannot import played match times or replay video links.</p>
+              <p class="text-sm text-gray-400 mt-2">`TBA_API_KEY` is not configured, so Watchtower cannot import played match times or replay video links.</p>
             <% when :placeholder_schedule %>
               <p class="text-lg font-semibold text-white">This event only has placeholder matches</p>
               <p class="text-sm text-gray-400 mt-2">Sync the event from TBA to import real match times and replay videos before using replay scout.</p>

@@ -1,4 +1,4 @@
-<% content_for(:title) { "Teams - Lighthouse" } %>
+<% content_for(:title) { "Teams - Watchtower" } %>
 
 <div class="mb-6">
   <h1 class="text-2xl font-bold text-white">Team Rankings</h1>
@@ -30,10 +30,13 @@
             <th scope="col" class="text-right cursor-pointer select-none hover:text-orange-400 transition hidden sm:table-cell" data-col="3" data-action="click->sortable-table#sort">EPA<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
             <th scope="col" class="text-right cursor-pointer select-none hover:text-orange-400 transition hidden sm:table-cell" data-col="4" data-action="click->sortable-table#sort">Accuracy<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
             <th scope="col" class="text-right hidden md:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="5" data-action="click->sortable-table#sort">Defence<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
-            <th scope="col" class="text-right hidden md:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="6" data-action="click->sortable-table#sort">Record<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
-            <th scope="col" class="text-right hidden md:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="7" data-action="click->sortable-table#sort">RP Avg<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
-            <th scope="col" class="text-right hidden lg:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="8" data-action="click->sortable-table#sort">Std Dev<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
-            <th scope="col" class="text-right cursor-pointer select-none hover:text-orange-400 transition" data-col="9" data-action="click->sortable-table#sort">Scouted<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
+            <th scope="col" class="text-right hidden md:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="6" data-action="click->sortable-table#sort">OPR<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
+            <th scope="col" class="text-right hidden lg:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="7" data-action="click->sortable-table#sort">DPR<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
+            <th scope="col" class="text-right hidden lg:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="8" data-action="click->sortable-table#sort">CCWM<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
+            <th scope="col" class="text-right hidden md:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="9" data-action="click->sortable-table#sort">Record<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
+            <th scope="col" class="text-right hidden md:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="10" data-action="click->sortable-table#sort">RP Avg<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
+            <th scope="col" class="text-right hidden lg:table-cell cursor-pointer select-none hover:text-orange-400 transition" data-col="11" data-action="click->sortable-table#sort">Std Dev<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
+            <th scope="col" class="text-right cursor-pointer select-none hover:text-orange-400 transition" data-col="12" data-action="click->sortable-table#sort">Scouted<span data-sort-arrow class="text-orange-400 text-xs invisible"> ▲</span></th>
           </tr>
         </thead>
         <tbody data-sortable-table-target="body">
@@ -45,10 +48,14 @@
             <% ranking = @rankings[team.team_number] %>
             <% rank = ranking&.dig(:rank) %>
             <% epa_data = @statbotics_epa[team.id] %>
+            <% opr_data = @oprs[team.team_number] %>
             <% avg_pts = summary&.avg_total_points.to_f %>
             <% epa_val = epa_data&.epa_mean.to_f %>
             <% acc = summary&.fuel_accuracy_pct.to_f.round(0) || 0 %>
             <% avg_defense = summary&.avg_defense_rating %>
+            <% team_opr = opr_data&.dig(:opr) %>
+            <% team_dpr = opr_data&.dig(:dpr) %>
+            <% team_ccwm = opr_data&.dig(:ccwm) %>
             <% qual_wins = epa_data&.qual_wins.to_i || 0 %>
             <% qual_losses = epa_data&.qual_losses.to_i || 0 %>
             <% qual_total = qual_wins + qual_losses %>
@@ -95,6 +102,18 @@
                 <% else %>
                   <span class="font-mono text-gray-500">---</span>
                 <% end %>
+              </td>
+              <td class="text-right hidden md:table-cell" data-sort-value="<%= team_opr || -1 %>">
+                <span class="font-mono font-semibold <%= team_opr ? 'text-cyan-400' : 'text-gray-500' %>"><%= team_opr ? team_opr.round(1) : "---" %></span>
+              </td>
+              <td class="text-right hidden lg:table-cell" data-sort-value="<%= team_dpr || -1 %>">
+                <span class="font-mono font-semibold <%= team_dpr ? 'text-violet-400' : 'text-gray-500' %>"><%= team_dpr ? team_dpr.round(1) : "---" %></span>
+              </td>
+              <td class="text-right hidden lg:table-cell" data-sort-value="<%= team_ccwm || -999 %>">
+                <span class="font-mono font-semibold <%= if team_ccwm.nil? then 'text-gray-500'
+                    elsif team_ccwm >= 0 then 'text-emerald-400'
+                    else 'text-red-400'
+                    end %>"><%= team_ccwm ? team_ccwm.round(1) : "---" %></span>
               </td>
               <td class="text-right hidden md:table-cell" data-sort-value="<%= winrate %>">
                 <% if qual_total > 0 %>

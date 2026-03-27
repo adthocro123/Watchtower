@@ -37,6 +37,16 @@
       icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
     }
 
+    if current_user.admin?
+      mobile_nav_items << {
+        label: "Online",
+        path: online_users_path,
+        active: request.path == online_users_path,
+        aria_label: "Who's online",
+        icon: "M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728M8.464 15.536a5 5 0 010-7.072m7.072 0a5 5 0 010 7.072M13 12a1 1 0 11-2 0 1 1 0 012 0z"
+      }
+    end
+
     mobile_nav_items << {
       label: "Schedule",
       path: scouting_assignments_path,
@@ -116,7 +126,7 @@
     end
   %>
 
-  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-sm border-t border-gray-800 lg:hidden safe-area-bottom" aria-label="Mobile navigation">
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-sm border-t border-gray-800 md:hidden safe-area-bottom" aria-label="Mobile navigation">
     <div class="flex items-center justify-around h-16 px-2" data-controller="overflow-nav">
 
       <%# === Bar items (icon + label, shown inline until they overflow) === %>

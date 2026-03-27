@@ -1,0 +1,51 @@
+<% content_for(:title) { "Who's Online - Watchtower" } %>
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-white">Who's Online</h1>
+  <p class="text-sm text-gray-400 mt-1">Scouts active in the last 5 minutes are shown as online. Updates on page refresh.</p>
+</div>
+
+<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-semibold text-white uppercase tracking-wider">Scouts</span>
+    </div>
+    <div class="flex items-center gap-3 text-xs text-gray-400">
+      <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-400"></span> Online (last 5 min)</span>
+      <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-600"></span> Offline</span>
+    </div>
+  </div>
+
+  <% if @scouts_presence.empty? %>
+    <div class="px-4 py-8 text-center text-gray-500 text-sm">No scouts found.</div>
+  <% else %>
+    <ul class="divide-y divide-gray-800">
+      <% @scouts_presence.each do |presence| %>
+        <li class="flex items-center gap-4 px-4 py-3">
+          <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 <%= presence[:online] ? 'bg-green-400' : 'bg-gray-600' %>"></span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium <%= presence[:online] ? 'text-white' : 'text-gray-400' %>">
+              <%= presence[:user].full_name %>
+            </p>
+            <p class="text-xs text-gray-500 truncate"><%= presence[:user].username %></p>
+          </div>
+          <div class="text-right shrink-0">
+            <% if presence[:online] %>
+              <span class="inline-flex items-center gap-1 text-xs font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">
+                Online
+              </span>
+            <% elsif presence[:last_seen] %>
+              <span class="text-xs text-gray-500"><%= time_ago_in_words(presence[:last_seen]) %> ago</span>
+            <% else %>
+              <span class="text-xs text-gray-600">Never logged in</span>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>
+
+<div class="mt-3 text-right">
+  <%= link_to "↻ Refresh", online_users_path, class: "text-xs text-gray-500 hover:text-white transition-colors" %>
+</div>

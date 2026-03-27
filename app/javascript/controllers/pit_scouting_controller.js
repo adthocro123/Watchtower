@@ -72,7 +72,7 @@ export default class extends Controller {
       // Dispatch event so connectivity controller can update the queue count
       window.dispatchEvent(new CustomEvent("lighthouse:entry-queued"))
     } catch (error) {
-      console.error("[Lighthouse] Failed to save pit scouting entry offline:", error)
+      console.error("[Watchtower] Failed to save pit scouting entry offline:", error)
       alert("Failed to save entry offline. Please try again.")
     }
   }

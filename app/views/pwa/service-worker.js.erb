@@ -77,7 +77,7 @@ self.addEventListener("push", (event) => {
   if (!event.data) return
 
   const payload = event.data.json()
-  const title = payload.title || "Lighthouse"
+  const title = payload.title || "Watchtower"
   const options = {
     body: payload.body || "You have an upcoming scouting assignment.",
     icon: payload.icon || "/icon.png",
@@ -184,7 +184,7 @@ function offlineFallback() {
     `<!DOCTYPE html>
     <html lang="en" class="dark">
       <head>
-        <title>Lighthouse - Offline</title>
+        <title>Watchtower - Offline</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#030712">
         <style>
@@ -208,7 +208,7 @@ function offlineFallback() {
           <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728M5.636 5.636a9 9 0 000 12.728M12 12v.01" />
           </svg>
-          <h1>Lighthouse</h1>
+          <h1>Watchtower</h1>
           <p class="subtitle">This page hasn't been cached for offline use yet. Navigate to a page you've visited before, or try these:</p>
           <div class="actions">
             <a href="/" class="btn btn-primary">Go to Dashboard</a>
@@ -394,7 +394,7 @@ async function syncOfflineEntries(storeName, syncUrl) {
       total: toSync.length
     })
   } catch (error) {
-    console.error("[Lighthouse SW] Background sync failed:", error)
+    console.error("[Watchtower SW] Background sync failed:", error)
     await notifyClients({
       type: "sync-progress",
       store: storeName,
@@ -431,7 +431,7 @@ async function fetchWithRetry(url, entries) {
         // is HTML instead of JSON. Detect this and treat it as an auth error.
         const contentType = response.headers.get("Content-Type") || ""
         if (!contentType.includes("application/json")) {
-          console.warn("[Lighthouse SW] Sync response is not JSON (possible auth redirect)")
+          console.warn("[Watchtower SW] Sync response is not JSON (possible auth redirect)")
           await notifyClients({ type: "sync-auth-expired" })
           return null
         }
@@ -440,13 +440,13 @@ async function fetchWithRetry(url, entries) {
 
       // 4xx errors are not retryable
       if (response.status >= 400 && response.status < 500) {
-        console.error(`[Lighthouse SW] Sync returned ${response.status}, not retrying`)
+        console.error(`[Watchtower SW] Sync returned ${response.status}, not retrying`)
         return null
       }
 
-      console.warn(`[Lighthouse SW] Sync attempt ${attempt + 1} failed: ${response.status}`)
+      console.warn(`[Watchtower SW] Sync attempt ${attempt + 1} failed: ${response.status}`)
     } catch (error) {
-      console.warn(`[Lighthouse SW] Sync attempt ${attempt + 1} network error:`, error)
+      console.warn(`[Watchtower SW] Sync attempt ${attempt + 1} network error:`, error)
     }
 
     // Wait before retrying (unless last attempt)
@@ -455,7 +455,7 @@ async function fetchWithRetry(url, entries) {
     }
   }
 
-  console.error("[Lighthouse SW] All sync retries exhausted")
+  console.error("[Watchtower SW] All sync retries exhausted")
   return null
 }
 
@@ -493,7 +493,7 @@ async function precacheShell(cache) {
   try {
     await cache.addAll(PRECACHE_ASSETS)
   } catch (err) {
-    console.warn("[Lighthouse SW] Some precache assets failed:", err)
+    console.warn("[Watchtower SW] Some precache assets failed:", err)
     await Promise.allSettled(
       PRECACHE_ASSETS.map((url) => cache.add(url).catch(() => null))
     )

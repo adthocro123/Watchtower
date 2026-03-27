@@ -24,7 +24,7 @@ import { decode } from "lib/qr_payload"
  *   list    - Container for appending imported entry results
  */
 export default class extends Controller {
-  static targets = ["video", "canvas", "preview", "status", "result", "list", "startBtn"]
+  static targets = ["video", "canvas", "preview", "status", "result", "list", "startBtn", "uploadArea"]
   static values = {
     importUrl: String,   // POST endpoint for QR import
     scanning: { type: Boolean, default: false },
@@ -35,12 +35,16 @@ export default class extends Controller {
     this.stream = null
 
     if (!cameraSupported()) {
-      this.statusTarget.textContent = "Camera access is not supported on this device or browser."
-      this.statusTarget.className = "text-sm text-red-400 mt-3"
+      this.statusTarget.textContent = "Camera not available over HTTP — use the image upload below instead."
+      this.statusTarget.className = "text-sm text-amber-400 mt-3"
 
       if (this.hasStartBtnTarget) {
         this.startBtnTarget.disabled = true
         this.startBtnTarget.classList.add("opacity-60", "cursor-not-allowed")
+      }
+
+      if (this.hasUploadAreaTarget) {
+        this.uploadAreaTarget.classList.remove("hidden")
       }
     }
   }
@@ -139,7 +143,7 @@ export default class extends Controller {
       await this.submitEntry(entry)
     } catch (err) {
       console.error("QR decode/import failed:", err)
-      this.appendResult("error", "Invalid QR code — not a Lighthouse scouting entry.", null)
+      this.appendResult("error", "Invalid QR code — not a Watchtower scouting entry.", null)
     }
 
     // Resume scanning after a short delay
@@ -189,6 +193,48 @@ export default class extends Controller {
       console.error("Import request failed:", err)
       this.appendResult("error", `Network error: ${err.message}`, null)
     }
+  }
+
+  async uploadImage(event) {
+    const file = event.target.files[0]
+    if (!file) return
+
+    this.statusTarget.textContent = "Reading image..."
+    this.statusTarget.className = "text-sm text-orange-400 mt-3"
+
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      const canvas = this.canvasTarget
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })
+      ctx.drawImage(img, 0, 0)
+      URL.revokeObjectURL(url)
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "attemptBoth",
+      })
+
+      if (code && code.data) {
+        this.handleScan(code.data)
+      } else {
+        this.statusTarget.textContent = "No QR code found in image. Try a clearer screenshot."
+        this.statusTarget.className = "text-sm text-red-400 mt-3"
+      }
+
+      // Reset file input so the same file can be re-uploaded
+      event.target.value = ""
+    }
+
+    img.onerror = () => {
+      this.statusTarget.textContent = "Could not read image file."
+      this.statusTarget.className = "text-sm text-red-400 mt-3"
+    }
+
+    img.src = url
   }
 
   appendResult(status, message, entryId) {

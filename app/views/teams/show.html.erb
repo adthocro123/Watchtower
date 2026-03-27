@@ -1,4 +1,4 @@
-<% content_for(:title) { "Team #{@team.team_number} - Lighthouse" } %>
+<% content_for(:title) { "Team #{@team.team_number} - Watchtower" } %>
 
 <div class="max-w-4xl mx-auto">
   <%# Header %>
@@ -51,6 +51,25 @@
     </div>
   <% end %>
 
+  <%# TBA OPR / DPR / CCWM %>
+  <% if @team_opr %>
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div class="stat-card group text-center border-cyan-500/20">
+        <p class="text-3xl font-bold text-cyan-400 font-mono"><%= @team_opr[:opr]&.round(1) || "---" %></p>
+        <p class="text-xs text-gray-400 mt-1 font-medium">OPR</p>
+      </div>
+      <div class="stat-card group text-center border-violet-500/20">
+        <p class="text-3xl font-bold text-violet-400 font-mono"><%= @team_opr[:dpr]&.round(1) || "---" %></p>
+        <p class="text-xs text-gray-400 mt-1 font-medium">DPR</p>
+      </div>
+      <div class="stat-card group text-center border-emerald-500/20">
+        <% ccwm_val = @team_opr[:ccwm] %>
+        <p class="text-3xl font-bold font-mono <%= ccwm_val && ccwm_val >= 0 ? 'text-emerald-400' : 'text-red-400' %>"><%= ccwm_val&.round(1) || "---" %></p>
+        <p class="text-xs text-gray-400 mt-1 font-medium">CCWM</p>
+      </div>
+    </div>
+  <% end %>
+
   <%# Summary Stats %>
   <% if @summary %>
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
@@ -91,7 +110,7 @@
         <div aria-label="Donut chart showing fuel accuracy: <%= accuracy %>% made">
           <%= pie_chart({ "Made" => made, "Missed" => missed },
                          donut: true,
-                         colors: ["#f97316", "#ef4444"],
+                         colors: ["#818CF8", "#ef4444"],
                          library: {
                            plugins: {
                              legend: { labels: { color: "#9ca3af" } }
@@ -296,7 +315,7 @@
       end %>
       <div aria-label="Line chart showing points scored over matches">
         <%= line_chart chart_data,
-                       colors: ["#f97316"],
+                       colors: ["#818CF8"],
                        library: {
                          scales: {
                            x: { ticks: { color: "#9ca3af" }, grid: { color: "#1f2937" } },

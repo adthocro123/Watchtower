@@ -1,5 +1,5 @@
 /**
- * QR Payload encoder/decoder for Lighthouse scouting entries.
+ * QR Payload encoder/decoder for Watchtower scouting entries.
  *
  * Encodes a scouting entry into a compact JSON string suitable for QR codes
  * (~3 KB limit). Uses short keys and compact coordinate encoding to minimize

@@ -38,6 +38,12 @@ class TbaClient
     cached_get("tba:event_rankings:#{event_key}", "/event/#{event_key}/rankings")
   end
 
+  # GET /event/{event_key}/oprs
+  # Returns { "oprs" => { "frcNNN" => val }, "dprs" => { ... }, "ccwms" => { ... } }
+  def event_oprs(event_key)
+    cached_get("tba:event_oprs:#{event_key}", "/event/#{event_key}/oprs")
+  end
+
   private
 
   def build_connection

@@ -111,7 +111,7 @@ export default class extends Controller {
         this.#populateDetails()
       }
     } catch (error) {
-      console.error("[Lighthouse] Failed to clear failed entries:", error)
+      console.error("[Watchtower] Failed to clear failed entries:", error)
     }
   }
 
@@ -365,7 +365,7 @@ export default class extends Controller {
         `
       }).join("")
     } catch (error) {
-      console.error("[Lighthouse] Failed to populate details:", error)
+      console.error("[Watchtower] Failed to populate details:", error)
     }
   }
 

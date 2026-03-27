@@ -6,6 +6,14 @@ class UsersController < ApplicationController
     @users = User.order(:last_name, :first_name)
   end
 
+  def online
+    authorize User, :index?
+    @scouts_presence = User.scouts.order(:first_name).map do |u|
+      online = u.last_seen_at.present? && u.last_seen_at >= 5.minutes.ago
+      { user: u, online: online, last_seen: u.last_seen_at }
+    end
+  end
+
   def new
     authorize User
     @user = User.new
